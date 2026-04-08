@@ -10,4 +10,23 @@ export const SizeTemplateService = {
   async create(data: any) {
     return await prisma.sizeTemplate.create({ data });
   },
+
+  async getById(id: string) {
+    return await prisma.sizeTemplate.findUnique({ where: { id } });
+  },
+
+  async update(id: string, data: any) {
+    return await prisma.sizeTemplate.update({
+      where: { id },
+      data: {
+        ...(data.name !== undefined && { name: data.name }),
+        ...(data.type !== undefined && { type: data.type }),
+        ...(data.sizes !== undefined && { sizes: data.sizes }),
+      },
+    });
+  },
+
+  async delete(id: string) {
+    return await prisma.sizeTemplate.delete({ where: { id } });
+  },
 };

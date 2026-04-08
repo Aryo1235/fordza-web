@@ -41,6 +41,24 @@ export const BannerService = {
     });
   },
 
+  async update(id: string, data: any) {
+    const updateData: any = {};
+    if (data.title !== undefined) updateData.title = data.title;
+    if (data.linkUrl !== undefined) updateData.linkUrl = data.linkUrl;
+    if (data.imageUrl !== undefined) updateData.imageUrl = data.imageUrl;
+    if (data.imageKey !== undefined) updateData.imageKey = data.imageKey;
+    if (data.isActive !== undefined) updateData.isActive = data.isActive;
+
+    return await prisma.banner.update({
+      where: { id },
+      data: updateData,
+    });
+  },
+
+  async getById(id: string) {
+    return await prisma.banner.findUnique({ where: { id } });
+  },
+
   async delete(id: string) {
     return await prisma.banner.delete({
       where: { id },
