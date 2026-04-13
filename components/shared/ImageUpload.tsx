@@ -7,6 +7,17 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
+function extractErrorMessage(error: unknown, fallback: string) {
+  const maybeMessage = (error as any)?.response?.data?.message;
+  if (typeof maybeMessage === "string" && maybeMessage.trim())
+    return maybeMessage;
+
+  const message = (error as any)?.message;
+  if (typeof message === "string" && message.trim()) return message;
+
+  return fallback;
+}
+
 interface ImageUploadProps {
   images: { id: string; url: string }[];
   onUpload: (file: File) => Promise<void>;
@@ -46,7 +57,12 @@ export function ImageUpload({
       await onUpload(compressedFile);
     } catch (error) {
       console.error(error);
-      toast.error("Gagal mengunggah gambar. Pastikan format didukung.");
+      toast.error(
+        extractErrorMessage(
+          error,
+          "Gagal mengunggah gambar. Pastikan format didukung.",
+        ),
+      );
     } finally {
       setIsCompressing(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -59,7 +75,7 @@ export function ImageUpload({
       await onRemove(id);
     } catch (error) {
       console.error(error);
-      toast.error("Gagal menghapus gambar");
+      toast.error(extractErrorMessage(error, "Gagal menghapus gambar"));
     } finally {
       setLoadingId(null);
     }
@@ -74,7 +90,7 @@ export function ImageUpload({
             "grid gap-4",
             maxFiles === 1
               ? "grid-cols-1"
-              : "grid-cols-2 md:grid-cols-4 lg:grid-cols-5"
+              : "grid-cols-2 md:grid-cols-4 lg:grid-cols-5",
           )}
         >
           {images.map((img) => (
@@ -82,7 +98,7 @@ export function ImageUpload({
               key={img.id}
               className={cn(
                 "group relative h-32 w-full overflow-hidden rounded-lg bg-gray-100 border border-border",
-                maxFiles === 1 ? "aspect-video" : "aspect-square"
+                maxFiles === 1 ? "aspect-video" : "aspect-square",
               )}
             >
               <img
@@ -120,18 +136,22 @@ export function ImageUpload({
             maxFiles === 1 ? "aspect-video" : "aspect-square",
             isCompressing
               ? "border-muted-foreground/30 bg-muted/50 cursor-not-allowed"
-              : "border-muted-foreground/30 hover:border-[#3C3025] hover:bg-secondary cursor-pointer"
+              : "border-muted-foreground/30 hover:border-[#3C3025] hover:bg-secondary cursor-pointer",
           )}
         >
           {isCompressing ? (
             <>
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground mb-2" />
-              <p className="text-sm text-muted-foreground">Mengompres & Mengunggah...</p>
+              <p className="text-sm text-muted-foreground">
+                Mengompres & Mengunggah...
+              </p>
             </>
           ) : (
             <>
               <UploadCloud className="h-8 w-8 text-muted-foreground mb-2" />
-              <p className="text-sm font-medium text-foreground">Klik untuk unggah gambar</p>
+              <p className="text-sm font-medium text-foreground">
+                Klik untuk unggah gambar
+              </p>
               <p className="text-xs text-muted-foreground mt-1">
                 JPG, PNG, WebP (Otomatis dikompres &lt; 1MB)
               </p>
