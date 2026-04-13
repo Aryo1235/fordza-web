@@ -13,7 +13,7 @@
  */
 
 import { prisma } from "@/lib/prisma";
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@/app/generated/prisma/client";
 
 export const TestimonialRepository = {
   async getAll(filters: {
@@ -117,7 +117,9 @@ export const TestimonialRepository = {
     return await prisma.testimonial.update({
       where: { id },
       data: {
-        ...(data.customerName !== undefined && { customerName: data.customerName }),
+        ...(data.customerName !== undefined && {
+          customerName: data.customerName,
+        }),
         ...(data.rating !== undefined && { rating: data.rating }),
         ...(data.content !== undefined && { content: data.content }),
         ...(data.isActive !== undefined && { isActive: data.isActive }),

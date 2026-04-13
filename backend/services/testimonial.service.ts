@@ -15,14 +15,24 @@
 
 import { TestimonialRepository } from "@/backend/repositories/testimonial.repo";
 import { ProductRepository } from "@/backend/repositories/products.repo";
-import { Prisma } from "@prisma/client";
-
+import { Prisma } from "@/app/generated/prisma/client";
 export const TestimonialService = {
-  async getAll(filters: { productId?: string; rating?: number; page?: number; limit?: number }) {
+  async getAll(filters: {
+    productId?: string;
+    rating?: number;
+    page?: number;
+    limit?: number;
+  }) {
     return await TestimonialRepository.getAll(filters);
   },
 
-  async getAllAdmin(filters: { productId?: string; rating?: number; page?: number; limit?: number; search?: string }) {
+  async getAllAdmin(filters: {
+    productId?: string;
+    rating?: number;
+    page?: number;
+    limit?: number;
+    search?: string;
+  }) {
     return await TestimonialRepository.getAllAdmin(filters);
   },
 
@@ -36,7 +46,8 @@ export const TestimonialService = {
       // (ini business logic, bukan tugas Repo)
       const productId = data.product.connect?.id;
       if (productId) {
-        const stats = await TestimonialRepository.calculateRatingStats(productId);
+        const stats =
+          await TestimonialRepository.calculateRatingStats(productId);
         await ProductRepository.updateRating(productId, {
           avgRating: stats._avg.rating || 0,
           totalReviews: stats._count.rating || 0,
@@ -46,7 +57,9 @@ export const TestimonialService = {
       return newReview;
     } catch (error: any) {
       if (error.code === "P2025") {
-        throw new Error("Product ID tidak valid. Produk tidak ditemukan di database.");
+        throw new Error(
+          "Product ID tidak valid. Produk tidak ditemukan di database.",
+        );
       }
       throw error;
     }
@@ -62,7 +75,9 @@ export const TestimonialService = {
     const updated = await TestimonialRepository.update(id, data);
 
     // LANGKAH 3: Hitung ulang rating (hanya jika isActive berubah atau rating berubah)
-    const stats = await TestimonialRepository.calculateRatingStats(testimonial.productId);
+    const stats = await TestimonialRepository.calculateRatingStats(
+      testimonial.productId,
+    );
     await ProductRepository.updateRating(testimonial.productId, {
       avgRating: stats._avg.rating || 0,
       totalReviews: stats._count.rating || 0,
@@ -81,7 +96,9 @@ export const TestimonialService = {
     await TestimonialRepository.delete(id);
 
     // LANGKAH 3: Setelah dihapus, hitung ulang rating produk terkait
-    const stats = await TestimonialRepository.calculateRatingStats(testimonial.productId);
+    const stats = await TestimonialRepository.calculateRatingStats(
+      testimonial.productId,
+    );
     await ProductRepository.updateRating(testimonial.productId, {
       avgRating: stats._avg.rating || 0,
       totalReviews: stats._count.rating || 0,

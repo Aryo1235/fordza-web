@@ -105,8 +105,10 @@ async function main() {
   const productsData = [
     {
       id: "prod-001",
+      productCode: "FDZ-SHOE-001",
       name: "Fordza Urban Sneakers",
-      shortDescription: "Sneakers kasual dengan desain modern untuk sehari-hari.",
+      shortDescription:
+        "Sneakers kasual dengan desain modern untuk sehari-hari.",
       price: 350000,
       productType: "shoes",
       gender: "Man",
@@ -119,12 +121,15 @@ async function main() {
       closureType: "Tali",
       outsole: "Rubber",
       origin: "Bandung, Indonesia",
-      description: "Sneakers kasual yang cocok dipakai sehari-hari. Desain urban modern dengan bahan canvas berkualitas tinggi. Sol karet yang empuk dan tahan lama.",
+      description:
+        "Sneakers kasual yang cocok dipakai sehari-hari. Desain urban modern dengan bahan canvas berkualitas tinggi. Sol karet yang empuk dan tahan lama.",
       categoryIds: ["cat-sneakers"],
-      imageUrl: "https://placehold.co/600x600/1a1a2e/ffffff?text=Urban+Sneakers",
+      imageUrl:
+        "https://placehold.co/600x600/1a1a2e/ffffff?text=Urban+Sneakers",
     },
     {
       id: "prod-002",
+      productCode: "FDZ-SHOE-002",
       name: "Fordza Classic Leather Boots",
       shortDescription: "Boots kulit asli dengan konstruksi kokoh.",
       price: 750000,
@@ -139,12 +144,14 @@ async function main() {
       closureType: "Tali",
       outsole: "TPR",
       origin: "Garut, Indonesia",
-      description: "Boots klasik dari kulit sapi asli Garut. Dibuat dengan teknik handmade dan konstruksi blake stitch yang kokoh. Cocok untuk gaya rugged.",
+      description:
+        "Boots klasik dari kulit sapi asli Garut. Dibuat dengan teknik handmade dan konstruksi blake stitch yang kokoh. Cocok untuk gaya rugged.",
       categoryIds: ["cat-boots"],
       imageUrl: "https://placehold.co/600x600/16213e/ffffff?text=Leather+Boots",
     },
     {
       id: "prod-003",
+      productCode: "FDZ-SHOE-003",
       name: "Fordza Executive Oxford",
       shortDescription: "Sepatu formal oxford untuk profesional muda.",
       price: 650000,
@@ -159,12 +166,15 @@ async function main() {
       closureType: "Tali",
       outsole: "Leather Sole",
       origin: "Garut, Indonesia",
-      description: "Sepatu oxford formal dari kulit sapi premium. Finishing glossy dengan sol kulit asli. Sempurna untuk acara formal dan dunia kerja.",
+      description:
+        "Sepatu oxford formal dari kulit sapi premium. Finishing glossy dengan sol kulit asli. Sempurna untuk acara formal dan dunia kerja.",
       categoryIds: ["cat-formal"],
-      imageUrl: "https://placehold.co/600x600/0f3460/ffffff?text=Executive+Oxford",
+      imageUrl:
+        "https://placehold.co/600x600/0f3460/ffffff?text=Executive+Oxford",
     },
     {
       id: "prod-004",
+      productCode: "FDZ-SHOE-004",
       name: "Fordza Sport Runner",
       shortDescription: "Sneakers ringan untuk aktivitas olahraga ringan.",
       price: 280000,
@@ -179,12 +189,14 @@ async function main() {
       closureType: "Tali",
       outsole: "Phylon",
       origin: "Bandung, Indonesia",
-      description: "Sneakers super ringan dengan bahan mesh breathable. Cocok untuk jogging ringan atau jalan santai. Sol Phylon yang empuk.",
+      description:
+        "Sneakers super ringan dengan bahan mesh breathable. Cocok untuk jogging ringan atau jalan santai. Sol Phylon yang empuk.",
       categoryIds: ["cat-sneakers"],
       imageUrl: "https://placehold.co/600x600/e94560/ffffff?text=Sport+Runner",
     },
     {
       id: "prod-005",
+      productCode: "FDZ-SHOE-005",
       name: "Fordza Suede Chelsea Boots",
       shortDescription: "Chelsea boots suede dengan elastic side panel.",
       price: 680000,
@@ -199,12 +211,14 @@ async function main() {
       closureType: "Slip-on",
       outsole: "Rubber",
       origin: "Garut, Indonesia",
-      description: "Chelsea boots dari bahan suede premium. Elastic side panel untuk kemudahan pemakaian. Desain sleek cocok untuk casual-formal.",
+      description:
+        "Chelsea boots dari bahan suede premium. Elastic side panel untuk kemudahan pemakaian. Desain sleek cocok untuk casual-formal.",
       categoryIds: ["cat-boots"],
       imageUrl: "https://placehold.co/600x600/2b2d42/ffffff?text=Chelsea+Boots",
     },
     {
       id: "prod-006",
+      productCode: "FDZ-SHOE-006",
       name: "Fordza Penny Loafers",
       shortDescription: "Loafers klasik untuk tampilan smart casual.",
       price: 520000,
@@ -219,12 +233,14 @@ async function main() {
       closureType: "Slip-on",
       outsole: "Leather Sole",
       origin: "Garut, Indonesia",
-      description: "Loafers kulit klasik dengan desain penny strap. Nyaman untuk dipakai seharian. Cocok untuk smart casual look.",
+      description:
+        "Loafers kulit klasik dengan desain penny strap. Nyaman untuk dipakai seharian. Cocok untuk smart casual look.",
       categoryIds: ["cat-loafers", "cat-formal"],
       imageUrl: "https://placehold.co/600x600/8d99ae/ffffff?text=Penny+Loafers",
     },
     {
       id: "prod-007",
+      productCode: "FDZ-SHOE-007",
       name: "Fordza Canvas Slip-On",
       shortDescription: "Slip-on canvas yang simpel dan nyaman.",
       price: 200000,
@@ -239,12 +255,15 @@ async function main() {
       closureType: "Slip-on",
       outsole: "Rubber",
       origin: "Bandung, Indonesia",
-      description: "Slip-on canvas yang simpel dan nyaman untuk aktivitas sehari-hari. Ringan dan mudah dipakai. Tersedia untuk pria dan wanita.",
+      description:
+        "Slip-on canvas yang simpel dan nyaman untuk aktivitas sehari-hari. Ringan dan mudah dipakai. Tersedia untuk pria dan wanita.",
       categoryIds: ["cat-sneakers"],
-      imageUrl: "https://placehold.co/600x600/457b9d/ffffff?text=Canvas+Slip-On",
+      imageUrl:
+        "https://placehold.co/600x600/457b9d/ffffff?text=Canvas+Slip-On",
     },
     {
       id: "prod-008",
+      productCode: "FDZ-SHOE-008",
       name: "Fordza Leather Sandals",
       shortDescription: "Sandal kulit premium untuk kenyamanan maksimal.",
       price: 380000,
@@ -259,12 +278,15 @@ async function main() {
       closureType: "Strap",
       outsole: "Rubber",
       origin: "Garut, Indonesia",
-      description: "Sandal kulit asli dengan desain minimalis. Footbed empuk untuk kenyamanan seharian. Cocok untuk santai atau acara kasual.",
+      description:
+        "Sandal kulit asli dengan desain minimalis. Footbed empuk untuk kenyamanan seharian. Cocok untuk santai atau acara kasual.",
       categoryIds: ["cat-sandals"],
-      imageUrl: "https://placehold.co/600x600/533483/ffffff?text=Leather+Sandals",
+      imageUrl:
+        "https://placehold.co/600x600/533483/ffffff?text=Leather+Sandals",
     },
     {
       id: "prod-009",
+      productCode: "FDZ-SHOE-009",
       name: "Fordza High-Top Sneakers",
       shortDescription: "Sneakers high-top dengan aksen kulit.",
       price: 450000,
@@ -279,12 +301,14 @@ async function main() {
       closureType: "Tali",
       outsole: "Rubber",
       origin: "Bandung, Indonesia",
-      description: "High-top sneakers dengan kombinasi canvas dan aksen kulit sintetis. Desain street style yang keren. Sol karet anti-slip.",
+      description:
+        "High-top sneakers dengan kombinasi canvas dan aksen kulit sintetis. Desain street style yang keren. Sol karet anti-slip.",
       categoryIds: ["cat-sneakers"],
       imageUrl: "https://placehold.co/600x600/e07a5f/ffffff?text=High-Top",
     },
     {
       id: "prod-010",
+      productCode: "FDZ-SHOE-010",
       name: "Fordza Derby Shoes",
       shortDescription: "Derby shoes kulit polish untuk acara formal.",
       price: 580000,
@@ -299,7 +323,8 @@ async function main() {
       closureType: "Tali",
       outsole: "Leather Sole",
       origin: "Garut, Indonesia",
-      description: "Derby shoes dari kulit sapi polish. Open lacing system yang lebih fleksibel dari oxford. Cocok untuk formal dan semi-formal.",
+      description:
+        "Derby shoes dari kulit sapi polish. Open lacing system yang lebih fleksibel dari oxford. Cocok untuk formal dan semi-formal.",
       categoryIds: ["cat-formal"],
       imageUrl: "https://placehold.co/600x600/3d405b/ffffff?text=Derby+Shoes",
     },
@@ -315,6 +340,7 @@ async function main() {
     await prisma.product.create({
       data: {
         id: p.id,
+        productCode: p.productCode,
         name: p.name,
         shortDescription: p.shortDescription,
         price: p.price,
@@ -345,13 +371,19 @@ async function main() {
         },
       },
     });
-    console.log(`✅ ${p.name} — ${p.material} — Rp ${p.price.toLocaleString()}`);
+    console.log(
+      `✅ ${p.name} — ${p.material} — Rp ${p.price.toLocaleString()}`,
+    );
   }
 
   console.log("\n🌱 Seeding produk selesai!");
   console.log("📋 Ringkasan data untuk KNN:");
-  console.log("   - 5 Kategori: Sneakers, Boots, Formal Shoes, Sandals, Loafers");
-  console.log("   - 5 Material: Canvas, Genuine Cow Leather, Suede, Mesh Fabric");
+  console.log(
+    "   - 5 Kategori: Sneakers, Boots, Formal Shoes, Sandals, Loafers",
+  );
+  console.log(
+    "   - 5 Material: Canvas, Genuine Cow Leather, Suede, Mesh Fabric",
+  );
   console.log("   - Rentang Harga: Rp 200.000 — Rp 750.000");
   console.log("   - 10 Produk dengan variasi atribut berbeda");
   console.log("\n🔗 Test KNN: http://localhost:3000/api/recommend/prod-001");

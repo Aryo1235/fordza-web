@@ -88,7 +88,7 @@ export async function GET(req: Request) {
     XLSX.utils.book_append_sheet(workbook, worksheet, "Histori Stok");
 
     const buffer = XLSX.write(workbook, { bookType: "xlsx", type: "buffer" });
-    return new NextResponse(buffer as Buffer, {
+    return new NextResponse(new Uint8Array(buffer), {
       headers: {
         "Content-Type":
           "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
