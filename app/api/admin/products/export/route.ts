@@ -72,8 +72,8 @@ export async function GET(req: Request) {
         headStyles: { fillColor: [60, 48, 37] },
       });
 
-      const pdfBuffer = Buffer.from(doc.output("arraybuffer"));
-      return new NextResponse(pdfBuffer, {
+      const pdfBytes = new Uint8Array(doc.output("arraybuffer"));
+      return new NextResponse(pdfBytes, {
         headers: {
           "Content-Type": "application/pdf",
           "Content-Disposition": `attachment; filename="${buildFileName("Laporan_Stok_Opname_Fordza", "pdf")}"`,
@@ -87,8 +87,12 @@ export async function GET(req: Request) {
     );
     XLSX.utils.book_append_sheet(workbook, worksheet, "Stok Opname");
 
-    const buffer = XLSX.write(workbook, { bookType: "xlsx", type: "buffer" });
-    return new NextResponse(buffer as Buffer, {
+    const xlxsxBuffer = XLSX.write(workbook, {
+      bookType: "xlsx",
+      type: "buffer",
+    });
+
+    return new NextResponse(new Uint8Array(xlxsxBuffer), {
       headers: {
         "Content-Type":
           "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",

@@ -1,5 +1,5 @@
 // src/lib/prisma.ts
-import { PrismaClient } from "@/app/generated/prisma/client";
+import { PrismaClient } from "../app/generated/prisma/client"; // Pastikan path ini sesuai dengan output yang dihasilkan oleh generator Prisma
 import { Pool } from "pg"; // Berasal dari paket 'pg'
 import { PrismaPg } from "@prisma/adapter-pg"; // Berasal dari paket '@prisma/adapter-pg'
 

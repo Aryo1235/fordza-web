@@ -18,7 +18,7 @@ async function verifyJWT(token: string) {
   return await verifyToken(token);
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Tentukan jenis rute
