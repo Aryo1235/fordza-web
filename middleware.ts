@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { jwtVerify } from "jose";
-
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || "fordza-secret-key-change-in-production",
-);
-
-const ACCESS_COOKIE_NAME = "access_token";
+import { 
+  verifyToken, 
+  signAccessToken, 
+  getAccessCookieConfig, 
+  ACCESS_COOKIE_NAME, 
+  REFRESH_COOKIE_NAME 
+} from "@/lib/auth";
 
 // Route yang TIDAK perlu auth
 const PUBLIC_ROUTES = [
@@ -15,27 +15,24 @@ const PUBLIC_ROUTES = [
 ];
 
 async function verifyJWT(token: string) {
-  try {
-    const { payload } = await jwtVerify(token, JWT_SECRET);
-    return payload;
-  } catch {
-    return null;
-  }
+  return await verifyToken(token);
 }
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Hanya intercept /api/admin/* dan /api/kasir/*
-  const isAdminRoute = pathname.startsWith("/api/admin");
-  const isKasirRoute = pathname.startsWith("/api/kasir");
+  // Tentukan jenis rute
+  const isApiRoute = pathname.startsWith("/api");
+  const isAdminPage = pathname.startsWith("/dashboard");
+  const isKasirPage = pathname.startsWith("/pos") || pathname.startsWith("/riwayat") || pathname.startsWith("/cetak-ulang");
 
-  if (!isAdminRoute && !isKasirRoute) {
+  // Jika bukan rute yang perlu diproteksi, biarkan lewat
+  if (!isApiRoute && !isAdminPage && !isKasirPage) {
     return NextResponse.next();
   }
 
-  // Skip auth untuk public routes
-  if (PUBLIC_ROUTES.includes(pathname)) {
+  // Skip auth untuk public API routes
+  if (isApiRoute && PUBLIC_ROUTES.includes(pathname)) {
     return NextResponse.next();
   }
 
@@ -49,58 +46,77 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  if (!token) {
-    return NextResponse.json(
-      { success: false, message: "Unauthorized. Silakan login terlebih dahulu." },
-      { status: 401 },
-    );
-  }
+  // --- LOGIKA PENJAGA GERBANG (PASSIVE GUARD) ---
+  const payload = token ? await verifyJWT(token) : null;
 
-  const payload = await verifyJWT(token);
-
+  // Jika Access Token tidak valid/habis, kita cek apakah ada Refresh Token.
+  // Kita TIDAK melakukan refresh di sini (biar Axios yang urus), 
+  // tapi kita izinkan masuk ke halaman asalkan masih ada harapan (refresh token).
   if (!payload) {
-    return NextResponse.json(
-      { success: false, message: "Token tidak valid atau sudah kadaluarsa." },
-      { status: 401 },
-    );
+    const refreshToken = request.cookies.get(REFRESH_COOKIE_NAME)?.value;
+    const isRefreshValid = refreshToken ? await verifyToken(refreshToken) : null;
+
+    if (!isRefreshValid) {
+      // Benar-benar tidak punya akses sama sekali -> Login
+      if (isApiRoute) {
+        return NextResponse.json(
+          { success: false, message: "Sesi habis. Silakan login kembali." },
+          { status: 401 },
+        );
+      }
+      return NextResponse.redirect(new URL("/login", request.url));
+    }
+    
+    // Jika punya Refresh Token tapi Access Token abis, tetap biarkan masuk.
+    // Nanti saat halaman load, permintaan API pertama akan memicu 401 dan dihandle Axios.
   }
 
-  if (payload.type !== "access") {
-    return NextResponse.json(
-      { success: false, message: "Gunakan access token, bukan refresh token." },
-      { status: 401 },
-    );
+  // Jika kita sampai di sini, artinya user punya payload valid ATAU punya refresh token valid.
+  // Namun untuk logic ROLE GUARD di bawah, kita butuh payload (data user).
+  // Jika payload belum ada (karena baru aja expire), kita ambil dari refresh token saja.
+  const authPayload = payload || (await verifyToken(request.cookies.get(REFRESH_COOKIE_NAME)?.value!));
+
+  if (!authPayload) {
+     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  const role = payload.role as string;
+  const role = authPayload.role as string;
 
-  // Route /api/kasir/* hanya bisa diakses ADMIN atau KASIR
-  if (isKasirRoute && role !== "ADMIN" && role !== "KASIR") {
-    return NextResponse.json(
-      { success: false, message: "Akses ditolak." },
-      { status: 403 },
-    );
+  // --- LOGIKA ROLE GUARD (PEMBATASAN AKSES) ---
+  if (isAdminPage && role !== "ADMIN") {
+    return NextResponse.redirect(new URL("/pos", request.url));
   }
 
-  // Route /api/admin/* hanya bisa diakses ADMIN
-  // Pengecualian: KASIR boleh akses /me (untuk cek info akun) dan /logout
-  const isKasirAllowed = pathname === "/api/admin/auth/me" || pathname === "/api/admin/auth/logout";
+  const isKasirApi = pathname.startsWith("/api/kasir");
+  if (isKasirApi && role !== "ADMIN" && role !== "KASIR") {
+    return NextResponse.json({ success: false, message: "Akses ditolak." }, { status: 403 });
+  }
+
+  const isAdminApi = pathname.startsWith("/api/admin");
+  const isMeEndpoint = pathname === "/api/admin/auth/me";
+  const isLogoutEndpoint = pathname === "/api/admin/auth/logout";
+  const isCashierListEndpoint = pathname === "/api/admin/cashiers" && request.method === "GET";
+  const isKasirAllowedApi = isMeEndpoint || isLogoutEndpoint || isCashierListEndpoint;
   
-  if (isAdminRoute && role !== "ADMIN" && !isKasirAllowed) {
-    return NextResponse.json(
-      { success: false, message: "Akses ditolak. Hanya Admin yang diizinkan." },
-      { status: 403 },
-    );
+  if (isAdminApi && role !== "ADMIN" && !isKasirAllowedApi) {
+    return NextResponse.json({ success: false, message: "Akses ditolak." }, { status: 403 });
   }
 
-  // Inject info ke header downstream
+  // Inject info ke header downstream agar controller tahu siapa yang request
   const response = NextResponse.next();
-  response.headers.set("x-user-id", payload.id as string);
-  response.headers.set("x-user-username", payload.username as string);
+  response.headers.set("x-user-id", authPayload.id as string);
+  response.headers.set("x-user-username", authPayload.username as string);
   response.headers.set("x-user-role", role);
   return response;
 }
 
 export const config = {
-  matcher: ["/api/admin/:path*", "/api/kasir/:path*"],
+  matcher: [
+    "/api/admin/:path*", 
+    "/api/kasir/:path*", 
+    "/dashboard/:path*", 
+    "/pos/:path*", 
+    "/riwayat/:path*",
+    "/cetak-ulang/:path*"
+  ],
 };

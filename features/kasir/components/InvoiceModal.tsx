@@ -2,13 +2,14 @@
 
 import { useRef } from "react";
 import { X, Printer, FileText } from "lucide-react";
-import jsPDF from "jspdf";
+import { jsPDF } from "jspdf";
 
 interface TransactionItem {
   id: string;
   productName: string;
   quantity: number;
   priceAtSale: number;
+  discountAmount: number;
 }
 
 interface Transaction {
@@ -18,6 +19,8 @@ interface Transaction {
   amountPaid: number;
   change: number;
   status: string;
+  customerName?: string;
+  customerPhone?: string;
   createdAt: string;
   kasir?: { name?: string; username: string };
   items: TransactionItem[];
@@ -82,7 +85,7 @@ export default function InvoiceModal({ transaction, onClose }: InvoiceModalProps
     y += lineH * 0.8;
     doc.setFont("helvetica", "normal");
 
-    for (const item of transaction.items) {
+    for (const item of (transaction.items || [])) {
       const name = doc.splitTextToSize(item.productName, contentWidth - 10);
       doc.text(name, marginX, y);
       y += name.length * (lineH * 0.7);
@@ -156,16 +159,28 @@ export default function InvoiceModal({ transaction, onClose }: InvoiceModalProps
                 <span className="text-stone-500">Kasir</span>
                 <span>{transaction.kasir?.name || transaction.kasir?.username || "-"}</span>
               </div>
+              {transaction.customerName && (
+                <div className="flex justify-between">
+                  <span className="text-stone-500">Pelanggan</span>
+                  <span className="font-medium">{transaction.customerName}</span>
+                </div>
+              )}
             </div>
 
             <div className="border-t border-dashed border-stone-300 pt-2 mb-2">
-              {transaction.items.map((item) => (
+              {transaction.items?.map((item) => (
                 <div key={item.id} className="mb-1.5">
                   <p className="font-medium truncate">{item.productName}</p>
                   <div className="flex justify-between text-stone-500">
                     <span>{item.quantity} x {formatRp(item.priceAtSale)}</span>
                     <span className="font-medium text-stone-700">{formatRp(item.quantity * item.priceAtSale)}</span>
                   </div>
+                  {item.discountAmount > 0 && (
+                    <div className="flex justify-between text-[10px] text-red-500 italic">
+                      <span>Diskon</span>
+                      <span>- {formatRp(item.discountAmount)}</span>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

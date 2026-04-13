@@ -32,6 +32,7 @@ export interface ProductDetail {
 
 export interface Product {
   id: string;
+  productCode: string;
   name: string;
   shortDescription: string;
   price: number | string;

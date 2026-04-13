@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { sizeTemplateSchema } from "@/lib/zod-schemas";
-import { SizeTemplateService } from "@/services/size-template.db";
+import { SizeTemplateService } from "@/backend/services/size-template.service";
 
 // GET /api/admin/size-templates — Admin: semua template ukuran
 export async function GET() {

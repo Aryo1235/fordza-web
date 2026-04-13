@@ -1,108 +1,74 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { TransactionService } from "@/backend/services/transaction.service";
 
-// GET: Detail satu transaksi
 export async function GET(
-  _request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  req: Request,
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params;
+    const { id } = await context.params;
+    
+    if (!id) {
+      return NextResponse.json({ success: false, message: "ID Transaksi tidak valid" }, { status: 400 });
+    }
 
-    const transaction = await prisma.transaction.findUnique({
-      where: { id },
-      include: {
-        items: true,
-        kasir: { select: { name: true, username: true, role: true } },
-      },
-    });
+    const transaction = await TransactionService.getById(id);
 
     if (!transaction) {
       return NextResponse.json(
         { success: false, message: "Transaksi tidak ditemukan" },
-        { status: 404 },
+        { status: 404 }
       );
     }
 
     return NextResponse.json({
       success: true,
-      data: {
-        ...transaction,
-        totalPrice: Number(transaction.totalPrice),
-        amountPaid: Number(transaction.amountPaid),
-        change: Number(transaction.change),
-        items: transaction.items.map((i) => ({
-          ...i,
-          priceAtSale: Number(i.priceAtSale),
-        })),
-      },
+      data: transaction,
     });
   } catch (error: any) {
     console.error("GET /api/kasir/transactions/[id] error:", error.message);
     return NextResponse.json(
-      { success: false, message: "Gagal mengambil detail transaksi" },
-      { status: 500 },
+      { success: false, message: "Gagal memuat detail transaksi" },
+      { status: 500 }
     );
   }
 }
-
-// PATCH: VOID transaksi (hanya ADMIN)
 export async function PATCH(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  req: Request,
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params;
-    const role = request.headers.get("x-user-role");
+    const { id } = await context.params;
+    const { pin, cancelReason } = await req.json();
 
-    if (role !== "ADMIN") {
-      return NextResponse.json(
-        { success: false, message: "Hanya Admin yang dapat membatalkan transaksi" },
-        { status: 403 },
-      );
+    if (!id || !pin || !cancelReason) {
+      return NextResponse.json({ success: false, message: "Data tidak lengkap" }, { status: 400 });
     }
 
-    const transaction = await prisma.transaction.findUnique({ where: { id } });
+    // 🔐 VALIDASI KEAMANAN: Cek PIN Admin
+    const { AdminRepository } = await import("@/backend/repositories/admin.repo");
+    const admin = await AdminRepository.findByPin(pin);
 
-    if (!transaction) {
-      return NextResponse.json(
-        { success: false, message: "Transaksi tidak ditemukan" },
-        { status: 404 },
-      );
+    if (!admin) {
+      return NextResponse.json({ success: false, message: "PIN Admin salah atau tidak memiliki akses" }, { status: 403 });
     }
 
-    if (transaction.status === "VOID") {
-      return NextResponse.json(
-        { success: false, message: "Transaksi sudah berstatus VOID" },
-        { status: 400 },
-      );
-    }
+    // Ambil operatorId dari header x-user-id (diset oleh middleware)
+    const operatorId = req.headers.get("x-user-id") || undefined;
 
-    // VOID: kembalikan stok
-    const items = await prisma.transactionItem.findMany({ where: { transactionId: id } });
+    // Eksekusi VOID via Service (termasuk kembalikan stok & catat log)
+    const result = await TransactionService.voidTransaction(id, cancelReason, operatorId);
 
-    await prisma.$transaction(async (tx) => {
-      await tx.transaction.update({
-        where: { id },
-        data: { status: "VOID" },
-      });
-
-      await Promise.all(
-        items.map((i) =>
-          tx.product.update({
-            where: { id: i.productId },
-            data: { stock: { increment: i.quantity } },
-          }),
-        ),
-      );
+    return NextResponse.json({
+      success: true,
+      message: "Transaksi berhasil dibatalkan (VOID)",
+      data: result,
     });
-
-    return NextResponse.json({ success: true, message: "Transaksi berhasil di-VOID dan stok dikembalikan" });
   } catch (error: any) {
     console.error("PATCH /api/kasir/transactions/[id] error:", error.message);
     return NextResponse.json(
-      { success: false, message: "Gagal membatalkan transaksi" },
-      { status: 500 },
+      { success: false, message: error.message || "Gagal membatalkan transaksi" },
+      { status: 500 }
     );
   }
 }

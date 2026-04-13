@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { bannerSchema } from "@/lib/zod-schemas";
 import { uploadFileToS3, deleteFileFromS3 } from "@/actions/upload";
-import { BannerService } from "@/services/banner.db";
+import { BannerService } from "@/backend/services/banner.service";
 
 // GET /api/admin/banners — Admin: semua banner
 export async function GET(req: Request) {

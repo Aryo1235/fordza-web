@@ -4,6 +4,7 @@
 import { z } from "zod";
 
 export const productSchema = z.object({
+  productCode: z.string().min(3, "Kode produk minimal 3 karakter"),
   name: z.string().min(3, "Nama produk minimal 3 karakter"),
   price: z.coerce.number().min(1000),
   stock: z.coerce.number().int().min(0, "Stok tidak boleh negatif").default(0),

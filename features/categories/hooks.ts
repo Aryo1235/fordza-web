@@ -24,6 +24,13 @@ export function useCategoriesAdmin(page = 1, limit = 10) {
   });
 }
 
+export function useAllCategoriesAdmin() {
+  return useQuery({
+    queryKey: categoryKeys.adminListAll,
+    queryFn: () => getCategoriesAdmin(1, 100), // Ambil 100 data (asumsi cukup untuk dropdown)
+  });
+}
+
 export function useCategory(id: string) {
   return useQuery({
     queryKey: categoryKeys.detail(id),

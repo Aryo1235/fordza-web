@@ -6,10 +6,10 @@ import {
   useCreateSizeTemplate, 
   useUpdateSizeTemplate, 
   useDeleteSizeTemplate 
-} from "@/hooks/useSizeTemplates";
-import { DataTable } from "@/components/admin/DataTable";
-import { PageHeader } from "@/components/admin/PageHeader";
-import { ConfirmDialog } from "@/components/admin/ConfirmDialog";
+} from "@/features/size-templates";
+import { DataTable } from "@/components/shared/DataTable";
+import { PageHeader } from "@/components/layout/admin/PageHeader";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

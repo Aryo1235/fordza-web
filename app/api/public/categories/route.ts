@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { CategoryService } from "@/services/category.db";
+import { CategoryService } from "@/backend/services/category.service";
 
 // GET /api/public/categories — Customer: lihat kategori aktif
 export async function GET(req: Request) {

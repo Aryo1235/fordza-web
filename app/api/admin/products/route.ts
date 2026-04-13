@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { productSchema } from "@/features/products/schemas";
-import { ProductService } from "@/services/products.db";
+import { ProductService } from "@/backend/services/products.service";
 import { uploadFileToS3, deleteFileFromS3 } from "@/actions/upload";
 
 // GET /api/admin/products — Admin: list semua produk (termasuk inactive)
@@ -56,6 +56,7 @@ export async function POST(req: Request) {
 
     // 2. Data Mentah
     const rawData = {
+      productCode: formData.get("productCode"),
       name: formData.get("name"),
       price: formData.get("price"),
       stock: formData.get("stock") || "0",

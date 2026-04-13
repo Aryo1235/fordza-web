@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { useBannersAdmin, useCreateBanner, useDeleteBanner } from "@/hooks/useBanners";
-import { DataTable } from "@/components/admin/DataTable";
-import { PageHeader } from "@/components/admin/PageHeader";
-import { ConfirmDialog } from "@/components/admin/ConfirmDialog";
+import { useBannersAdmin, useCreateBanner, useDeleteBanner } from "@/features/banners";
+import { DataTable } from "@/components/shared/DataTable";
+import { PageHeader } from "@/components/layout/admin/PageHeader";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+import { StatusBadge } from "@/components/shared/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -15,6 +16,7 @@ import { Plus, Trash2, Loader2 } from "lucide-react";
 
 export default function BannersPage() {
   const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [isAddOpen, setIsAddOpen] = useState(false);
 
@@ -23,7 +25,7 @@ export default function BannersPage() {
   const [linkUrl, setLinkUrl] = useState("");
   const [file, setFile] = useState<File | null>(null);
 
-  const { data, isLoading } = useBannersAdmin(page, 10);
+  const { data, isLoading } = useBannersAdmin(page, limit);
   const createMutation = useCreateBanner();
   const deleteMutation = useDeleteBanner();
 

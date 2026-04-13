@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { ProductService } from "@/services/products.db";
+import { ProductService } from "@/backend/services/products.service";
 import { uploadFileToS3, deleteFileFromS3 } from "@/actions/upload";
 
 // GET /api/admin/products/[id] — Admin: detail produk
@@ -60,7 +60,7 @@ export async function PUT(
     // Data update
     const updateData: any = {};
     const fields = [
-      "name", "shortDescription", "productType", "gender",
+      "productCode", "name", "shortDescription", "productType", "gender",
       "description", "material", "closureType", "outsole",
       "origin", "notes", "careInstructions", "sizeTemplateId",
     ];
@@ -102,7 +102,8 @@ export async function PUT(
       if (uploadedImages.length > 0) updateData.images = uploadedImages;
     }
 
-    const product = await ProductService.update(id, updateData);
+    const operatorId = req.headers.get("x-user-id") || undefined;
+    const product = await ProductService.update(id, updateData, operatorId);
 
     return NextResponse.json(
       { success: true, message: "Produk berhasil diupdate", data: product },

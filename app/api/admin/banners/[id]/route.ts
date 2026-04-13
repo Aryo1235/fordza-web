@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { BannerService } from "@/services/banner.db";
+import { BannerService } from "@/backend/services/banner.service";
 import { uploadFileToS3, deleteFileFromS3 } from "@/actions/upload";
 
 // GET /api/admin/banners/[id]

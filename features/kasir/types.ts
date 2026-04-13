@@ -11,6 +11,7 @@ export interface Product {
 
 export interface CartItem extends Product {
   quantity: number;
+  discountAmount: number; // Diskon nominal (Rp)
 }
 
 export interface Transaction {
@@ -20,10 +21,31 @@ export interface Transaction {
   amountPaid: number;
   change: number;
   status: "PAID" | "VOID";
+  customerName?: string;
+  customerPhone?: string;
   createdAt: string;
   kasir?: {
     name?: string;
     username: string;
   };
-  items: { id: string; productName: string; quantity: number; priceAtSale: number }[];
+  items: { 
+    id: string; 
+    productName: string; 
+    quantity: number; 
+    priceAtSale: number;
+    discountAmount: number;
+  }[];
+}
+
+export interface CheckoutItem {
+  productId: string;
+  quantity: number;
+  discountAmount: number;
+}
+
+export interface CheckoutPayload {
+  items: CheckoutItem[];
+  amountPaid: number;
+  customerName?: string;
+  customerPhone?: string;
 }

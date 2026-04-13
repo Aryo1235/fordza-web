@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { testimonialSchema } from "@/lib/zod-schemas";
-import { TestimonialService } from "@/services/testimonial.db";
+import { TestimonialService } from "@/backend/services/testimonial.service";
 
 // GET /api/admin/testimonials — Admin: semua testimoni
 export async function GET(req: Request) {

@@ -1,6 +1,8 @@
 "use client";
 
 import { Plus, Minus, ShoppingBag } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface Product {
   id: string;
@@ -29,82 +31,100 @@ export default function ProductCard({
 
   return (
     <div
-      className={`bg-white rounded border flex flex-col overflow-hidden transition-all ${
-        outOfStock ? "opacity-50" : "hover:shadow-md hover:-translate-y-0.5"
-      }`}
-      style={{ borderColor: "#e5e0d8" }}
+      className={cn(
+        "group bg-white rounded-2xl border flex flex-col overflow-hidden transition-all duration-300",
+        outOfStock ? "opacity-60" : "hover:shadow-xl hover:shadow-stone-200/50 hover:-translate-y-1"
+      )}
+      style={{ borderColor: "#f3f0eb" }}
     >
-      {/* Image */}
-      <div className="relative aspect-square bg-stone-100 overflow-hidden">
+      {/* Image Section */}
+      <div className="relative aspect-[3/4] bg-stone-50 overflow-hidden">
         {product.imageUrl ? (
           <img
             src={product.imageUrl}
             alt={product.name}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <ShoppingBag className="w-10 h-10 text-stone-300" />
+            <ShoppingBag className="w-12 h-12 text-stone-200" />
           </div>
         )}
-        {outOfStock && (
-          <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-            <span className="text-white text-xs font-bold bg-black/60 px-2 py-1 rounded-sm">
-              HABIS
-            </span>
+        
+        {/* Overlay Badges */}
+        <div className="absolute inset-0 p-2 flex flex-col justify-between pointer-events-none">
+          <div className="flex justify-between items-start">
+            {product.category && (
+              <span className="bg-white/80 backdrop-blur-md text-[9px] font-bold text-stone-600 px-2 py-1 rounded-lg uppercase tracking-wider shadow-sm">
+                {product.category}
+              </span>
+            )}
+            {product.stock > 0 && product.stock <= 5 && !outOfStock && (
+              <span className="bg-amber-500 text-white text-[9px] px-2 py-1 rounded-lg font-black shadow-sm animate-pulse">
+                STOK LIMIT
+              </span>
+            )}
           </div>
-        )}
-        {product.stock > 0 && product.stock <= 5 && !outOfStock && (
-          <div className="absolute top-1.5 right-1.5 bg-amber-500 text-white text-xs px-1.5 py-0.5 rounded-sm font-medium">
-            Sisa {product.stock}
-          </div>
-        )}
+          
+          {outOfStock && (
+            <div className="self-center bg-black/60 backdrop-blur-md text-white text-[10px] font-black px-4 py-1.5 rounded-full tracking-widest uppercase">
+              Habis Terjual
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Info */}
-      <div className="p-2.5 flex flex-col gap-1.5 flex-1">
-        {product.category && (
-          <p className="text-xs text-stone-400 uppercase tracking-wider truncate">
-            {product.category}
+      {/* Info Section */}
+      <div className="p-3 md:p-4 flex flex-col flex-1 bg-white">
+        <div className="mb-3">
+          <p className="text-xs md:text-sm font-bold text-stone-800 leading-tight line-clamp-2 min-h-[2.5rem] group-hover:text-amber-700 transition-colors">
+            {product.name}
           </p>
-        )}
-        <p className="text-sm font-semibold text-stone-800 leading-tight line-clamp-2">
-          {product.name}
-        </p>
-        <p className="text-sm font-bold" style={{ color: "#3C3025" }}>
-          Rp {product.price.toLocaleString("id-ID")}
-        </p>
+          <div className="flex items-baseline gap-1 mt-1">
+            <span className="text-[10px] font-bold text-stone-400">Rp</span>
+            <span className="text-sm md:text-base font-black text-[#3C3025]">
+              {product.price.toLocaleString("id-ID")}
+            </span>
+          </div>
+        </div>
 
-        {/* Cart Controls */}
-        <div className="mt-auto pt-1.5">
+        {/* Action Button Section */}
+        <div className="mt-auto">
           {quantityInCart === 0 ? (
-            <button
+            <Button
               onClick={onAdd}
               disabled={outOfStock}
-              className="w-full py-1.5 text-xs font-semibold text-white rounded-sm transition-colors disabled:cursor-not-allowed"
-              style={{ backgroundColor: outOfStock ? "#ccc" : "#3C3025" }}
+              className={cn(
+                "w-full h-10 rounded-xl font-bold text-xs transition-all duration-300",
+                outOfStock 
+                  ? "bg-stone-100 text-stone-400 cursor-not-allowed" 
+                  : "bg-[#3C3025] hover:bg-[#4a3d30] text-white active:scale-95 shadow-md shadow-stone-200"
+              )}
             >
-              + Tambah
-            </button>
+              Tambah ke Keranjang
+            </Button>
           ) : (
-            <div className="flex items-center justify-between gap-2">
-              <button
+            <div className="flex items-center justify-between p-1 bg-stone-50 rounded-xl border border-stone-100">
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={onRemove}
-                className="w-8 h-8 flex items-center justify-center rounded-sm border border-stone-300 hover:bg-stone-100 transition-colors"
+                className="w-8 h-8 rounded-lg text-stone-500 hover:bg-white hover:text-red-500 hover:shadow-sm"
               >
-                <Minus className="w-3.5 h-3.5" />
-              </button>
-              <span className="text-sm font-bold" style={{ color: "#3C3025" }}>
+                <Minus className="w-4 h-4" />
+              </Button>
+              <span className="text-sm font-black text-[#3C3025]">
                 {quantityInCart}
               </span>
-              <button
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={onAdd}
                 disabled={maxReached}
-                className="w-8 h-8 flex items-center justify-center rounded-sm text-white transition-colors disabled:opacity-40"
-                style={{ backgroundColor: "#3C3025" }}
+                className="w-8 h-8 rounded-lg text-stone-500 hover:bg-white hover:text-amber-600 hover:shadow-sm"
               >
-                <Plus className="w-3.5 h-3.5" />
-              </button>
+                <Plus className="w-4 h-4" />
+              </Button>
             </div>
           )}
         </div>

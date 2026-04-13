@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { CategoryService } from "@/services/category.db";
+import { CategoryService } from "@/backend/services/category.service";
 import { uploadFileToS3, deleteFileFromS3 } from "@/actions/upload";
 
 // GET /api/admin/categories/[id]

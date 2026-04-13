@@ -1,6 +1,6 @@
 "use client";
 
-import { PageHeader } from "@/components/admin/PageHeader";
+import { PageHeader } from "@/components/layout/admin/PageHeader";
 import { CategoryForm, type CategoryFormValues, useCreateCategory } from "@/features/categories";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";

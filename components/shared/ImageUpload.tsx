@@ -81,14 +81,14 @@ export function ImageUpload({
             <div
               key={img.id}
               className={cn(
-                "group relative w-full overflow-hidden rounded-lg bg-gray-100 border border-border",
+                "group relative h-32 w-full overflow-hidden rounded-lg bg-gray-100 border border-border",
                 maxFiles === 1 ? "aspect-video" : "aspect-square"
               )}
             >
               <img
                 src={img.url}
                 alt="Upload preview"
-                className="h-full w-full object-contain bg-black/5"
+                className="h-32 w-full object-contain bg-black/5"
               />
               <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                 <Button

@@ -10,9 +10,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import api from "@/lib/api";
+import { formatNumber, parseNumber } from "@/lib/utils";
+
+// Import hooks dari feature lain
+import { useAllCategoriesAdmin } from "@/features/categories";
+import { useSizeTemplatesAdmin } from "@/features/size-templates";
 
 // Import schema & types dari feature sendiri
 import { productSchema, type ProductSchemaValues } from "../schemas";
@@ -34,6 +44,7 @@ export function ProductForm({ initialData, onSubmit, isLoading }: ProductFormPro
   } = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema) as any,
     defaultValues: initialData || {
+      productCode: "",
       name: "",
       shortDescription: "",
       description: "",
@@ -56,23 +67,9 @@ export function ProductForm({ initialData, onSubmit, isLoading }: ProductFormPro
     },
   });
 
-  // Fetch Kategori
-  const { data: categoriesData } = useQuery({
-    queryKey: ["admin-categories-all"],
-    queryFn: async () => {
-      const res = await api.get("/api/admin/categories");
-      return res.data;
-    },
-  });
-
-  // Fetch Size Templates
-  const { data: templatesData } = useQuery({
-    queryKey: ["admin-size-templates-all"],
-    queryFn: async () => {
-      const res = await api.get("/api/admin/size-templates");
-      return res.data;
-    },
-  });
+  // Fetch Kategori & Templates menggunakan hooks resmi
+  const { data: categoriesData } = useAllCategoriesAdmin();
+  const { data: templatesData } = useSizeTemplatesAdmin();
 
   const categories = categoriesData?.data || [];
   const templates = templatesData?.data || [];
@@ -82,6 +79,12 @@ export function ProductForm({ initialData, onSubmit, isLoading }: ProductFormPro
       <div className="flex flex-col gap-8">
         {/* Bagian Atas: Info Dasar */}
         <div className="space-y-5">
+          <div className="space-y-1.5">
+            <Label>Kode Produk (SKU)</Label>
+            <Input {...register("productCode")} placeholder="Cth: FDZ-SHOE-001" />
+            {errors.productCode && <p className="text-xs text-red-500">{errors.productCode.message}</p>}
+          </div>
+
           <div className="space-y-1.5">
             <Label>Nama Produk</Label>
             <Input {...register("name")} placeholder="Cth: Sepatu Pantofel" />
@@ -100,18 +103,21 @@ export function ProductForm({ initialData, onSubmit, isLoading }: ProductFormPro
               control={control}
               name="categoryIds"
               render={({ field }) => (
-                <select
+                <Select
                   value={field.value?.[0] || ""}
-                  onChange={(e) => field.onChange(e.target.value ? [e.target.value] : [])}
-                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
+                  onValueChange={(val) => field.onChange(val ? [val] : [])}
                 >
-                  <option value="">-- Pilih Kategori --</option>
-                  {categories.map((c: any) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="-- Pilih Kategori --" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((c: any) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               )}
             />
             {errors.categoryIds && <p className="text-xs text-red-500">{errors.categoryIds.message}</p>}
@@ -120,31 +126,75 @@ export function ProductForm({ initialData, onSubmit, isLoading }: ProductFormPro
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label>Tipe Produk</Label>
-              <select {...register("productType")} className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm">
-                <option value="shoes">Sepatu (Shoes)</option>
-                <option value="apparel">Pakaian (Apparel)</option>
-                <option value="accessories">Aksesoris (Accessories)</option>
-              </select>
+              <Controller
+                control={control}
+                name="productType"
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Pilih Tipe" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="shoes">Sepatu (Shoes)</SelectItem>
+                      <SelectItem value="apparel">Pakaian (Apparel)</SelectItem>
+                      <SelectItem value="accessories">Aksesoris (Accessories)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
             </div>
             <div className="space-y-1.5">
               <Label>Gender</Label>
-              <select {...register("gender")} className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm">
-                <option value="Unisex">Unisex</option>
-                <option value="Man">Pria (Man)</option>
-                <option value="Woman">Wanita (Woman)</option>
-              </select>
+              <Controller
+                control={control}
+                name="gender"
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Pilih Gender" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Unisex">Unisex</SelectItem>
+                      <SelectItem value="Man">Pria (Man)</SelectItem>
+                      <SelectItem value="Woman">Wanita (Woman)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label>Harga (Rp)</Label>
-              <Input type="number" {...register("price")} placeholder="0" />
+              <Controller
+                control={control}
+                name="price"
+                render={({ field }) => (
+                  <Input
+                    type="text"
+                    value={formatNumber(field.value)}
+                    onChange={(e) => field.onChange(parseNumber(e.target.value))}
+                    placeholder="0"
+                  />
+                )}
+              />
               {errors.price && <p className="text-xs text-red-500">{errors.price.message}</p>}
             </div>
             <div className="space-y-1.5">
               <Label>Stok</Label>
-              <Input type="number" {...register("stock")} placeholder="0" />
+              <Controller
+                control={control}
+                name="stock"
+                render={({ field }) => (
+                  <Input
+                    type="text"
+                    value={formatNumber(field.value)}
+                    onChange={(e) => field.onChange(parseNumber(e.target.value))}
+                    placeholder="0"
+                  />
+                )}
+              />
               {errors.stock && <p className="text-xs text-red-500">{errors.stock.message}</p>}
             </div>
           </div>
@@ -201,19 +251,22 @@ export function ProductForm({ initialData, onSubmit, isLoading }: ProductFormPro
               control={control}
               name="sizeTemplateId"
               render={({ field }) => (
-                <select
-                  {...field}
-                  value={field.value || ""}
-                  onChange={field.onChange}
-                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
+                <Select
+                  value={field.value || "none"}
+                  onValueChange={(val) => field.onChange(val === "none" ? "" : val)}
                 >
-                  <option value="">-- Tidak Pakai Template --</option>
-                  {templates.map((t: any) => (
-                    <option key={t.id} value={t.id}>
-                      {t.name}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="-- Tidak Pakai Template --" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">-- Tidak Pakai Template --</SelectItem>
+                    {templates.map((t: any) => (
+                      <SelectItem key={t.id} value={t.id}>
+                        {t.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               )}
             />
           </div>

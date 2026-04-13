@@ -7,3 +7,4 @@ export * from "./api";
 export * from "./hooks";
 export * from "./schemas";
 export * from "./components/ProductForm";
+export * from "./components/RelatedProducts";

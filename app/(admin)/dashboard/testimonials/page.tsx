@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { useTestimonialsAdmin, useUpdateTestimonial, useDeleteTestimonial, useCreateTestimonial } from "@/hooks/useTestimonials";
+import { useTestimonialsAdmin, useUpdateTestimonial, useDeleteTestimonial, useCreateTestimonial } from "@/features/testimonials";
 import { useProductsAdmin } from "@/features/products";
-import { DataTable } from "@/components/admin/DataTable";
-import { PageHeader } from "@/components/admin/PageHeader";
-import { ConfirmDialog } from "@/components/admin/ConfirmDialog";
+import { DataTable } from "@/components/shared/DataTable";
+import { PageHeader } from "@/components/layout/admin/PageHeader";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+import { StatusBadge } from "@/components/shared/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Trash2, Search, Plus, Loader2 } from "lucide-react";
@@ -17,6 +18,7 @@ import { toast } from "sonner";
 
 export default function TestimonialsPage() {
   const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
   const [search, setSearch] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -29,9 +31,9 @@ export default function TestimonialsPage() {
   const [rating, setRating] = useState(5);
   const [content, setContent] = useState("");
 
-  const { data, isLoading } = useTestimonialsAdmin(page, 10, search);
-  // Fetch products for dropdown
-  const { data: productsData } = useProductsAdmin({ page: 1, limit: 100 });
+  const { data, isLoading } = useTestimonialsAdmin(page, limit, search);
+  // Fetch products for dropdown - Only when modal is open (Optimization)
+  const { data: productsData } = useProductsAdmin({ page: 1, limit: 100 }, isAddOpen);
   
   const createMutation = useCreateTestimonial();
   const updateMutation = useUpdateTestimonial();
@@ -171,29 +173,49 @@ export default function TestimonialsPage() {
         }
       />
 
-      <div className="mb-6 flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-xl border border-border shadow-sm">
-        <div className="relative w-full sm:max-w-xs">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input 
-            placeholder="Cari nama pelanggan..." 
-            className="pl-9"
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(1);
-            }}
-          />
+      {/* Filter Bar */}
+      <div className="mb-6 flex flex-col sm:flex-row gap-4 justify-between items-center bg-white p-4 rounded-xl border border-stone-200 shadow-sm font-medium">
+        <div className="relative w-full sm:max-w-md space-y-1.5 flex-1">
+          <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">Cari Ulasan</p>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" />
+            <Input 
+              placeholder="Ketik nama pelanggan..." 
+              className="pl-9 h-10 border-stone-200 focus:ring-stone-200 text-sm"
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
+            />
+          </div>
+        </div>
+        <div className="hidden md:block py-2 px-4 bg-stone-50 rounded-lg border border-stone-100 italic text-[10px] font-bold text-stone-400 uppercase tracking-tight">
+          Status: Public Reviews
         </div>
       </div>
 
-      <DataTable 
-        columns={columns} 
-        data={data?.data || []} 
-        isLoading={isLoading} 
-        meta={data?.meta}
-        onPageChange={setPage}
-        emptyMessage="Belum ada testimoni pelanggan."
-      />
+      <div className="border border-stone-200 rounded-xl shadow-sm overflow-hidden bg-white mb-6">
+        <div className="bg-stone-50 border-b border-stone-100 py-3 px-6">
+          <p className="text-[10px] font-bold text-stone-500 uppercase tracking-tight flex items-center gap-2">
+            <Search className="w-3 h-3 text-stone-400" />
+            Customer Feedback & Moderation Audit ({data?.meta?.totalItems || 0} Reviews)
+          </p>
+        </div>
+        <DataTable 
+          columns={columns} 
+          data={data?.data || []} 
+          isLoading={isLoading} 
+          meta={data?.meta}
+          onPageChange={setPage}
+          onLimitChange={(l) => {
+            setLimit(l);
+            setPage(1);
+          }}
+          emptyMessage="Belum ada testimoni pelanggan."
+          className="space-y-0 [&_.rounded-md.border]:border-none [&_.rounded-md.border]:shadow-none [&_.rounded-md.border]:rounded-none"
+        />
+      </div>
 
       {/* Dialog Hapus */}
       <ConfirmDialog 

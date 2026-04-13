@@ -283,10 +283,10 @@ e:\fordza-web\
 | Halaman Home (`/`) | ❌ |
 | Halaman Kategori (`/kategori`) | ❌ |
 | Halaman Koleksi (`/koleksi`) | ❌ |
-| Halaman Detail Produk (`/produk/[id]`) | ❌ |
+| Halaman Detail Produk (`/produk/[id]`) | ✅ |
 | Halaman Tentang (`/tentang`) | ❌ |
 | Halaman Panduan Ukuran (`/panduan-ukuran`) | ❌ |
-| Admin CMS Dashboard (UI) | ❌ |
+| Admin CMS Dashboard (UI) | ✅ |
 | Navbar & Bottom Navigation | ❌ |
 | UI Components (Card, Carousel, dll) | ❌ |
 

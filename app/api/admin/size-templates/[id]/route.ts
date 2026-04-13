@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { SizeTemplateService } from "@/services/size-template.db";
+import { SizeTemplateService } from "@/backend/services/size-template.service";
 
 // GET /api/admin/size-templates/[id]
 export async function GET(

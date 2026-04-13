@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { RecommendationService } from "@/services/recommendation.db";
+import { RecommendationService } from "@/backend/services/recommendation.service";
 
 // GET /api/recommend/:id — Rekomendasi produk serupa (KNN)
 export async function GET(

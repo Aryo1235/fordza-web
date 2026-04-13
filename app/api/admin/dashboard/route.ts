@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { DashboardService } from "@/services/dashboard.db";
+import { DashboardService } from "@/backend/services/dashboard.service";
 
 export async function GET() {
   try {

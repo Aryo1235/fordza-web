@@ -2,18 +2,20 @@
 
 import { useState } from "react";
 import { useCategoriesAdmin, useDeleteCategory } from "@/features/categories";
-import { DataTable } from "@/components/admin/DataTable";
-import { PageHeader } from "@/components/admin/PageHeader";
-import { ConfirmDialog } from "@/components/admin/ConfirmDialog";
+import { DataTable } from "@/components/shared/DataTable";
+import { PageHeader } from "@/components/layout/admin/PageHeader";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+import { StatusBadge } from "@/components/shared/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { Plus, Edit, Trash2 } from "lucide-react";
 import Link from "next/link";
 
 export default function CategoriesPage() {
   const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  const { data, isLoading } = useCategoriesAdmin(page, 10);
+  const { data, isLoading } = useCategoriesAdmin(page, limit);
   const deleteMutation = useDeleteCategory();
 
   const handleDelete = () => {

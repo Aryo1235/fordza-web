@@ -57,3 +57,9 @@ export async function addProductImage(productId: string, file: File) {
   });
   return res.data;
 }
+
+/** GET /api/admin/stock/logs — Histori pergerakan stok */
+export async function getStockLogs(params: { page?: number; limit?: number; search?: string; type?: string } = {}) {
+  const res = await api.get("/api/admin/stock/logs", { params });
+  return res.data;
+}

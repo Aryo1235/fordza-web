@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { AdminService } from "@/services/admin.db";
+import { AdminService } from "@/backend/services/admin.service";
 import { verifyToken, ACCESS_COOKIE_NAME } from "@/lib/auth";
 import { cookies } from "next/headers";
 

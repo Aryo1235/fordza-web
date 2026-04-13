@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { TestimonialService } from "@/services/testimonial.db";
+import { TestimonialService } from "@/backend/services/testimonial.service";
 
 // PUT /api/admin/testimonials/[id] — Admin: update testimoni
 export async function PUT(

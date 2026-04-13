@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { PageHeader } from "@/components/admin/PageHeader";
+import { PageHeader } from "@/components/layout/admin/PageHeader";
 import { ImageUpload } from "@/components/shared/ImageUpload";
 import { ProductForm, type ProductFormValues, useCreateProduct } from "@/features/products";
 import { useRouter } from "next/navigation";
@@ -64,7 +64,7 @@ export default function NewProductPage() {
 
       <div className="space-y-8">
         {/* Gallery Section */}
-        <div className="bg-white p-6 rounded-xl border border-border shadow-sm">
+        <div className="bg-white p-6 rounded-xl border border-border shadow-sm h-fit">
           <h3 className="text-lg font-semibold mb-4 text-[#3C3025]">Galeri Produk</h3>
           <p className="text-sm text-muted-foreground mb-4">Tambahkan foto produk terbaik Anda di sini. Maksimal 4 foto.</p>
           <ImageUpload 
@@ -72,6 +72,7 @@ export default function NewProductPage() {
             onUpload={handleUploadTemp}
             onRemove={handleRemoveTemp}
             maxFiles={4}
+           
           />
         </div>
 

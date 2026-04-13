@@ -4,10 +4,12 @@ import { useState } from "react";
 import { Search, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { InvoiceModal, useCheckInvoice, type Transaction } from "@/features/kasir";
+import { getTransactionById } from "@/features/transactions";
 
 export default function CetakUlangPage() {
   const [invoiceNo, setInvoiceNo] = useState("");
   const [modalTransaction, setModalTransaction] = useState<Transaction | null>(null);
+  const [showModal, setShowModal] = useState(false);
 
   const { isFetching: loading, refetch } = useCheckInvoice(invoiceNo);
 
@@ -22,7 +24,7 @@ export default function CetakUlangPage() {
     }
 
     const json = res.data;
-    if (json.data.length === 0) {
+    if (!json.data || json.data.length === 0) {
       toast.error("Transaksi tidak ditemukan");
       return;
     }
@@ -34,7 +36,15 @@ export default function CetakUlangPage() {
       return;
     }
 
-    setModalTransaction(found);
+    // Karena API list tidak menyertakan items, kita ambil detail lengkapnya
+    try {
+      const fullDetail = await getTransactionById(found.id, false);
+      setModalTransaction(fullDetail);
+      setShowModal(false); // Jangan langsung buka modal
+    } catch (err) {
+      console.error("Detail fetch error:", err);
+      toast.error("Gagal memuat rincian produk untuk struk ini.");
+    }
   };
 
   return (
@@ -79,7 +89,7 @@ export default function CetakUlangPage() {
 
       {/* Result Preview */}
       {modalTransaction && (
-        <div className="bg-white border border-stone-200 rounded-sm overflow-hidden">
+        <div className="bg-white border border-stone-200 rounded-sm overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-300">
           <div className="px-4 py-3 border-b flex items-center justify-between"
             style={{ backgroundColor: "#3C3025" }}>
             <div className="flex items-center gap-2">
@@ -108,20 +118,16 @@ export default function CetakUlangPage() {
               <span className="text-stone-500">Kasir</span>
               <span>{modalTransaction.kasir?.name || modalTransaction.kasir?.username || "-"}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-stone-500">Jumlah Item</span>
-              <span>{modalTransaction.items?.length || 0} produk</span>
-            </div>
             <div className="flex justify-between font-bold text-base border-t pt-2 mt-2">
-              <span>Total</span>
+              <span>Total Belanja</span>
               <span style={{ color: "#3C3025" }}>Rp {modalTransaction.totalPrice.toLocaleString("id-ID")}</span>
             </div>
           </div>
 
           <div className="px-4 pb-4">
             <button
-              onClick={() => setModalTransaction({ ...modalTransaction })}
-              className="w-full py-2.5 text-sm font-semibold text-white rounded-sm flex items-center justify-center gap-2"
+              onClick={() => setShowModal(true)}
+              className="w-full py-2.5 text-sm font-semibold text-white rounded-sm flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
               style={{ backgroundColor: "#3C3025" }}
             >
               <Printer className="w-4 h-4" />
@@ -132,10 +138,10 @@ export default function CetakUlangPage() {
       )}
 
       {/* Invoice Modal */}
-      {modalTransaction && (
+      {showModal && modalTransaction && (
         <InvoiceModal
           transaction={modalTransaction}
-          onClose={() => setModalTransaction(null)}
+          onClose={() => setShowModal(false)}
         />
       )}
     </div>

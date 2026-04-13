@@ -1,7 +1,7 @@
 "use client";
 
 import { use, useState, useEffect } from "react";
-import { PageHeader } from "@/components/admin/PageHeader";
+import { PageHeader } from "@/components/layout/admin/PageHeader";
 import { ImageUpload } from "@/components/shared/ImageUpload";
 import { 
   ProductForm, type ProductFormValues,
@@ -29,6 +29,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
   useEffect(() => {
     if (product) {
         setInitialData({
+          productCode: product.productCode || "",
           name: product.name,
           shortDescription: product.shortDescription || "",
           description: product.detail?.description || "",

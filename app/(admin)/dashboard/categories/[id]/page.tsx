@@ -1,7 +1,7 @@
 "use client";
 
 import { use } from "react";
-import { PageHeader } from "@/components/admin/PageHeader";
+import { PageHeader } from "@/components/layout/admin/PageHeader";
 import { CategoryForm, type CategoryFormValues, useCategory, useUpdateCategory } from "@/features/categories";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";

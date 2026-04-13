@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { BannerService } from "@/services/banner.db";
+import { BannerService } from "@/backend/services/banner.service";
 
 // GET /api/public/banners — Customer: lihat banner aktif
 export async function GET(req: Request) {

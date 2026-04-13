@@ -24,6 +24,7 @@ enum TransactionStatus {
 // --- 1. PRODUCT (Lightweight untuk Katalog/Card) ---
 model Product {
   id               String            @id @default(cuid())
+  productCode      String            @unique @map("product_code")
   name             String
   shortDescription String            @map("short_description")
   price            Decimal           @db.Decimal(12, 2)
@@ -47,6 +48,7 @@ model Product {
   categories       ProductCategory[]
   testimonials     Testimonial[]
   transactionItems TransactionItem[]
+  stockLogs        StockLog[]
 
   createdAt        DateTime          @default(now()) @map("created_at")
   updatedAt        DateTime          @updatedAt @map("updated_at")
@@ -165,8 +167,10 @@ model Admin {
   password  String
   name      String?
   role      Role     @default(ADMIN)
+  pin       String?
 
   transactions Transaction[]
+  stockLogs    StockLog[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -183,9 +187,14 @@ model Transaction {
   change      Decimal           @db.Decimal(12, 2)
   status      TransactionStatus @default(PAID)
   notes       String?           @db.Text
+  cancelReason String?          @db.Text @map("cancel_reason")
 
   kasirId     String            @map("kasir_id")
   kasir       Admin             @relation(fields: [kasirId], references: [id])
+
+  // Data Pelanggan (CRM Lite)
+  customerName   String?         @map("customer_name")
+  customerPhone  String?         @map("customer_phone")
 
   items       TransactionItem[]
 
@@ -200,6 +209,10 @@ model TransactionItem {
   quantity     Int
   priceAtSale  Decimal     @db.Decimal(12, 2) @map("price_at_sale")
   productName  String      @map("product_name")
+  productCode  String?     @map("product_code")
+  
+  // Diskon per item (Nominal Rp)
+  discountAmount Decimal    @default(0) @db.Decimal(12, 2) @map("discount_amount")
 
   transactionId String     @map("transaction_id")
   transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
@@ -208,4 +221,23 @@ model TransactionItem {
   product      Product     @relation(fields: [productId], references: [id])
 
   @@map("transaction_items")
+}
+
+// --- 12. STOCK LEDGER (History Log Stok) ---
+model StockLog {
+  id           String      @id @default(cuid())
+  productId    String      @map("product_id")
+  product      Product     @relation(fields: [productId], references: [id])
+  
+  delta        Int         // + untuk masuk, - untuk keluar
+  currentStock Int         @map("current_stock")
+  
+  type         String      // SALE, VOID, RESTOCK, ADJUSTMENT
+  notes        String?     @db.Text
+  
+  operatorId   String?     @map("operator_id")
+  operator     Admin?      @relation(fields: [operatorId], references: [id])
+  createdAt    DateTime    @default(now()) @map("created_at")
+
+  @@map("stock_logs")
 }

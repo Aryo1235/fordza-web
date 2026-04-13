@@ -27,6 +27,7 @@ async function main() {
         password: hashedPassword,
         name: "Admin Fordza",
         role: "ADMIN",
+        pin: "123456",
       },
     });
     console.log("✅ Admin dibuat:", admin.username);
@@ -45,6 +46,7 @@ async function main() {
         password: hashedPassword,
         name: "Kasir Toko",
         role: "KASIR",
+        pin: "223344",
       },
     });
     console.log("✅ Kasir dibuat:", kasir.username);
@@ -112,6 +114,7 @@ async function main() {
     // 3. Create Products
     const p1 = await prisma.product.create({
       data: {
+        productCode: "FDZ-SHOE-001",
         name: "Fordza Sepatu Oxford Klasik",
         shortDescription: "Sepatu formal untuk ke kantor",
         price: 350000,
@@ -145,6 +148,7 @@ async function main() {
 
     const p2 = await prisma.product.create({
       data: {
+        productCode: "FDZ-SNDL-001",
         name: "Fordza Sandal Casual Pria",
         shortDescription: "Sandal kulit nyaman sehari-hari",
         price: 210000,

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { TestimonialService } from "@/services/testimonial.db";
+import { TestimonialService } from "@/backend/services/testimonial.service";
 
 // GET /api/public/testimonials — Customer: halaman semua review
 // Query params:

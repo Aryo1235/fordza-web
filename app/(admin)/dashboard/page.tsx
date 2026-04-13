@@ -1,9 +1,9 @@
 "use client";
 
-import { PageHeader } from "@/components/admin/PageHeader";
+import { PageHeader } from "@/components/layout/admin/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ShoppingBag, FolderOpen, Image as ImageIcon, MessageSquare, Loader2 } from "lucide-react";
-import { useDashboardStats } from "@/hooks/useDashboard";
+import { useDashboardStats } from "@/features/dashboard";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 export default function DashboardPage() {

@@ -13,22 +13,34 @@ import {
   deleteProduct,
   deleteProductImage,
   addProductImage,
+  getStockLogs,
 } from "./api";
 import type { ProductFilters } from "./types";
 
 // Query Keys — terpusat agar mudah di-invalidate
 export const productKeys = {
   all: ["products"] as const,
-  adminList: (filters: ProductFilters) => ["admin-products", filters] as const,
-  detail: (id: string) => ["product", id] as const,
+  adminList: (filters: ProductFilters) => ["products", "admin-list", filters] as const,
+  detail: (id: string) => ["products", "detail", id] as const,
+  stockLogs: (params: any) => ["products", "stock-logs", params] as const,
 };
 
 /** List produk untuk halaman Admin (dengan pagination & filter) */
-export function useProductsAdmin(filters: ProductFilters = {}) {
+export function useProductsAdmin(filters: ProductFilters = {}, enabled: boolean = true) {
   return useQuery({
     queryKey: productKeys.adminList(filters),
     queryFn: () => getAdminProducts(filters),
-    placeholderData: (prev) => prev, // Gak flicker saat ganti halaman
+    placeholderData: (prev) => prev, 
+    enabled,
+  });
+}
+
+/** Hook untuk mengambil log pergerakan stok */
+export function useStockLogs(params: { page?: number; limit?: number; search?: string; type?: string } = {}) {
+  return useQuery({
+    queryKey: productKeys.stockLogs(params),
+    queryFn: () => getStockLogs(params),
+    placeholderData: (prev) => prev,
   });
 }
 
@@ -58,9 +70,10 @@ export function useUpdateProduct() {
   return useMutation({
     mutationFn: ({ id, formData }: { id: string; formData: FormData }) =>
       updateProduct(id, formData),
-    onSuccess: (_, variables) => {
+    onSuccess: () => {
+      // Hanya invalidate list — tidak perlu invalidate detail
+      // karena halaman langsung redirect setelah update
       queryClient.invalidateQueries({ queryKey: productKeys.all });
-      queryClient.invalidateQueries({ queryKey: productKeys.detail(variables.id) });
     },
   });
 }

@@ -2,13 +2,13 @@
  * =============================================================
  * KNN (K-Nearest Neighbor) Content-Based Filtering
  * =============================================================
- * 
+ *
  * Module ini berisi fungsi-fungsi pure untuk:
- * 1. Ekstraksi Fitur Unik (Kategori & Material)
+ * 1. Ekstraksi Fitur Unik (Kategori, Material, Gender, dan Tipe Produk)
  * 2. Vektorisasi dengan One-Hot Encoding + Min-Max Normalization Harga
  * 3. Perhitungan Euclidean Distance
  * 4. Pencarian K-Tetangga Terdekat
- * 
+ *
  * Digunakan untuk merekomendasikan "Produk Serupa" berdasarkan
  * kemiripan yang jauh lebih adil tanpa asumsi urutan/tingkatan (Ordinal Bias).
  */
@@ -20,23 +20,23 @@
 /** Representasi produk dari database yang siap diproses */
 export interface ProductFeature {
   id: string;
-  categoryIds: string[];  // Array ID kategori produk
-  material: string;       // Material produk (dari ProductDetail)
-  gender: string;         // Gender produk (dari Product)
-  productType: string;    // Tipe produk (dari Product)
-  price: number;          // Harga produk (angka mentah)
+  categoryIds: string[]; // Array ID kategori produk
+  material: string; // Material produk (dari ProductDetail)
+  gender: string; // Gender produk (dari Product)
+  productType: string; // Tipe produk (dari Product)
+  price: number; // Harga produk (angka mentah)
 }
 
 /** Produk yang sudah dikonversi ke Multi-Dimensional Vector numerik (One-Hot + Harga) */
 export interface ProductVector {
   id: string;
-  vector: number[];       // [is_cat_A, is_cat_B, ..., is_mat_A, ..., price_normalized]
+  vector: number[]; // [is_cat_A, ..., is_mat_A, ..., is_gender_A, ..., is_type_A, ..., price_normalized]
 }
 
 /** Hasil perhitungan jarak antara 2 produk */
 export interface DistanceResult {
   id: string;
-  distance: number;       // Jarak Euclidean (semakin kecil = semakin mirip)
+  distance: number; // Jarak Euclidean (semakin kecil = semakin mirip)
 }
 
 // ============================================================
@@ -44,26 +44,28 @@ export interface DistanceResult {
 // ============================================================
 
 /**
- * Mengambil daftar unik dari semua Category dan Material yang ada,
+ * Mengambil daftar unik dari semua fitur nominal yang ada,
  * sekaligus menghitung batas harga Minimum dan Maksimum.
  */
 export function extractUniqueDimensions(products: ProductFeature[]) {
   // 1. Kumpulkan Category Unik
-  const categoryIds = Array.from(new Set(products.flatMap((p) => p.categoryIds))).sort();
+  const categoryIds = Array.from(
+    new Set(products.flatMap((p) => p.categoryIds)),
+  ).sort();
 
   // 2. Kumpulkan Material Unik
   const materials = Array.from(
-    new Set(products.map((p) => p.material.toLowerCase().trim()))
+    new Set(products.map((p) => p.material.toLowerCase().trim())),
   ).sort();
 
   // 3. Kumpulkan Gender Unik
   const genders = Array.from(
-    new Set(products.map((p) => p.gender.toLowerCase().trim()))
+    new Set(products.map((p) => p.gender.toLowerCase().trim())),
   ).sort();
 
   // 4. Kumpulkan Product Type Unik
   const types = Array.from(
-    new Set(products.map((p) => p.productType.toLowerCase().trim()))
+    new Set(products.map((p) => p.productType.toLowerCase().trim())),
   ).sort();
 
   // 5. Cari rentang Harga
@@ -89,17 +91,21 @@ export function extractUniqueDimensions(products: ProductFeature[]) {
  */
 export function buildProductVectors(
   products: ProductFeature[],
-  dimensions: ReturnType<typeof extractUniqueDimensions>
+  dimensions: ReturnType<typeof extractUniqueDimensions>,
 ): ProductVector[] {
-  const { categoryIds, materials, genders, types, minPrice, maxPrice } = dimensions;
+  const { categoryIds, materials, genders, types, minPrice, maxPrice } =
+    dimensions;
   const priceRange = maxPrice - minPrice;
 
   return products.map((product) => {
     const vector: number[] = [];
+    // Set mempercepat pengecekan membership kategori saat one-hot encoding.
+    // Ini membantu ketika jumlah produk/kategori bertambah besar.
+    const productCategorySet = new Set(product.categoryIds);
 
     // [1] One-Hot Encode: Kategori
     for (const catId of categoryIds) {
-      vector.push(product.categoryIds.includes(catId) ? 1 : 0);
+      vector.push(productCategorySet.has(catId) ? 1 : 0);
     }
 
     // [2] One-Hot Encode: Material
@@ -121,7 +127,8 @@ export function buildProductVectors(
     }
 
     // [5] Normalisasi Harga (Min-Max Scaler)
-    const normalizedPrice = priceRange === 0 ? 0 : (product.price - minPrice) / priceRange;
+    const normalizedPrice =
+      priceRange === 0 ? 0 : (product.price - minPrice) / priceRange;
     vector.push(normalizedPrice);
 
     return { id: product.id, vector };
@@ -136,7 +143,10 @@ export function buildProductVectors(
  * Menghitung Jarak Euclidean (Pitagoras Multi-Dimensi).
  * Digunakan untuk perengkingan kemiripan berbasis kedekatan nilai Vektor.
  */
-export function euclideanDistance(vectorA: number[], vectorB: number[]): number {
+export function euclideanDistance(
+  vectorA: number[],
+  vectorB: number[],
+): number {
   if (vectorA.length !== vectorB.length) {
     throw new Error("Kedua vektor harus memiliki dimensi yang sama");
   }
@@ -151,13 +161,13 @@ export function euclideanDistance(vectorA: number[], vectorB: number[]): number 
 }
 
 // ============================================================
-//  LANGKAH 4: PENCARIAN KNN TERDEKAT 
+//  LANGKAH 4: PENCARIAN KNN TERDEKAT
 // ============================================================
 
 /**
  * Menghitung jarak Target ke SEMUA produk menggunakan rumus Euclidean Distance,
  * lalu mengembalikan "k" jumlah tetangga terdekat dengan jarak paling minimum.
- * 
+ *
  * @param targetId ID Produk yang sedang dilihat User.
  * @param vectors List Vektor (Biner One-Hot) milik seluruh katalog Produk (termasuk Target).
  * @param k Jumlah "Produk Serupa" / Rekomendasi yang akan dikembalikan (Default: 4).
@@ -165,7 +175,7 @@ export function euclideanDistance(vectorA: number[], vectorB: number[]): number 
 export function findKNearest(
   targetId: string,
   vectors: ProductVector[],
-  k: number = 4
+  k: number = 4,
 ): DistanceResult[] {
   const targetVector = vectors.find((v) => v.id === targetId);
   if (!targetVector) {
