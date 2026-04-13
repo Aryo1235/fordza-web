@@ -1,0 +1,240 @@
+# Penjelasan Algoritma KNN Content-Based Filtering untuk Skripsi
+
+## Untuk Bab 3 — Metodologi Penelitian
+
+### 3.x.1 Metode Content-Based Filtering
+
+Content-Based Filtering adalah metode rekomendasi yang merekomendasikan item berdasarkan **kemiripan atribut (fitur)** dari item itu sendiri. Berbeda dengan Collaborative Filtering yang mengandalkan perilaku pengguna lain, Content-Based Filtering hanya menganalisis **karakteristik produk**.
+
+Pada penelitian ini, sistem merekomendasikan produk serupa berdasarkan 3 atribut:
+
+| No | Atribut    | Tipe Data    | Contoh Nilai                    |
+|----|------------|--------------|---------------------------------|
+| 1  | Kategori   | Kategorikal  | Sneakers, Boots, Formal Shoes   |
+| 2  | Material   | Kategorikal  | Genuine Cow Leather, Canvas     |
+| 3  | Harga      | Numerikal    | Rp 250.000, Rp 550.000         |
+
+### 3.x.2 Algoritma K-Nearest Neighbor (KNN)
+
+KNN (K-Nearest Neighbor) adalah algoritma *supervised learning* yang bekerja dengan prinsip **"tetangga terdekat"**. Dalam konteks rekomendasi produk, KNN mencari *K* produk yang memiliki **jarak terkecil** (paling mirip) terhadap produk yang sedang dilihat oleh pengguna.
+
+#### Langkah-langkah Algoritma:
+
+```
+1. INISIALISASI
+   ├── Tentukan nilai K (jumlah rekomendasi) = 4
+   ├── Tentukan fitur yang digunakan = [Kategori, Material, Harga]
+   └── Tentukan metrik jarak = Euclidean Distance
+
+2. DATA PRE-PROCESSING
+   ├── Label Encoding: Ubah data kategorikal → angka
+   └── Min-Max Normalization: Skala harga ke rentang [0, 1]
+
+3. PERHITUNGAN JARAK
+   └── Hitung Euclidean Distance antara produk target vs semua produk
+
+4. PENGURUTAN & SELEKSI
+   ├── Urutkan produk berdasarkan jarak terkecil → terbesar
+   └── Ambil K=4 produk teratas sebagai rekomendasi
+```
+
+### 3.x.3 Data Pre-Processing
+
+#### A. Label Encoding — Kategori
+
+Label Encoding mengubah data teks (kategorikal) menjadi angka. Setiap kategori unik diberi sebuah indeks numerik.
+
+**Contoh:**
+
+| Kategori      | Kode (Index) |
+|---------------|:------------:|
+| Sneakers      |      0       |
+| Boots         |      1       |
+| Formal Shoes  |      2       |
+| Sandals       |      3       |
+
+Jika sebuah produk memiliki **lebih dari satu kategori**, maka nilai encoding-nya adalah **rata-rata** dari indeks kategori tersebut.
+
+> Contoh: Produk A memiliki kategori [Sneakers, Boots] → Encoded = (0 + 1) / 2 = **0.5**
+
+#### B. Label Encoding — Material
+
+Sama seperti kategori, setiap material unik diberi indeks numerik.
+
+| Material                    | Kode (Index) |
+|-----------------------------|:------------:|
+| genuine sheep skin          |      0       |
+| genuine cow leather         |      1       |
+| canvas                      |      2       |
+| suede                       |      3       |
+
+#### C. Min-Max Normalization — Harga
+
+Harga memiliki skala yang jauh lebih besar dibanding fitur lain (misalnya ratusan ribu), sehingga perlu **dinormalisasi** agar tidak mendominasi perhitungan jarak.
+
+**Rumus Min-Max Normalization:**
+
+$$
+X_{norm} = \frac{X - X_{min}}{X_{max} - X_{min}}
+$$
+
+Di mana:
+- $X$ = nilai harga asli
+- $X_{min}$ = harga minimum dalam dataset
+- $X_{max}$ = harga maksimum dalam dataset
+- $X_{norm}$ = hasil normalisasi (antara 0 dan 1)
+
+**Contoh:**
+
+Dataset harga: [250.000, 350.000, 450.000, 550.000]
+
+- $X_{min}$ = 250.000
+- $X_{max}$ = 550.000
+
+| Harga Asli | Perhitungan                              | Hasil |
+|:----------:|:----------------------------------------:|:-----:|
+| 250.000    | (250.000 - 250.000) / (550.000 - 250.000) | 0.000 |
+| 350.000    | (350.000 - 250.000) / (550.000 - 250.000) | 0.333 |
+| 450.000    | (450.000 - 250.000) / (550.000 - 250.000) | 0.667 |
+| 550.000    | (550.000 - 250.000) / (550.000 - 250.000) | 1.000 |
+
+### 3.x.4 Euclidean Distance
+
+Euclidean Distance mengukur jarak antara dua titik dalam ruang berdimensi-n. Semakin kecil nilainya, semakin **mirip** kedua produk tersebut.
+
+**Rumus:**
+
+$$
+d(A, B) = \sqrt{\sum_{i=1}^{n}(A_i - B_i)^2}
+$$
+
+Di mana:
+- $A_i$ = nilai fitur ke-i dari produk A
+- $B_i$ = nilai fitur ke-i dari produk B
+- $n$ = jumlah fitur (dalam penelitian ini, n = 3)
+
+Maka untuk 3 fitur [Kategori, Material, Harga]:
+
+$$
+d(A, B) = \sqrt{(A_{kategori} - B_{kategori})^2 + (A_{material} - B_{material})^2 + (A_{harga} - B_{harga})^2}
+$$
+
+---
+
+## Untuk Bab 4 — Hasil dan Pembahasan
+
+### 4.x.1 Contoh Perhitungan Manual KNN
+
+Misal terdapat 5 produk dalam database:
+
+| ID | Nama Produk                | Kategori      | Material             | Harga    |
+|:--:|----------------------------|---------------|----------------------|:--------:|
+| P1 | Fordza Leather Boots       | Boots         | Genuine Cow Leather  | 550.000  |
+| P2 | Fordza Canvas Sneakers     | Sneakers      | Canvas               | 250.000  |
+| P3 | Fordza Suede Loafers       | Formal Shoes  | Suede                | 450.000  |
+| P4 | Fordza Sport Sneakers      | Sneakers      | Canvas               | 300.000  |
+| P5 | Fordza Premium Boots       | Boots         | Genuine Cow Leather  | 500.000  |
+
+**Produk yang sedang dilihat (target): P1 (Fordza Leather Boots)**
+
+#### Langkah 1: Label Encoding
+
+**Encoding Kategori:**
+
+| Kategori      | Index |
+|---------------|:-----:|
+| Boots         |   0   |
+| Sneakers      |   1   |
+| Formal Shoes  |   2   |
+
+**Encoding Material:**
+
+| Material             | Index |
+|----------------------|:-----:|
+| genuine cow leather  |   0   |
+| canvas               |   1   |
+| suede                |   2   |
+
+#### Langkah 2: Normalisasi Harga
+
+- $X_{min}$ = 250.000, $X_{max}$ = 550.000, Range = 300.000
+
+| ID | Harga   | Normalisasi                        | Hasil |
+|:--:|:-------:|:----------------------------------:|:-----:|
+| P1 | 550.000 | (550.000 - 250.000) / 300.000      | 1.000 |
+| P2 | 250.000 | (250.000 - 250.000) / 300.000      | 0.000 |
+| P3 | 450.000 | (450.000 - 250.000) / 300.000      | 0.667 |
+| P4 | 300.000 | (300.000 - 250.000) / 300.000      | 0.167 |
+| P5 | 500.000 | (500.000 - 250.000) / 300.000      | 0.833 |
+
+#### Langkah 3: Vektor Fitur Setiap Produk
+
+Format vektor: [Kategori_encoded, Material_encoded, Harga_normalized]
+
+| ID | Vektor          |
+|:--:|:---------------:|
+| P1 | [0, 0, 1.000]   |
+| P2 | [1, 1, 0.000]   |
+| P3 | [2, 2, 0.667]   |
+| P4 | [1, 1, 0.167]   |
+| P5 | [0, 0, 0.833]   |
+
+#### Langkah 4: Hitung Euclidean Distance (P1 vs Semua)
+
+**P1 vs P2:**
+
+$$
+d(P1, P2) = \sqrt{(0-1)^2 + (0-1)^2 + (1.000-0.000)^2} = \sqrt{1 + 1 + 1} = \sqrt{3} = 1.7321
+$$
+
+**P1 vs P3:**
+
+$$
+d(P1, P3) = \sqrt{(0-2)^2 + (0-2)^2 + (1.000-0.667)^2} = \sqrt{4 + 4 + 0.111} = \sqrt{8.111} = 2.8480
+$$
+
+**P1 vs P4:**
+
+$$
+d(P1, P4) = \sqrt{(0-1)^2 + (0-1)^2 + (1.000-0.167)^2} = \sqrt{1 + 1 + 0.693} = \sqrt{2.693} = 1.6411
+$$
+
+**P1 vs P5:**
+
+$$
+d(P1, P5) = \sqrt{(0-0)^2 + (0-0)^2 + (1.000-0.833)^2} = \sqrt{0 + 0 + 0.028} = \sqrt{0.028} = 0.1670
+$$
+
+#### Langkah 5: Pengurutan dan Seleksi K=4
+
+| Peringkat | ID | Nama Produk                | Jarak  |
+|:---------:|:--:|----------------------------|:------:|
+| 1         | P5 | Fordza Premium Boots       | 0.1670 |
+| 2         | P4 | Fordza Sport Sneakers      | 1.6411 |
+| 3         | P2 | Fordza Canvas Sneakers     | 1.7321 |
+| 4         | P3 | Fordza Suede Loafers       | 2.8480 |
+
+**Hasil:** Sistem merekomendasikan 4 produk di atas sebagai "Produk Serupa" untuk P1 (Fordza Leather Boots).
+
+### 4.x.2 Analisis Hasil
+
+Dari hasil perhitungan di atas, dapat dianalisis bahwa:
+
+1. **P5 (Fordza Premium Boots)** memiliki jarak paling kecil (0.1670) karena memiliki **kategori yang sama** (Boots), **material yang sama** (Genuine Cow Leather), dan **harga yang berdekatan** (Rp 500.000 vs Rp 550.000).
+
+2. **P4 dan P2** memiliki jarak menengah karena berbeda kategori dan material (Sneakers, Canvas), tetapi P4 sedikit lebih dekat karena harganya lebih mendekati P1.
+
+3. **P3 (Fordza Suede Loafers)** memiliki jarak terbesar karena **berbeda pada semua fitur**: kategori (Formal Shoes), material (Suede), walaupun harganya cukup dekat.
+
+**Kesimpulan:** Algoritma KNN berhasil merekomendasikan produk yang paling relevan berdasarkan kemiripan atribut. Produk dengan kategori, material, dan harga yang lebih mirip mendapat peringkat lebih tinggi dalam rekomendasi.
+
+### 4.x.3 Arsitektur Implementasi
+
+Implementasi fitur "Produk Serupa" terdiri dari komponen berikut:
+
+| Komponen            | File                             | Fungsi                               |
+|---------------------|----------------------------------|--------------------------------------|
+| Algoritma KNN       | [lib/knn.ts](file:///e:/fordza-web/lib/knn.ts)                     | Encoding, normalisasi, Euclidean Distance, KNN |
+| Service Layer       | [services/recommendation.db.ts](file:///e:/fordza-web/services/recommendation.db.ts)  | Orkestrasi fetch data + jalankan KNN |
+| API Route           | [app/api/recommend/[id]/route.ts](file:///e:/fordza-web/app/api/recommend/%5Bid%5D/route.ts)| Endpoint HTTP untuk frontend         |
+| Komponen Frontend   | [components/RelatedProducts.tsx](file:///e:/fordza-web/components/RelatedProducts.tsx)  | Tampilan kartu produk rekomendasi    |

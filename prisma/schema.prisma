@@ -1,0 +1,243 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// --- ENUM ROLE ---
+enum Role {
+  ADMIN
+  KASIR
+}
+
+// --- ENUM STATUS TRANSAKSI ---
+enum TransactionStatus {
+  PAID
+  VOID
+}
+
+// --- 1. PRODUCT (Lightweight untuk Katalog/Card) ---
+model Product {
+  id               String            @id @default(cuid())
+  productCode      String            @unique @map("product_code")
+  name             String
+  shortDescription String            @map("short_description")
+  price            Decimal           @db.Decimal(12, 2)
+  stock            Int               @default(0)
+  productType      String            @map("product_type")
+  gender           String            @default("Unisex")
+
+  // Status Flags
+  isPopular        Boolean           @default(false) @map("is_popular")
+  isBestseller     Boolean           @default(false) @map("is_bestseller")
+  isNew            Boolean           @default(true) @map("is_new")
+  isActive         Boolean           @default(true) @map("is_active")
+
+  // Cached Rating
+  avgRating        Float             @default(0) @map("avg_rating")
+  totalReviews     Int               @default(0) @map("total_reviews")
+
+  // Relasi
+  detail           ProductDetail?
+  images           ProductImage[]
+  categories       ProductCategory[]
+  testimonials     Testimonial[]
+  transactionItems TransactionItem[]
+  stockLogs        StockLog[]
+
+  createdAt        DateTime          @default(now()) @map("created_at")
+  updatedAt        DateTime          @updatedAt @map("updated_at")
+
+  @@map("products")
+}
+
+// --- TABEL PRODUCT DETAIL (Data Berat) ---
+model ProductDetail {
+  id               String        @id @default(cuid())
+  productId        String        @unique @map("product_id")
+  product          Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  description      String        @db.Text
+  notes            String?       @db.Text
+  careInstructions String?       @db.Text @map("care_instructions")
+
+  material         String?
+  closureType      String?       @map("closure_type")
+  outsole          String?
+  origin           String?       @map("origin")
+
+  sizeTemplateId   String?       @map("size_template_id")
+  sizeTemplate     SizeTemplate? @relation(fields: [sizeTemplateId], references: [id])
+
+  @@map("product_details")
+}
+
+// --- 3. PRODUCT CATEGORY (Pivot Table Eksplisit) ---
+model ProductCategory {
+  productId  String   @map("product_id")
+  categoryId String   @map("category_id")
+
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  assignedAt DateTime @default(now()) @map("assigned_at")
+
+  @@id([productId, categoryId])
+  @@map("product_categories")
+}
+
+// --- 4. CATEGORY ---
+model Category {
+  id               String            @id @default(cuid())
+  name             String
+  shortDescription String?           @map("short_description")
+  imageUrl         String            @map("image_url")
+  imageKey         String?           @map("image_key")
+  isActive         Boolean           @default(true) @map("is_active")
+  order            Int               @default(0)
+
+  products         ProductCategory[]
+
+  @@map("categories")
+}
+
+// --- 5. PRODUCT IMAGE ---
+model ProductImage {
+  id        String  @id @default(cuid())
+  url       String
+  key       String  @map("image_key")
+  productId String  @map("product_id")
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("product_images")
+}
+
+// --- 6. SIZE TEMPLATE ---
+model SizeTemplate {
+  id             String          @id @default(cuid())
+  name           String
+  type           String
+  sizes          String[]
+  productDetails ProductDetail[]
+
+  createdAt      DateTime        @default(now()) @map("created_at")
+  updatedAt      DateTime        @updatedAt @map("updated_at")
+
+  @@map("size_templates")
+}
+
+// --- 7. TESTIMONIAL ---
+model Testimonial {
+  id           String   @id @default(cuid())
+  productId    String   @map("product_id")
+  product      Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  customerName String   @map("customer_name")
+  rating       Int      @default(5)
+  content      String   @db.Text
+  isActive     Boolean  @default(true) @map("is_active")
+
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@map("testimonials")
+}
+
+// --- 8. BANNER ---
+model Banner {
+  id        String   @id @default(cuid())
+  title     String?
+  imageUrl  String   @map("image_url")
+  imageKey  String   @map("image_key")
+  linkUrl   String?  @map("link_url")
+  isActive  Boolean  @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("banners")
+}
+
+// --- 9. ADMIN / USER ---
+model Admin {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  password  String
+  name      String?
+  role      Role     @default(ADMIN)
+  pin       String?
+
+  transactions Transaction[]
+  stockLogs    StockLog[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("admins")
+}
+
+// --- 10. TRANSACTION (POS) ---
+model Transaction {
+  id          String            @id @default(cuid())
+  invoiceNo   String            @unique @map("invoice_no")
+  totalPrice  Decimal           @db.Decimal(12, 2) @map("total_price")
+  amountPaid  Decimal           @db.Decimal(12, 2) @map("amount_paid")
+  change      Decimal           @db.Decimal(12, 2)
+  status      TransactionStatus @default(PAID)
+  notes       String?           @db.Text
+  cancelReason String?          @db.Text @map("cancel_reason")
+
+  kasirId     String            @map("kasir_id")
+  kasir       Admin             @relation(fields: [kasirId], references: [id])
+
+  // Data Pelanggan (CRM Lite)
+  customerName   String?         @map("customer_name")
+  customerPhone  String?         @map("customer_phone")
+
+  items       TransactionItem[]
+
+  createdAt   DateTime          @default(now()) @map("created_at")
+
+  @@map("transactions")
+}
+
+// --- 11. TRANSACTION ITEM ---
+model TransactionItem {
+  id           String      @id @default(cuid())
+  quantity     Int
+  priceAtSale  Decimal     @db.Decimal(12, 2) @map("price_at_sale")
+  productName  String      @map("product_name")
+  productCode  String?     @map("product_code")
+  
+  // Diskon per item (Nominal Rp)
+  discountAmount Decimal    @default(0) @db.Decimal(12, 2) @map("discount_amount")
+
+  transactionId String     @map("transaction_id")
+  transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+
+  productId    String      @map("product_id")
+  product      Product     @relation(fields: [productId], references: [id])
+
+  @@map("transaction_items")
+}
+
+// --- 12. STOCK LEDGER (History Log Stok) ---
+model StockLog {
+  id           String      @id @default(cuid())
+  productId    String      @map("product_id")
+  product      Product     @relation(fields: [productId], references: [id])
+  
+  delta        Int         // + untuk masuk, - untuk keluar
+  currentStock Int         @map("current_stock")
+  
+  type         String      // SALE, VOID, RESTOCK, ADJUSTMENT
+  notes        String?     @db.Text
+  
+  operatorId   String?     @map("operator_id")
+  operator     Admin?      @relation(fields: [operatorId], references: [id])
+  createdAt    DateTime    @default(now()) @map("created_at")
+
+  @@map("stock_logs")
+}
