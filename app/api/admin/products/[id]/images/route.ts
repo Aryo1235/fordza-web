@@ -39,7 +39,7 @@ export async function POST(
 
     if (!res.success) {
       return NextResponse.json(
-        { success: false, message: "Gagal upload gambar ke S3" },
+        { success: false, message: res.message || "Gagal upload gambar ke S3" },
         { status: 500 },
       );
     }
