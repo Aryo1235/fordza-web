@@ -7,6 +7,23 @@ export async function uploadFileToS3(
   folder: string = "products",
 ) {
   try {
+    const requiredEnv = [
+      "S3_BUCKET_NAME",
+      "NEXT_PUBLIC_STORAGE_URL",
+      "S3_REGION",
+      "S3_ENDPOINT",
+      "S3_ACCESS_KEY_ID",
+      "S3_SECRET_ACCESS_KEY",
+    ] as const;
+
+    const missingEnv = requiredEnv.filter((name) => !process.env[name]);
+    if (missingEnv.length > 0) {
+      return {
+        success: false,
+        message: `Konfigurasi server belum lengkap: ${missingEnv.join(", ")}`,
+      };
+    }
+
     // 1. Ambil file dari FormData
     const file = formData.get("file") as File;
     if (!file) return { success: false, message: "Tidak ada file" };
@@ -14,7 +31,10 @@ export async function uploadFileToS3(
     // 2. Validasi tipe file (harus gambar)
     const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
     if (!allowedTypes.includes(file.type)) {
-      return { success: false, message: "Tipe file tidak didukung. Gunakan JPG, PNG, atau WebP." };
+      return {
+        success: false,
+        message: "Tipe file tidak didukung. Gunakan JPG, PNG, atau WebP.",
+      };
     }
 
     // 3. Validasi ukuran file (max 2MB)
