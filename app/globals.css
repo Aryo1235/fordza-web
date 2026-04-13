@@ -50,31 +50,31 @@
   --radius: 0.5rem;
 
   /* Fordza Brand Colors */
-  --fordza-brown: #3C3025;
-  --fordza-cream: #FEF4E8;
+  --fordza-brown: #3c3025;
+  --fordza-cream: #fef4e8;
   --fordza-brown-light: #5a4a38;
   --fordza-cream-dark: #f5e6cf;
 
   /* Light Mode — bg=white, primary=brown, secondary=cream */
   --background: #ffffff;
-  --foreground: #3C3025;
+  --foreground: #3c3025;
   --card: #ffffff;
-  --card-foreground: #3C3025;
+  --card-foreground: #3c3025;
   --popover: #ffffff;
-  --popover-foreground: #3C3025;
-  --primary: #3C3025;
+  --popover-foreground: #3c3025;
+  --primary: #3c3025;
   --primary-foreground: #ffffff;
-  --secondary: #FEF4E8;
-  --secondary-foreground: #3C3025;
-  --muted: #FEF4E8;
+  --secondary: #fef4e8;
+  --secondary-foreground: #3c3025;
+  --muted: #fef4e8;
   --muted-foreground: #8a7060;
-  --accent: #FEF4E8;
-  --accent-foreground: #3C3025;
+  --accent: #fef4e8;
+  --accent-foreground: #3c3025;
   --destructive: #dc2626;
   --destructive-foreground: #ffffff;
   --border: #e8d8c4;
   --input: #e8d8c4;
-  --ring: #3C3025;
+  --ring: #3c3025;
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -82,14 +82,14 @@
   --chart-5: oklch(0.769 0.188 70.08);
 
   /* Sidebar — coklat tua bg, krem text */
-  --sidebar: #3C3025;
-  --sidebar-foreground: #FEF4E8;
-  --sidebar-primary: #FEF4E8;
-  --sidebar-primary-foreground: #3C3025;
+  --sidebar: #3c3025;
+  --sidebar-foreground: #fef4e8;
+  --sidebar-primary: #fef4e8;
+  --sidebar-primary-foreground: #3c3025;
   --sidebar-accent: #5a4a38;
-  --sidebar-accent-foreground: #FEF4E8;
+  --sidebar-accent-foreground: #fef4e8;
   --sidebar-border: #5a4a38;
-  --sidebar-ring: #FEF4E8;
+  --sidebar-ring: #fef4e8;
 }
 
 .dark {
