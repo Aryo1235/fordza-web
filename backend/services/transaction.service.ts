@@ -19,6 +19,9 @@
  */
 
 import { TransactionRepository } from "@/backend/repositories/transaction.repo";
+import { AdminService } from "@/backend/services/admin.service";
+
+const DISCOUNT_AUTH_THRESHOLD = 300000;
 
 export const TransactionService = {
   /**
@@ -36,8 +39,9 @@ export const TransactionService = {
     amountPaid: number;
     customerName?: string;
     customerPhone?: string;
+    adminPin?: string;
   }) {
-    const { kasirId, items, amountPaid, customerName, customerPhone } = data;
+    const { kasirId, items, amountPaid, customerName, customerPhone, adminPin } = data;
 
     // ✅ KEPUTUSAN BISNIS #1: Ambil data produk dari DB untuk validasi
     const productIds = items.map((i) => i.productId);
@@ -55,6 +59,7 @@ export const TransactionService = {
       discountAmount: number;
     }[] = [];
 
+    let totalDiscount = 0;
     for (const item of items) {
       const dbProduct = dbProducts.find((p) => p.id === item.productId);
 
@@ -69,11 +74,27 @@ export const TransactionService = {
         );
       }
 
+      if (item.quantity <= 0) {
+        throw new Error(`Jumlah produk untuk ${dbProduct.name} tidak valid`);
+      }
+
       const price = Number(dbProduct.price);
-      const discount = item.discountAmount || 0;
+      const itemSubtotal = price * item.quantity;
+      const discount = Number(item.discountAmount || 0);
+
+      if (discount < 0) {
+        throw new Error(`Diskon untuk ${dbProduct.name} tidak boleh negatif`);
+      }
+
+      if (discount > itemSubtotal) {
+        throw new Error(
+          `Diskon ${dbProduct.name} tidak boleh lebih besar dari subtotal item (Rp ${itemSubtotal.toLocaleString("id-ID")})`,
+        );
+      }
 
       // ✅ KEPUTUSAN BISNIS #3.1: Hitung subtotal tiap item (Harga * Qty - Diskon)
       totalPrice += price * item.quantity - discount;
+      totalDiscount += discount;
 
       validatedItems.push({
         productId: item.productId,
@@ -83,6 +104,17 @@ export const TransactionService = {
         productName: dbProduct.name,
         discountAmount: discount,
       });
+    }
+
+    if (totalDiscount > DISCOUNT_AUTH_THRESHOLD) {
+      if (!adminPin) {
+        throw new Error("Diskon besar membutuhkan otorisasi PIN Admin");
+      }
+
+      const authorizedAdmin = await AdminService.verifyAdminPin(adminPin);
+      if (!authorizedAdmin) {
+        throw new Error("PIN Admin salah atau tidak memiliki akses");
+      }
     }
 
     // ✅ KEPUTUSAN BISNIS #4: Uang yang dibayar harus >= total belanja

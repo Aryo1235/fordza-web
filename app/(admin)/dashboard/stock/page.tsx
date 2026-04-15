@@ -159,7 +159,7 @@ export default function StockOpnamePage() {
         title="Stok Opname"
         description="Perbarui stok fisik barang secara cepat. Pastikan angka sesuai dengan barang riil di gudang."
         action={
-          <div className="flex  gap-10 ">
+          <div className="flex gap-10">
             {hasChanges && (
               <Button
                 variant="ghost"

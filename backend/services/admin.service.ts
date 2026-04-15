@@ -11,6 +11,7 @@
 
 import { AdminRepository } from "@/backend/repositories/admin.repo";
 import { Role } from "@/app/generated/prisma/client";
+import bcrypt from "bcryptjs";
 
 export const AdminService = {
   async findByUsername(username: string) {
@@ -35,6 +36,29 @@ export const AdminService = {
 
   async getAllUsers() {
     return await AdminRepository.findAll();
+  },
+
+  async verifyAdminPin(pin: string) {
+    const trimmedPin = pin?.trim();
+    if (!trimmedPin) return null;
+
+    const candidates = await AdminRepository.findAdminPinCandidates();
+
+    for (const admin of candidates) {
+      if (!admin.pin) continue;
+
+      // Backward compatible: tetap terima PIN plaintext lama jika belum dimigrasi.
+      if (admin.pin === trimmedPin) {
+        return { id: admin.id, name: admin.name, username: admin.username };
+      }
+
+      const isMatch = await bcrypt.compare(trimmedPin, admin.pin).catch(() => false);
+      if (isMatch) {
+        return { id: admin.id, name: admin.name, username: admin.username };
+      }
+    }
+
+    return null;
   },
 
   async updateUser(id: string, data: { username?: string; password?: string; name?: string; role?: Role; pin?: string }) {

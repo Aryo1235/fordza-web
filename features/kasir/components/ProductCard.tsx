@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 
 interface Product {
   id: string;
+  productCode: string | null;
   name: string;
   price: number;
   stock: number;
@@ -18,6 +19,7 @@ interface ProductCardProps {
   quantityInCart: number;
   onAdd: () => void;
   onRemove: () => void;
+  isJustAdded?: boolean;
 }
 
 export default function ProductCard({
@@ -25,6 +27,7 @@ export default function ProductCard({
   quantityInCart,
   onAdd,
   onRemove,
+  isJustAdded = false,
 }: ProductCardProps) {
   const outOfStock = product.stock === 0;
   const maxReached = quantityInCart >= product.stock;
@@ -32,57 +35,63 @@ export default function ProductCard({
   return (
     <div
       className={cn(
-        "group bg-white rounded-2xl border flex flex-col overflow-hidden transition-all duration-300",
-        outOfStock ? "opacity-60" : "hover:shadow-xl hover:shadow-stone-200/50 hover:-translate-y-1"
+        "group bg-white rounded-lg md:rounded-xl border flex flex-col overflow-hidden transition-all duration-200",
+        outOfStock ? "opacity-60" : "hover:shadow-lg hover:shadow-stone-200/40",
+        isJustAdded && "ring-2 ring-amber-300 shadow-lg shadow-amber-100/70"
       )}
       style={{ borderColor: "#f3f0eb" }}
     >
-      {/* Image Section */}
-      <div className="relative aspect-[3/4] bg-stone-50 overflow-hidden">
+      {/* Image Section - portrait on mobile, square on tablet */}
+      <div className="relative aspect-[3/4] md:aspect-square bg-stone-50 overflow-hidden">
         {product.imageUrl ? (
           <img
             src={product.imageUrl}
             alt={product.name}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <ShoppingBag className="w-12 h-12 text-stone-200" />
+            <ShoppingBag className="w-8 h-8 md:w-10 md:h-10 text-stone-200" />
           </div>
         )}
-        
+
         {/* Overlay Badges */}
-        <div className="absolute inset-0 p-2 flex flex-col justify-between pointer-events-none">
+        <div className="absolute inset-0 p-1.5 md:p-2 flex flex-col justify-between pointer-events-none">
           <div className="flex justify-between items-start">
             {product.category && (
-              <span className="bg-white/80 backdrop-blur-md text-[9px] font-bold text-stone-600 px-2 py-1 rounded-lg uppercase tracking-wider shadow-sm">
+              <span className="bg-white/90 backdrop-blur-md text-[8px] md:text-[9px] font-semibold text-stone-600 px-1.5 py-0.5 md:px-2 md:py-1 rounded-md uppercase tracking-wider shadow-sm">
                 {product.category}
               </span>
             )}
             {product.stock > 0 && product.stock <= 5 && !outOfStock && (
-              <span className="bg-amber-500 text-white text-[9px] px-2 py-1 rounded-lg font-black shadow-sm animate-pulse">
-                STOK LIMIT
+              <span className="bg-amber-500 text-white text-[8px] md:text-[9px] px-1.5 py-0.5 md:px-2 md:py-1 rounded-md font-semibold shadow-sm">
+                LIMIT
               </span>
             )}
           </div>
-          
+
           {outOfStock && (
-            <div className="self-center bg-black/60 backdrop-blur-md text-white text-[10px] font-black px-4 py-1.5 rounded-full tracking-widest uppercase">
-              Habis Terjual
+            <div className="self-center bg-black/60 backdrop-blur-md text-white text-[9px] md:text-[10px] font-semibold px-2 py-1 md:px-3 md:py-1.5 rounded-full uppercase">
+              Stok Habis
             </div>
           )}
         </div>
       </div>
 
       {/* Info Section */}
-      <div className="p-3 md:p-4 flex flex-col flex-1 bg-white">
-        <div className="mb-3">
-          <p className="text-xs md:text-sm font-bold text-stone-800 leading-tight line-clamp-2 min-h-[2.5rem] group-hover:text-amber-700 transition-colors">
+      <div className="p-2 md:p-3 flex flex-col flex-1 bg-white">
+        <div className="mb-1.5 md:mb-2.5">
+          {product.productCode && (
+            <p className="text-[9px] md:text-[10px] font-mono text-stone-400 uppercase tracking-wider mb-0.5 truncate">
+              {product.productCode}
+            </p>
+          )}
+          <p className="text-[11px] md:text-sm font-semibold text-stone-800 leading-tight line-clamp-2 min-h-8 md:min-h-10 transition-colors">
             {product.name}
           </p>
-          <div className="flex items-baseline gap-1 mt-1">
-            <span className="text-[10px] font-bold text-stone-400">Rp</span>
-            <span className="text-sm md:text-base font-black text-[#3C3025]">
+          <div className="flex items-baseline gap-0.5 mt-1">
+            <span className="text-[9px] md:text-[10px] font-semibold text-stone-400">Rp</span>
+            <span className="text-xs md:text-base font-bold text-[#3C3025]">
               {product.price.toLocaleString("id-ID")}
             </span>
           </div>
@@ -95,25 +104,25 @@ export default function ProductCard({
               onClick={onAdd}
               disabled={outOfStock}
               className={cn(
-                "w-full h-10 rounded-xl font-bold text-xs transition-all duration-300",
-                outOfStock 
-                  ? "bg-stone-100 text-stone-400 cursor-not-allowed" 
-                  : "bg-[#3C3025] hover:bg-[#4a3d30] text-white active:scale-95 shadow-md shadow-stone-200"
+                "w-full h-8 md:h-10 rounded-md md:rounded-lg font-semibold text-[11px] md:text-xs transition-all duration-200",
+                outOfStock
+                  ? "bg-stone-100 text-stone-400 cursor-not-allowed"
+                  : "bg-[#3C3025] hover:bg-[#4a3d30] text-white"
               )}
             >
-              Tambah ke Keranjang
+              Tambah
             </Button>
           ) : (
-            <div className="flex items-center justify-between p-1 bg-stone-50 rounded-xl border border-stone-100">
+            <div className="flex items-center justify-between p-0.5 md:p-1 bg-stone-50 rounded-md md:rounded-lg border border-stone-100">
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={onRemove}
-                className="w-8 h-8 rounded-lg text-stone-500 hover:bg-white hover:text-red-500 hover:shadow-sm"
+                className="w-7 h-7 md:w-9 md:h-9 rounded-md text-stone-500 hover:bg-white hover:text-red-500"
               >
-                <Minus className="w-4 h-4" />
+                <Minus className="w-3 h-3 md:w-4 md:h-4" />
               </Button>
-              <span className="text-sm font-black text-[#3C3025]">
+              <span className="text-xs md:text-sm font-bold text-[#3C3025]">
                 {quantityInCart}
               </span>
               <Button
@@ -121,9 +130,9 @@ export default function ProductCard({
                 size="icon"
                 onClick={onAdd}
                 disabled={maxReached}
-                className="w-8 h-8 rounded-lg text-stone-500 hover:bg-white hover:text-amber-600 hover:shadow-sm"
+                className="w-7 h-7 md:w-9 md:h-9 rounded-md text-stone-500 hover:bg-white hover:text-amber-600"
               >
-                <Plus className="w-4 h-4" />
+                <Plus className="w-3 h-3 md:w-4 md:h-4" />
               </Button>
             </div>
           )}

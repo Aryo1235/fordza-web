@@ -275,7 +275,10 @@ export const ProductRepository = {
     const where: any = {};
 
     if (search) {
-      where.name = { contains: search, mode: "insensitive" };
+      where.OR = [
+        { name: { contains: search, mode: "insensitive" } },
+        { productCode: { contains: search, mode: "insensitive" } },
+      ];
     }
 
     const [products, totalItems] = await Promise.all([
@@ -328,7 +331,10 @@ export const ProductRepository = {
     const where: any = {};
 
     if (search) {
-      where.name = { contains: search, mode: "insensitive" };
+      where.OR = [
+        { name: { contains: search, mode: "insensitive" } },
+        { productCode: { contains: search, mode: "insensitive" } },
+      ];
     }
 
     return await prisma.product.findMany({
@@ -513,10 +519,10 @@ export const ProductRepository = {
 
     const where: any = {
       isActive: true,
-      stock: { gt: 0 },
       OR: search
         ? [
             { name: { contains: search, mode: "insensitive" } },
+            { productCode: { contains: search, mode: "insensitive" } },
             {
               categories: {
                 some: {

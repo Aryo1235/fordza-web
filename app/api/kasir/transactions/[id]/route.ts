@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { TransactionService } from "@/backend/services/transaction.service";
+import { AdminService } from "@/backend/services/admin.service";
 
 export async function GET(
   req: Request,
@@ -46,8 +47,7 @@ export async function PATCH(
     }
 
     // 🔐 VALIDASI KEAMANAN: Cek PIN Admin
-    const { AdminRepository } = await import("@/backend/repositories/admin.repo");
-    const admin = await AdminRepository.findByPin(pin);
+    const admin = await AdminService.verifyAdminPin(pin);
 
     if (!admin) {
       return NextResponse.json({ success: false, message: "PIN Admin salah atau tidak memiliki akses" }, { status: 403 });

@@ -3,12 +3,19 @@
 import { useState } from "react";
 import { Search, Printer } from "lucide-react";
 import { toast } from "sonner";
-import { InvoiceModal, useCheckInvoice, type Transaction } from "@/features/kasir";
+import {
+  InvoiceModal,
+  useCheckInvoice,
+  type Transaction,
+} from "@/features/kasir";
 import { getTransactionById } from "@/features/transactions";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 
 export default function CetakUlangPage() {
   const [invoiceNo, setInvoiceNo] = useState("");
-  const [modalTransaction, setModalTransaction] = useState<Transaction | null>(null);
+  const [modalTransaction, setModalTransaction] = useState<Transaction | null>(
+    null,
+  );
   const [showModal, setShowModal] = useState(false);
 
   const { isFetching: loading, refetch } = useCheckInvoice(invoiceNo);
@@ -19,7 +26,11 @@ export default function CetakUlangPage() {
 
     const res = await refetch();
     if (res.isError || !res.data?.success) {
-      toast.error((res.error as any)?.message || res.data?.message || "Gagal mencari transaksi");
+      toast.error(
+        (res.error as any)?.message ||
+          res.data?.message ||
+          "Gagal mencari transaksi",
+      );
       return;
     }
 
@@ -29,10 +40,14 @@ export default function CetakUlangPage() {
       return;
     }
 
-    const found = json.data.find((t: any) => t.invoiceNo.toLowerCase() === invoiceNo.trim().toLowerCase());
-    
+    const found = json.data.find(
+      (t: any) => t.invoiceNo.toLowerCase() === invoiceNo.trim().toLowerCase(),
+    );
+
     if (!found) {
-      toast.error("Nomor invoice tidak ditemukan. Periksa kembali penulisannya.");
+      toast.error(
+        "Nomor invoice tidak ditemukan. Periksa kembali penulisannya.",
+      );
       return;
     }
 
@@ -48,16 +63,25 @@ export default function CetakUlangPage() {
   };
 
   return (
-    <div className="p-4 md:p-6 max-w-xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-xl font-bold text-stone-800">Cetak Ulang Struk</h1>
-        <p className="text-sm text-stone-500 mt-0.5">
-          Masukkan nomor invoice untuk mencetak ulang struk transaksi
-        </p>
+    <div className="flex-1 w-full mx-auto p-4 md:p-6">
+      <div className="mb-6 flex items-start gap-4">
+        <SidebarTrigger className="-ml-2 text-stone-500 hover:bg-stone-200/50 mt-0.5 md:mt-0" />
+        <div className="flex flex-col items-start ">
+          <h1 className="text-xl font-bold text-stone-800">
+            Cetak Ulang Struk
+          </h1>
+
+          <p className="text-sm text-stone-500 mt-0.5">
+            Masukkan nomor invoice untuk mencetak ulang struk transaksi
+          </p>
+        </div>
       </div>
 
-      {/* Search Form */}
-      <form onSubmit={handleSearch} className="bg-white border border-stone-200 rounded-sm p-5 mb-5">
+          {/* Search Form */}
+          <form
+            onSubmit={handleSearch}
+            className="bg-white border border-stone-200 rounded-sm p-5 mb-5"
+          >
         <label className="block text-xs font-semibold text-stone-600 uppercase tracking-wider mb-2">
           Nomor Invoice
         </label>
@@ -85,22 +109,28 @@ export default function CetakUlangPage() {
         <p className="text-xs text-stone-400 mt-2">
           Format: FDZ-YYYYMMDD-XXXX (contoh: FDZ-20260408-0001)
         </p>
-      </form>
+          </form>
 
-      {/* Result Preview */}
-      {modalTransaction && (
-        <div className="bg-white border border-stone-200 rounded-sm overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-300">
-          <div className="px-4 py-3 border-b flex items-center justify-between"
-            style={{ backgroundColor: "#3C3025" }}>
+          {/* Result Preview */}
+          {modalTransaction && (
+            <div className="bg-white border border-stone-200 rounded-sm overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <div
+            className="px-4 py-3 border-b flex items-center justify-between"
+            style={{ backgroundColor: "#3C3025" }}
+          >
             <div className="flex items-center gap-2">
               <Printer className="w-4 h-4 text-white" />
-              <span className="text-white text-sm font-semibold">Transaksi Ditemukan</span>
+              <span className="text-white text-sm font-semibold">
+                Transaksi Ditemukan
+              </span>
             </div>
-            <span className={`text-xs font-bold px-2 py-0.5 rounded-sm ${
-              modalTransaction.status === "PAID"
-                ? "bg-green-400 text-green-900"
-                : "bg-red-400 text-red-900"
-            }`}>
+            <span
+              className={`text-xs font-bold px-2 py-0.5 rounded-sm ${
+                modalTransaction.status === "PAID"
+                  ? "bg-green-400 text-green-900"
+                  : "bg-red-400 text-red-900"
+              }`}
+            >
               {modalTransaction.status}
             </span>
           </div>
@@ -108,19 +138,32 @@ export default function CetakUlangPage() {
           <div className="p-4 space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-stone-500">No. Invoice</span>
-              <span className="font-mono font-semibold" style={{ color: "#3C3025" }}>{modalTransaction.invoiceNo}</span>
+              <span
+                className="font-mono font-semibold"
+                style={{ color: "#3C3025" }}
+              >
+                {modalTransaction.invoiceNo}
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-stone-500">Tanggal</span>
-              <span>{new Date(modalTransaction.createdAt).toLocaleString("id-ID")}</span>
+              <span>
+                {new Date(modalTransaction.createdAt).toLocaleString("id-ID")}
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-stone-500">Kasir</span>
-              <span>{modalTransaction.kasir?.name || modalTransaction.kasir?.username || "-"}</span>
+              <span>
+                {modalTransaction.kasir?.name ||
+                  modalTransaction.kasir?.username ||
+                  "-"}
+              </span>
             </div>
             <div className="flex justify-between font-bold text-base border-t pt-2 mt-2">
               <span>Total Belanja</span>
-              <span style={{ color: "#3C3025" }}>Rp {modalTransaction.totalPrice.toLocaleString("id-ID")}</span>
+              <span style={{ color: "#3C3025" }}>
+                Rp {modalTransaction.totalPrice.toLocaleString("id-ID")}
+              </span>
             </div>
           </div>
 
@@ -134,16 +177,16 @@ export default function CetakUlangPage() {
               Buka Struk & Cetak
             </button>
           </div>
-        </div>
-      )}
+            </div>
+          )}
 
-      {/* Invoice Modal */}
-      {showModal && modalTransaction && (
-        <InvoiceModal
-          transaction={modalTransaction}
-          onClose={() => setShowModal(false)}
-        />
-      )}
-    </div>
+          {/* Invoice Modal */}
+          {showModal && modalTransaction && (
+            <InvoiceModal
+              transaction={modalTransaction}
+              onClose={() => setShowModal(false)}
+            />
+          )}
+        </div>
   );
 }

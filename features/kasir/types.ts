@@ -2,6 +2,7 @@
 
 export interface Product {
   id: string;
+  productCode: string | null;
   name: string;
   price: number;
   stock: number;

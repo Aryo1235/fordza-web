@@ -48,7 +48,7 @@ export default function ProductsPage() {
           </div>
           <div>
             <p className="font-semibold text-[#3C3025]">{item.name}</p>
-            <p className="text-xs text-muted-foreground">ID: {item.id.slice(-6)}</p>
+            <p className="text-xs text-muted-foreground">Kode Produk: {item.productCode}</p>
           </div>
         </div>
       ),
