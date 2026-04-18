@@ -78,14 +78,27 @@ Jangan panik dan jangan menghapus proyek skripsi Anda. Katakan ini kepada client
 
 ---
 
-## ⚠️ Pemberitahuan Batasan Teknologi (Tech Limits Checklist)
+## ⚠️ Cara Menjelaskan Batasan Teknologi (Analogi Toko)
 
-Sangat penting untuk jujur namun tetap elegan mengenai batasan alat gratisan (*Free-Tier*) sejak awal, agar Anda tidak dituntut secara hukum hukum jika web sedang *down*.
+Sangat penting untuk jujur mengenai batasan alat gratisan (*Free-Tier*) sejak awal agar ekspektasi client terjaga. Gunakan analogi **"Toko Fisik"** agar mereka langsung paham:
 
-**Cara Bilang ke Client:**
-*"Pak/Bu, sebagai info tambahan, untuk tahap awal ini saya merakit web ini menggunakan server dan database modern dengan *Paket Starter Bisnis* (Gratis). Walaupun gratis, teknologinya sudah dipakai oleh startup-startup, jadi untuk lalu-lintas toko dalam setahun pertama ini pasti sangat cukup dan lancar. Namun, kalau ke depannya bisnis bapak meledak dan pengunjung webnya tembus ribuan orang per hari sampai datanya penuh, mungkin bapak perlu menyisihkan biaya *upgrade* langganan server (sekitar ratusan ribu per bulan) langsung dibayar ke vendor *Cloud*-nya, bukan ke saya. Tapi untuk sekarang, bapak terima beres gratis semua biaya bulanannya karena saya pakaikan kuota developer saya."*
+| Istilah Teknis | Analogi Toko (Bahasa Awam) | Skala Ukurannya (Biar Client Paham) |
+| :--- | :--- | :--- |
+| **Server Bandwidth** (100GB) | **Lebar Pintu Toko:** Kapasitas pengunjung yang bisa masuk lihat-lihat katalog. | **Sangat Luas:** Bisa menampung sekitar **50.000 - 80.000 pengunjung** per bulan. |
+| **Database Storage** (500MB) | **Buku Nota/Laporan:** Kapasitas lembar catatan transaksi dan data pelanggan. | **Sangat Tebal:** Bisa mencatat hingga **200.000 transaksi** sukses. |
+| **Object Storage** (1GB) | **Gudang Foto/Display:** Kapasitas berapa banyak foto sepatu yang bisa dipajang. | **Banyak:** Bisa memuat sekitar **3.000 - 5.000 foto produk** (HD). |
+| **Server Timeout** (15 Detik) | **Kesabaran Pelayan:** Berapa lama pelayan toko boleh "berpikir" sebelum dianggap lemot. | **Standar:** Jika simpan data lebih dari **15 detik**, sistem batal otomatis agar antrian tidak macet. |
 
-**Catatan Batasan Teknis Tersembunyi (Khusus Pengetahuan Anda / Developer):**
-1. **Server Host (Vercel Free Tier + Next.js):** Bandwidth bulanan dibatasi (100GB). Komunikasi *Frontend* ke *API Route* akan *timeout* (terputus otomatis) jika memproses komputasi algoritma lebih dari 10-15 detik. Eksekusi perhitungan jarak produk (*KNN Algorithm*) serta transaksi *Point of Sale* (POS) beroperasi dengan lancar dalam batasan ini asalkan kode tetap ringan.
-2. **Database Relasional (Neon PostgreSQL Free Tier):** Ruang penyimpanan dibatasi 500MB per *project*. Angka 500MB ini **SANGAT MASIF** untuk murni baris data teks (bisa menampung hingga ratusan ribu baris riwayat transaksi POS Kasir, mutasi stok, dan rincian varian sepatu).
-3. **Penyimpanan Foto (Supabase Object Storage Free):** Anda merancang arsitektur ideal dengan melempar file gambar keluar dari database utama menuju *Supabase Storage Buckets*. Batas ukuran penyimpanan gratisnya adalah 1GB (bisa memuat sekitar 2.000 hingga 5.000 foto sepatu jika sudah dikompres rata-rata 200KB/foto). Jika di masa depan limit 1GB ini penuh, ini adalah komponen pertama yang wajib dibebaskan.
+**Contoh Cara Menjelaskan Skalanya:**
+> *"Pak/Bu, jangan khawatir soal angka teknisnya. Intinya, server ini bisa melayani sampai **50.000 orang lebih** yang liat-liat web Bapak/Ibu tiap bulan secara gratis. Terus, 'buku catatan' di dalamnya juga bisa nampung sampai **ratusan ribu nota penjualan**. Jadi, kapasitas ini sudah lebih dari cukup untuk toko yang lagi ramai sekalipun."*
+
+---
+
+## 🛠️ Catatan Teknis (Khusus Untuk Anda)
+
+Tetap simpan detail ini sebagai panduan teknis Anda:
+
+1. **Server (Vercel Free):** Limit bandwidth 100GB/bulan. (Hitungan: 100GB / 1MB rerata size halaman = 100.000 view).
+2. **Database (Neon PostgreSQL):** Limit 500MB. (Satu baris data teks hanya ~1KB, jadi 500MB = 500.000 baris data).
+3. **Penyimpanan Foto (Supabase Storage):** Limit 1GB gratis. Gunakan library kompresi gambar agar 1 foto tetap di bawah 200KB.
+4. **Kecepatan Proses (Timeout):** Jika Anda membuat laporan tahunan yang sangat berat, usahakan prosesnya di-split atau dioptimasi agar tidak tembus 15 detik.
