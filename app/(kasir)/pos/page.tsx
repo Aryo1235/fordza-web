@@ -70,20 +70,58 @@ export default function POSPage() {
   const getQuantity = (productId: string) =>
     cart.find((c) => c.id === productId)?.quantity ?? 0;
 
-  const addToCart = (product: Product) => {
-    setJustAddedProductId(product.id);
+  const addToCart = (
+    product: Product,
+    variantId: string | null = null,
+    variantColor: string | null = null,
+    skuId: string | null = null,
+    skuSize: string | null = null,
+    priceAtSku?: number,
+    stockAtSku?: number,
+  ) => {
+    // Buat cartKey unik berdasarkan productId + skuId (atau productId saja jika tanpa varian)
+    const cartKey = skuId ? `${product.id}__${skuId}` : product.id;
+
+    setJustAddedProductId(cartKey);
+    const effectivePrice = priceAtSku ?? product.price;
+    const effectiveStock = stockAtSku ?? product.stock;
+    const effectiveName = skuSize
+      ? `${product.name} - ${variantColor} / ${skuSize}`
+      : product.name;
+
     setCart((prev: CartItem[]) => {
-      const existing = prev.find((c: CartItem) => c.id === product.id);
+      const existing = prev.find((c: CartItem) =>
+        skuId ? c.skuId === skuId : c.id === product.id && !c.skuId,
+      );
       if (existing) {
-        if (existing.quantity >= product.stock) {
-          toast.warning(`Stok ${product.name} hanya tersisa ${product.stock}`);
+        if (existing.quantity >= effectiveStock) {
+          toast.warning(
+            `Stok ${effectiveName} hanya tersisa ${effectiveStock}`,
+          );
           return prev;
         }
         return prev.map((c: CartItem) =>
-          c.id === product.id ? { ...c, quantity: c.quantity + 1 } : c,
+          (skuId ? c.skuId === skuId : c.id === product.id && !c.skuId)
+            ? { ...c, quantity: c.quantity + 1 }
+            : c,
         );
       }
-      return [...prev, { ...product, quantity: 1, discountAmount: 0 }];
+      const newItem: CartItem = {
+        id: product.id,
+        productCode: product.productCode,
+        name: effectiveName,
+        imageUrl: product.imageUrl,
+        category: product.category,
+        price: effectivePrice,
+        stock: effectiveStock,
+        quantity: 1,
+        discountAmount: 0,
+        variantId,
+        variantColor,
+        skuId,
+        skuSize,
+      };
+      return [...prev, newItem];
     });
   };
 
@@ -209,6 +247,8 @@ export default function POSPage() {
           productId: c.id,
           quantity: c.quantity,
           discountAmount: c.discountAmount,
+          variantId: c.variantId ?? undefined,
+          skuId: c.skuId ?? undefined,
         })),
         amountPaid,
         customerName,
@@ -304,9 +344,7 @@ export default function POSPage() {
                   // Mobile: 2 columns
                   "grid-cols-2",
                   // Tablet (768-1024px): no cart panel, more cols
-                  isSidebarCollapsed
-                    ? "md:grid-cols-4"
-                    : "md:grid-cols-3",
+                  isSidebarCollapsed ? "md:grid-cols-4" : "md:grid-cols-3",
                   // Desktop (1024px+): cart visible, reduce cols
                   !isCartVisible
                     ? isSidebarCollapsed
@@ -426,7 +464,17 @@ export default function POSPage() {
                         </span>
                         <Button
                           size="icon"
-                          onClick={() => addToCart(item)}
+                          onClick={() =>
+                            addToCart(
+                              { ...item, hasVariants: false, variants: [] },
+                              item.variantId,
+                              item.variantColor,
+                              item.skuId,
+                              item.skuSize,
+                              item.price,
+                              item.stock,
+                            )
+                          }
                           disabled={item.quantity >= item.stock}
                           className="h-9 w-9 bg-[#3C3025] hover:bg-[#5a4a38] text-white"
                         >

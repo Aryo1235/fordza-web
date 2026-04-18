@@ -14,6 +14,7 @@ import {
   deleteProductImage,
   addProductImage,
   getStockLogs,
+  getSkuStockLogs,
 } from "./api";
 import type { ProductFilters } from "./types";
 
@@ -22,7 +23,7 @@ export const productKeys = {
   all: ["products"] as const,
   adminList: (filters: ProductFilters) => ["products", "admin-list", filters] as const,
   detail: (id: string) => ["products", "detail", id] as const,
-  stockLogs: (params: any) => ["products", "stock-logs", params] as const,
+  stockLogs: (params: any) => ["products", "stock-logs", params.detail, params] as const,
 };
 
 /** List produk untuk halaman Admin (dengan pagination & filter) */
@@ -35,12 +36,29 @@ export function useProductsAdmin(filters: ProductFilters = {}, enabled: boolean 
   });
 }
 
-/** Hook untuk mengambil log pergerakan stok */
-export function useStockLogs(params: { page?: number; limit?: number; search?: string; type?: string } = {}) {
+/** Hook untuk mengambil log pergerakan stok universal */
+export function useStockLogs(
+  params: { page?: number; limit?: number; search?: string; type?: string } = {},
+  options: { enabled?: boolean } = {}
+) {
   return useQuery({
-    queryKey: productKeys.stockLogs(params),
+    queryKey: productKeys.stockLogs({ ...params, detail: "universal" }),
     queryFn: () => getStockLogs(params),
     placeholderData: (prev) => prev,
+    ...options,
+  });
+}
+
+/** Hook untuk mengambil log pergerakan stok level SKU (detail) */
+export function useSkuStockLogs(
+  params: { page?: number; limit?: number; search?: string; type?: string; productId?: string; skuId?: string } = {},
+  options: { enabled?: boolean } = {}
+) {
+  return useQuery({
+    queryKey: productKeys.stockLogs({ ...params, detail: "sku" }),
+    queryFn: () => getSkuStockLogs(params),
+    placeholderData: (prev) => prev,
+    ...options,
   });
 }
 

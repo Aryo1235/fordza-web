@@ -21,7 +21,7 @@
 export interface ProductFeature {
   id: string;
   categoryIds: string[]; // Array ID kategori produk
-  material: string; // Material produk (dari ProductDetail)
+  material: string; // Detail material produk (gabungan atau override)
   gender: string; // Gender produk (dari Product)
   productType: string; // Tipe produk (dari Product)
   price: number; // Harga produk (angka mentah)

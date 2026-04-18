@@ -35,18 +35,38 @@ export const TransactionService = {
    */
   async checkout(data: {
     kasirId: string;
-    items: { productId: string; quantity: number; discountAmount?: number }[];
+    items: {
+      productId: string;
+      quantity: number;
+      discountAmount?: number;
+      // SKU-based (produk dengan varian)
+      variantId?: string | null;
+      skuId?: string | null;
+    }[];
     amountPaid: number;
     customerName?: string;
     customerPhone?: string;
     adminPin?: string;
   }) {
-    const { kasirId, items, amountPaid, customerName, customerPhone, adminPin } = data;
+    const {
+      kasirId,
+      items,
+      amountPaid,
+      customerName,
+      customerPhone,
+      adminPin,
+    } = data;
 
-    // ✅ KEPUTUSAN BISNIS #1: Ambil data produk dari DB untuk validasi
+    // ✅ KEPUTUSAN BISNIS #1: Pisahkan item SKU-based dan product-based
+    const skuIds = items.filter((i) => i.skuId).map((i) => i.skuId as string);
     const productIds = items.map((i) => i.productId);
-    const dbProducts =
-      await TransactionRepository.findProductsByIds(productIds);
+
+    const [dbProducts, dbSkus] = await Promise.all([
+      TransactionRepository.findProductsByIds(productIds),
+      skuIds.length > 0
+        ? TransactionRepository.findSkusByIds(skuIds)
+        : Promise.resolve([]),
+    ]);
 
     // ✅ KEPUTUSAN BISNIS #2: Validasi stok & hitung total
     let totalPrice = 0;
@@ -57,43 +77,64 @@ export const TransactionService = {
       priceAtSale: number;
       productName: string;
       discountAmount: number;
+      variantId?: string | null;
+      variantColor?: string | null;
+      skuId?: string | null;
+      skuSize?: string | null;
     }[] = [];
 
     let totalDiscount = 0;
     for (const item of items) {
       const dbProduct = dbProducts.find((p) => p.id === item.productId);
-
-      if (!dbProduct) {
+      if (!dbProduct)
         throw new Error(`Produk tidak ditemukan: ${item.productId}`);
-      }
 
-      // ✅ KEPUTUSAN BISNIS #3: Stok tidak boleh kurang dari jumlah pesanan
-      if (dbProduct.stock < item.quantity) {
-        throw new Error(
-          `Stok ${dbProduct.name} tidak cukup (tersisa ${dbProduct.stock})`,
-        );
-      }
-
-      if (item.quantity <= 0) {
+      if (item.quantity <= 0)
         throw new Error(`Jumlah produk untuk ${dbProduct.name} tidak valid`);
+
+      let price: number;
+      let actualStock: number;
+      let variantId: string | null = null;
+      let variantColor: string | null = null;
+      let skuId: string | null = null;
+      let skuSize: string | null = null;
+
+      if (item.skuId) {
+        // Produk DENGAN varian + SKU
+        const dbSku = dbSkus.find((s) => s.id === item.skuId);
+        if (!dbSku) throw new Error(`SKU tidak ditemukan: ${item.skuId}`);
+
+        actualStock = dbSku.stock;
+        price = Number(dbSku.priceOverride ?? dbSku.variant.basePrice);
+        variantId = dbSku.variantId;
+        variantColor = dbSku.variant.color;
+        skuId = dbSku.id;
+        skuSize = dbSku.size;
+      } else {
+        // Produk TANPA varian: gunakan product.stock langsung
+        actualStock = dbProduct.stock;
+        price = Number(dbProduct.price ?? 0);
       }
 
-      const price = Number(dbProduct.price);
+      // ✅ Validasi stok
+      if (actualStock < item.quantity) {
+        const label = skuSize
+          ? `${dbProduct.name} (${variantColor} / Size ${skuSize})`
+          : dbProduct.name;
+        throw new Error(`Stok ${label} tidak cukup (tersisa ${actualStock})`);
+      }
+
       const itemSubtotal = price * item.quantity;
       const discount = Number(item.discountAmount || 0);
 
-      if (discount < 0) {
+      if (discount < 0)
         throw new Error(`Diskon untuk ${dbProduct.name} tidak boleh negatif`);
-      }
-
-      if (discount > itemSubtotal) {
+      if (discount > itemSubtotal)
         throw new Error(
           `Diskon ${dbProduct.name} tidak boleh lebih besar dari subtotal item (Rp ${itemSubtotal.toLocaleString("id-ID")})`,
         );
-      }
 
-      // ✅ KEPUTUSAN BISNIS #3.1: Hitung subtotal tiap item (Harga * Qty - Diskon)
-      totalPrice += price * item.quantity - discount;
+      totalPrice += itemSubtotal - discount;
       totalDiscount += discount;
 
       validatedItems.push({
@@ -101,8 +142,14 @@ export const TransactionService = {
         productCode: dbProduct.productCode || "-",
         quantity: item.quantity,
         priceAtSale: price,
-        productName: dbProduct.name,
+        productName: skuSize
+          ? `${dbProduct.name} - ${variantColor} / ${skuSize}`
+          : dbProduct.name,
         discountAmount: discount,
+        variantId,
+        variantColor,
+        skuId,
+        skuSize,
       });
     }
 
@@ -290,7 +337,13 @@ export const TransactionService = {
     // Serahkan ke Repository untuk proses VOID + kembalikan stok secara atomik
     await TransactionRepository.voidWithStockRestore(
       id,
-      items,
+      items.map((i) => ({
+        productId: i.productId,
+        quantity: i.quantity,
+        skuId: i.skuId ?? null,
+        skuSize: i.skuSize ?? null,
+        variantColor: i.variantColor ?? null,
+      })),
       cancelReason,
       operatorId,
     );

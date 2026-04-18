@@ -49,9 +49,10 @@ export function ImageUpload({
     try {
       setIsCompressing(true);
       const options = {
-        maxSizeMB: 1,
-        maxWidthOrHeight: 1920,
+        maxSizeMB: 0.8,
+        maxWidthOrHeight: 1200,
         useWebWorker: true,
+        fileType: "image/webp",
       };
       const compressedFile = await imageCompression(file, options);
       await onUpload(compressedFile);
@@ -82,7 +83,7 @@ export function ImageUpload({
   };
 
   return (
-    <div className={cn("space-y-4", className)}>
+    <div className={cn("flex flex-col h-full space-y-4", className)}>
       {/* List Gambar */}
       {images.length > 0 && (
         <div
@@ -90,7 +91,7 @@ export function ImageUpload({
             "grid gap-4",
             maxFiles === 1
               ? "grid-cols-1"
-              : "grid-cols-2 md:grid-cols-4 lg:grid-cols-5",
+              : "grid-cols-2",
           )}
         >
           {images.map((img) => (
@@ -132,8 +133,8 @@ export function ImageUpload({
         <div
           onClick={() => !isCompressing && fileInputRef.current?.click()}
           className={cn(
-            "flex w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed transition-colors",
-            maxFiles === 1 ? "aspect-video" : "aspect-square",
+            "flex w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed transition-colors min-h-[180px] mt-auto",
+            maxFiles === 1 ? "aspect-video" : "",
             isCompressing
               ? "border-muted-foreground/30 bg-muted/50 cursor-not-allowed"
               : "border-muted-foreground/30 hover:border-[#3C3025] hover:bg-secondary cursor-pointer",
@@ -149,11 +150,11 @@ export function ImageUpload({
           ) : (
             <>
               <UploadCloud className="h-8 w-8 text-muted-foreground mb-2" />
-              <p className="text-sm font-medium text-foreground">
-                Klik untuk unggah gambar
+              <p className="text-sm font-medium text-foreground text-center px-4">
+                {images.length === 0 ? "Unggah Gambar Utama" : "Tambah Gambar Lain"}
               </p>
-              <p className="text-xs text-muted-foreground mt-1">
-                JPG, PNG, WebP (Otomatis dikompres &lt; 1MB)
+              <p className="text-[10px] text-muted-foreground mt-1 text-center">
+                JPG, PNG, WebP
               </p>
             </>
           )}

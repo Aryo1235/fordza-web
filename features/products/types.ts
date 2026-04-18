@@ -17,8 +17,10 @@ export interface ProductCategory {
 export interface ProductDetail {
   description: string;
   notes?: string | null;
-  careInstructions?: string | null;
   material?: string | null;
+  upper?: string | null;
+  lining?: string | null;
+  insole?: string | null;
   closureType?: string | null;
   outsole?: string | null;
   origin?: string | null;
@@ -30,13 +32,35 @@ export interface ProductDetail {
   } | null;
 }
 
+export interface ProductSku {
+  id: string;
+  size: string;
+  stock: number;
+  priceOverride?: number | null; // null = pakai basePrice varian
+  isActive: boolean;
+  variantId: string;
+}
+
+export interface ProductVariant {
+  id: string;
+  variantCode: string;
+  color: string;
+  basePrice: number;
+  comparisonPrice?: number | null;
+  discountPercent?: number | null;
+  isActive: boolean;
+  skus: ProductSku[];
+  images: { id: string; url: string }[];
+}
+
 export interface Product {
   id: string;
   productCode: string;
   name: string;
   shortDescription: string;
-  price: number | string;
-  stock: number;
+  price?: number | string | null;       // Nullable: fallback dari varian termurah
+  discountPercent?: number | null;
+  stock: number;                         // Cached total semua SKU
   productType: string;
   gender: string;
   isPopular: boolean;
@@ -48,6 +72,7 @@ export interface Product {
   createdAt: string;
   images: ProductImage[];
   categories: ProductCategory[];
+  variants: ProductVariant[];           // Daftar varian warna + SKU
   detail?: ProductDetail | null;
 }
 

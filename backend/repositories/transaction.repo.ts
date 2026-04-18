@@ -52,10 +52,28 @@ export const TransactionRepository = {
     });
   },
 
-  // Ambil semua produk yang ID-nya ada di keranjang (untuk validasi stok di Service)
+  // Ambil semua produk yang ID-nya ada di keranjang (untuk validasi produk tanpa varian)
   async findProductsByIds(productIds: string[]) {
     return await prisma.product.findMany({
       where: { id: { in: productIds } },
+      include: {
+        variants: {
+          where: { isActive: true },
+          include: { skus: { where: { isActive: true } } },
+        },
+      },
+    });
+  },
+
+  // Ambil SKU berdasarkan ID (untuk validasi stok di Service)
+  async findSkusByIds(skuIds: string[]) {
+    return await prisma.productSku.findMany({
+      where: { id: { in: skuIds } },
+      include: {
+        variant: {
+          select: { color: true, basePrice: true, productId: true, product: { select: { name: true, productCode: true } } },
+        },
+      },
     });
   },
 
@@ -75,6 +93,11 @@ export const TransactionRepository = {
       priceAtSale: number;
       productName: string;
       discountAmount: number;
+      // Varian & SKU (null jika produk tanpa varian)
+      variantId?: string | null;
+      variantColor?: string | null;
+      skuId?: string | null;
+      skuSize?: string | null;
     }[];
   }) {
     return await prisma.$transaction(async (tx) => {
@@ -97,6 +120,10 @@ export const TransactionRepository = {
               priceAtSale: i.priceAtSale,
               productName: i.productName,
               discountAmount: i.discountAmount,
+              variantId: i.variantId ?? null,
+              variantColor: i.variantColor ?? null,
+              skuId: i.skuId ?? null,
+              skuSize: i.skuSize ?? null,
             })),
           },
         },
@@ -106,26 +133,69 @@ export const TransactionRepository = {
         },
       });
 
-      // LANGKAH 2: Kurangi stok setiap produk & CATAT LOG secara paralel
+      // LANGKAH 2: Kurangi stok — per SKU jika ada varian, per Product jika tidak
       await Promise.all(
         data.items.map(async (i) => {
-          // Update Stok
-          const updatedProduct = await tx.product.update({
-            where: { id: i.productId },
-            data: { stock: { decrement: i.quantity } },
-          });
+          if (i.skuId) {
+            // Produk DENGAN varian: kurangi stok di ProductSku
+            const updatedSku = await tx.productSku.update({
+              where: { id: i.skuId },
+              data: { stock: { decrement: i.quantity } },
+            });
 
-          // Catat Stock Log (Ledger)
-          await tx.stockLog.create({
-            data: {
-              productId: i.productId,
-              delta: -i.quantity,
-              currentStock: updatedProduct.stock,
-              type: "SALE",
-              notes: `Penjualan Invoice ${data.invoiceNo}`,
-              operatorId: data.kasirId,
-            },
-          });
+            // Catat SKU Stock Log
+            await tx.skuStockLog.create({
+              data: {
+                skuId: i.skuId,
+                delta: -i.quantity,
+                currentStock: updatedSku.stock,
+                size: i.skuSize || "-",
+                color: i.variantColor || "-",
+                type: "SALE",
+                notes: `Penjualan Invoice ${data.invoiceNo}`,
+                operatorId: data.kasirId,
+              },
+            });
+
+            // Rekalkulasi cached stock di Product induk
+            const totalStock = await tx.productSku.aggregate({
+              where: { variant: { productId: i.productId } },
+              _sum: { stock: true },
+            });
+            await tx.product.update({
+              where: { id: i.productId },
+              data: { stock: totalStock._sum.stock ?? 0 },
+            });
+
+            // Dual-Logging: Catat juga ke Stock Log level Produk (Master Log)
+            await tx.stockLog.create({
+              data: {
+                productId: i.productId,
+                delta: -i.quantity,
+                currentStock: totalStock._sum.stock ?? 0,
+                type: "SALE",
+                notes: `Penjualan Invoice ${data.invoiceNo} (${i.variantColor} - Size ${i.skuSize})`,
+                operatorId: data.kasirId,
+              },
+            });
+          } else {
+            // Produk TANPA varian: kurangi stok langsung di Product
+            const updatedProduct = await tx.product.update({
+              where: { id: i.productId },
+              data: { stock: { decrement: i.quantity } },
+            });
+
+            await tx.stockLog.create({
+              data: {
+                productId: i.productId,
+                delta: -i.quantity,
+                currentStock: updatedProduct.stock,
+                type: "SALE",
+                notes: `Penjualan Invoice ${data.invoiceNo}`,
+                operatorId: data.kasirId,
+              },
+            });
+          }
         }),
       );
 
@@ -211,6 +281,10 @@ export const TransactionRepository = {
             quantity: true,
             priceAtSale: true,
             discountAmount: true,
+            // SKU snapshot
+            variantColor: true,
+            skuSize: true,
+            skuId: true,
           },
         },
       },
@@ -236,38 +310,77 @@ export const TransactionRepository = {
   // Ubah status VOID + kembalikan stok dalam 1 operasi ACID
   async voidWithStockRestore(
     transactionId: string,
-    items: { productId: string; quantity: number }[],
+    items: { productId: string; quantity: number; skuId?: string | null; skuSize?: string | null; variantColor?: string | null }[],
     cancelReason: string,
     operatorId?: string,
   ) {
     return await prisma.$transaction(async (tx) => {
       await tx.transaction.update({
         where: { id: transactionId },
-        data: {
-          status: "VOID",
-          cancelReason,
-        },
+        data: { status: "VOID", cancelReason },
       });
 
       await Promise.all(
         items.map(async (i) => {
-          // Update Stok
-          const updatedProduct = await tx.product.update({
-            where: { id: i.productId },
-            data: { stock: { increment: i.quantity } },
-          });
+          if (i.skuId) {
+            // Produk DENGAN varian: kembalikan stok ke SKU
+            const updatedSku = await tx.productSku.update({
+              where: { id: i.skuId },
+              data: { stock: { increment: i.quantity } },
+            });
 
-          // Catat Stock Log (Ledger)
-          await tx.stockLog.create({
-            data: {
-              productId: i.productId,
-              delta: i.quantity,
-              currentStock: updatedProduct.stock,
-              type: "VOID",
-              notes: `Void Transaksi ID: ${transactionId}. Alasan: ${cancelReason}`,
-              operatorId: operatorId || null,
-            },
-          });
+            await tx.skuStockLog.create({
+              data: {
+                skuId: i.skuId,
+                delta: i.quantity,
+                currentStock: updatedSku.stock,
+                size: i.skuSize || "-",
+                color: i.variantColor || "-",
+                type: "VOID",
+                notes: `Void Transaksi ID: ${transactionId}. Alasan: ${cancelReason}`,
+                operatorId: operatorId || null,
+              },
+            });
+
+            // Rekalkulasi cached stock
+            const totalStock = await tx.productSku.aggregate({
+              where: { variant: { productId: i.productId } },
+              _sum: { stock: true },
+            });
+            await tx.product.update({
+              where: { id: i.productId },
+              data: { stock: totalStock._sum.stock ?? 0 },
+            });
+
+            // Dual-Logging: Catat juga ke Stock Log level Produk (Master Log)
+            await tx.stockLog.create({
+              data: {
+                productId: i.productId,
+                delta: i.quantity,
+                currentStock: totalStock._sum.stock ?? 0,
+                type: "VOID",
+                notes: `Void Transaksi ID: ${transactionId} (${i.variantColor} - Size ${i.skuSize})`,
+                operatorId: operatorId || null,
+              },
+            });
+          } else {
+            // Produk TANPA varian: kembalikan stok ke Product
+            const updatedProduct = await tx.product.update({
+              where: { id: i.productId },
+              data: { stock: { increment: i.quantity } },
+            });
+
+            await tx.stockLog.create({
+              data: {
+                productId: i.productId,
+                delta: i.quantity,
+                currentStock: updatedProduct.stock,
+                type: "VOID",
+                notes: `Void Transaksi ID: ${transactionId}. Alasan: ${cancelReason}`,
+                operatorId: operatorId || null,
+              },
+            });
+          }
         }),
       );
     });
@@ -311,10 +424,11 @@ export const TransactionRepository = {
       }),
     ]);
 
-    // Agregasi Produk Terjual secara manual untuk mendukung perhitungan Harga * Qty
+    // Agregasi per nama produk + variant (agar beda warna/ukuran tampil terpisah)
     const productAggregation: Record<string, any> = {};
     (rawItems || []).forEach((item: any) => {
-      const key = item.productId;
+      // Key unik: pakai skuId jika ada, fallback ke productId
+      const key = item.skuId ?? item.productId;
       if (!productAggregation[key]) {
         productAggregation[key] = {
           name: item.productName,
@@ -325,8 +439,7 @@ export const TransactionRepository = {
         };
       }
       productAggregation[key].quantity += item.quantity;
-      productAggregation[key].revenue +=
-        Number(item.priceAtSale) * item.quantity;
+      productAggregation[key].revenue += Number(item.priceAtSale) * item.quantity;
     });
 
     const aggregatedProducts = Object.values(productAggregation).sort(

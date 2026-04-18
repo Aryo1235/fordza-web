@@ -1,18 +1,54 @@
 // features/kasir/types.ts
 
+// Mewakili 1 varian warna dengan daftar SKU ukurannya
+export interface ProductVariantForKasir {
+  id: string;
+  color: string;
+  material?: string | null;
+  basePrice: number;
+  discountPercent?: number | null;
+  skus: {
+    id: string;
+    size: string;
+    stock: number;
+    priceOverride?: number | null; // null = pakai basePrice
+  }[];
+  images: { url: string }[];
+}
+
+// Produk yang ditampilkan di grid POS
 export interface Product {
   id: string;
   productCode: string | null;
   name: string;
-  price: number;
-  stock: number;
+  price: number;           // Harga terendah dari semua varian (untuk display)
+  stock: number;           // Cached total
   imageUrl: string | null;
   category: string | null;
+  hasVariants: boolean;    // TRUE jika produk punya varian (tampilkan modal pilih varian)
+  variants: ProductVariantForKasir[];
 }
 
-export interface CartItem extends Product {
+// 1 item di keranjang belanja — sudah termasuk pilihan varian & SKU
+export interface CartItem {
+  // Data produk induk
+  id: string;              // productId
+  productCode: string | null;
+  name: string;            // Misal: "Pantofel Fordza - Hitam / 42"
+  imageUrl: string | null;
+  category: string | null;
+
+  // Data SKU yang dipilih
+  price: number;           // Harga yang berlaku (priceOverride ?? basePrice)
+  stock: number;           // Stok SKU yang dipilih
   quantity: number;
-  discountAmount: number; // Diskon nominal (Rp)
+  discountAmount: number;  // Diskon nominal per item (Rp)
+
+  // Referensi varian & SKU
+  variantId: string | null;
+  variantColor: string | null;
+  skuId: string | null;
+  skuSize: string | null;
 }
 
 export interface Transaction {
@@ -29,19 +65,24 @@ export interface Transaction {
     name?: string;
     username: string;
   };
-  items: { 
-    id: string; 
-    productName: string; 
-    quantity: number; 
+  items: {
+    id: string;
+    productName: string;
+    quantity: number;
     priceAtSale: number;
     discountAmount: number;
+    variantColor?: string | null;
+    skuSize?: string | null;
   }[];
 }
 
+// Payload yang dikirim ke API checkout
 export interface CheckoutItem {
   productId: string;
   quantity: number;
   discountAmount: number;
+  variantId?: string | null;
+  skuId?: string | null;
 }
 
 export interface CheckoutPayload {

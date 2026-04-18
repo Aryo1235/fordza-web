@@ -45,20 +45,19 @@ export const RecommendationService = {
         shortDescription: true,
         avgRating: true,
         totalReviews: true,
-        // Ambil 1 gambar untuk thumbnail
         images: { take: 1, select: { id: true, url: true } },
-        // Kategori produk (untuk encoding)
         categories: {
           select: {
             categoryId: true,
-            category: {
-              select: { id: true, name: true },
-            },
+            category: { select: { id: true, name: true } },
           },
         },
-        // Detail produk (untuk material)
-        detail: {
-          select: { material: true },
+        detail: { select: { material: true } },
+        // Ambil material & basePrice varian aktif (untuk hitung harga terendah + material override)
+        variants: {
+          where: { isActive: true },
+          select: { basePrice: true },
+          take: 5,
         },
       },
     });
@@ -83,14 +82,24 @@ export const RecommendationService = {
     // -------------------------------------------------------
     // STEP 2: Transformasi ke format ProductFeature
     // -------------------------------------------------------
-    const features: ProductFeature[] = allProducts.map((product) => ({
-      id: product.id,
-      categoryIds: product.categories.map((c) => c.categoryId),
-      material: product.detail?.material || "unknown", // Default jika tidak ada
-      gender: product.gender || "unknown",
-      productType: product.productType || "unknown",
-      price: Number(product.price), // Decimal → number
-    }));
+    const features: ProductFeature[] = allProducts.map((product) => {
+      // Harga fitur KNN: pakai cached price jika ada, fallback ke varian termurah
+      const variantMinPrice = product.variants.length > 0
+        ? Math.min(...product.variants.map((v) => Number(v.basePrice)))
+        : 0;
+      const priceForFeature = product.price ? Number(product.price) : variantMinPrice;
+
+      const materialForFeature = product.detail?.material || "unknown";
+
+      return {
+        id: product.id,
+        categoryIds: product.categories.map((c) => c.categoryId),
+        material: materialForFeature,
+        gender: product.gender || "unknown",
+        productType: product.productType || "unknown",
+        price: priceForFeature,
+      };
+    });
 
     // -------------------------------------------------------
     // STEP 3 & 4: Dimensi Adaptif & Vektorisasi (One-Hot + Normalisasi)
