@@ -33,9 +33,10 @@ interface ProductFormProps {
   initialData?: ProductFormValues & { id?: string };
   onSubmit: (data: ProductFormValues) => void;
   isLoading?: boolean;
+  submitLabel?: string; // Override teks tombol simpan
 }
 
-export function ProductForm({ initialData, onSubmit, isLoading }: ProductFormProps) {
+export function ProductForm({ initialData, onSubmit, isLoading, submitLabel }: ProductFormProps) {
   const {
     register,
     handleSubmit,
@@ -48,16 +49,13 @@ export function ProductForm({ initialData, onSubmit, isLoading }: ProductFormPro
       name: "",
       shortDescription: "",
       description: "",
-      price: 0,
-      stock: 0,
       productType: "shoes",
       gender: "Unisex",
       material: "",
-      closureType: "",
       outsole: "",
+      closureType: "",
       origin: "",
       notes: "",
-      careInstructions: "",
       isActive: true,
       categoryIds: [],
       sizeTemplateId: "",
@@ -98,26 +96,53 @@ export function ProductForm({ initialData, onSubmit, isLoading }: ProductFormPro
           </div>
 
           <div className="space-y-1.5">
-            <Label>Kategori</Label>
+            <Label>Kategori <span className="text-red-500">*</span></Label>
             <Controller
               control={control}
               name="categoryIds"
               render={({ field }) => (
-                <Select
-                  value={field.value?.[0] || ""}
-                  onValueChange={(val) => field.onChange(val ? [val] : [])}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="-- Pilih Kategori --" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((c: any) => (
-                      <SelectItem key={c.id} value={c.id}>
-                        {c.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <>
+                  <Select
+                    value={field.value?.[0] || ""}
+                    onValueChange={(val) => {
+                      const current = field.value || [];
+                      if (val && !current.includes(val)) {
+                        field.onChange([...current, val]);
+                      }
+                    }}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="-- Tambah Kategori --" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map((c: any) => (
+                        <SelectItem key={c.id} value={c.id}>
+                          {c.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  {field.value && field.value.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {field.value.map((id: string) => {
+                        const cat = categories.find((c: any) => c.id === id);
+                        return (
+                          <div key={id} className="flex items-center gap-1 px-2 py-1 rounded-md bg-stone-100 text-xs text-stone-700 border border-stone-200">
+                            {cat?.name || id}
+                            <button
+                              type="button"
+                              className="ml-1 text-stone-400 hover:text-red-500"
+                              onClick={() => field.onChange(field.value.filter((i: string) => i !== id))}
+                            >
+                              ×
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </>
               )}
             />
             {errors.categoryIds && <p className="text-xs text-red-500">{errors.categoryIds.message}</p>}
@@ -125,7 +150,7 @@ export function ProductForm({ initialData, onSubmit, isLoading }: ProductFormPro
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label>Tipe Produk</Label>
+              <Label>Tipe Produk <span className="text-red-500">*</span></Label>
               <Controller
                 control={control}
                 name="productType"
@@ -164,39 +189,10 @@ export function ProductForm({ initialData, onSubmit, isLoading }: ProductFormPro
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <Label>Harga (Rp)</Label>
-              <Controller
-                control={control}
-                name="price"
-                render={({ field }) => (
-                  <Input
-                    type="text"
-                    value={formatNumber(field.value)}
-                    onChange={(e) => field.onChange(parseNumber(e.target.value))}
-                    placeholder="0"
-                  />
-                )}
-              />
-              {errors.price && <p className="text-xs text-red-500">{errors.price.message}</p>}
-            </div>
-            <div className="space-y-1.5">
-              <Label>Stok</Label>
-              <Controller
-                control={control}
-                name="stock"
-                render={({ field }) => (
-                  <Input
-                    type="text"
-                    value={formatNumber(field.value)}
-                    onChange={(e) => field.onChange(parseNumber(e.target.value))}
-                    placeholder="0"
-                  />
-                )}
-              />
-              {errors.stock && <p className="text-xs text-red-500">{errors.stock.message}</p>}
-            </div>
+          {/* Info: Harga & Stok dikelola di Varian */}
+          <div className="rounded-md bg-amber-50 border border-amber-200 p-3 text-sm text-amber-800">
+            <span className="font-semibold">ℹ️ Harga & Stok</span> dikelola per warna di bagian{" "}
+            <span className="font-semibold">"Manajemen Varian"</span> setelah produk disimpan.
           </div>
         </div>
 
@@ -217,32 +213,30 @@ export function ProductForm({ initialData, onSubmit, isLoading }: ProductFormPro
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label>Material / Bahan</Label>
-              <Input {...register("material")} placeholder="Cth: Leather" />
+              <Label>Material Utama (Global) <span className="text-red-500">*</span></Label>
+              <Input {...register("material")} placeholder="Cth: Genuine Leather / Suede" />
+              {errors.material && <p className="text-xs text-red-500">{errors.material.message}</p>}
             </div>
             <div className="space-y-1.5">
-              <Label>Penutup (Closure)</Label>
-              <Input {...register("closureType")} placeholder="Cth: Laces/Slip-on" />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Outsole (Sol)</Label>
-              <Input {...register("outsole")} placeholder="Cth: Rubber" />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Asal / Pembuatan</Label>
-              <Input {...register("origin")} placeholder="Cth: Lokal" />
+              <Label>Material Sol (Outsole)</Label>
+              <Input {...register("outsole")} placeholder="Cth: Rubber / TPR / Leather" />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label>Catatan Tambahan</Label>
-              <Input {...register("notes")} placeholder="Opsional" />
+              <Label>Tipe Penutup / Konstruksi</Label>
+              <Input {...register("closureType")} placeholder="Cth: Laces / Slip-on / Stitching" />
             </div>
             <div className="space-y-1.5">
-              <Label>Perawatan</Label>
-              <Input {...register("careInstructions")} placeholder="Opsional" />
+              <Label>Asal / Pembuatan</Label>
+              <Input {...register("origin")} placeholder="Cth: Lokal Indonesia" />
             </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>Catatan (Opsional)</Label>
+            <Input {...register("notes")} placeholder="Cth: Cocok untuk acara formal, size cenderung kecil, dll" />
           </div>
 
           <div className="space-y-1.5">
@@ -271,47 +265,46 @@ export function ProductForm({ initialData, onSubmit, isLoading }: ProductFormPro
             />
           </div>
 
-          <div className="flex flex-col gap-2 rounded-lg border p-4 shadow-sm">
-            <div className="flex flex-row items-center justify-between w-full">
+          <div className="pt-6 border-t border-stone-100 grid grid-cols-2 gap-4">
+            <div className="flex items-center justify-between p-3 rounded-xl bg-stone-50 border border-stone-100 shadow-sm">
               <div className="space-y-0.5">
-                <Label className="text-base">Tampil di Toko</Label>
-                <p className="text-sm text-muted-foreground">Aktifkan agar produk terlihat (Bukan Draft).</p>
+                <Label className="text-[10px] font-bold uppercase text-stone-500">Tampil di Toko</Label>
+                <p className="text-[9px] text-stone-400 italic font-mono">PUBLISHED</p>
               </div>
               <Controller control={control} name="isActive" render={({ field }) => (
-                <Switch checked={field.value} onCheckedChange={field.onChange} />
+                <Switch checked={field.value} onCheckedChange={field.onChange} className="scale-75" />
               )} />
             </div>
-            {errors.isActive && <p className="text-xs text-red-500 font-medium">{errors.isActive.message}</p>}
-          </div>
 
-          <div className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm">
-            <div className="space-y-0.5">
-              <Label className="text-base">Lebih Populer</Label>
-              <p className="text-sm text-muted-foreground">Tandai jika ini produk unggulan.</p>
+            <div className="flex items-center justify-between p-3 rounded-xl bg-stone-50 border border-stone-100 shadow-sm">
+              <div className="space-y-0.5">
+                <Label className="text-[10px] font-bold uppercase text-stone-500">Lebih Populer</Label>
+                <p className="text-[9px] text-stone-400 italic font-mono">TRENDING</p>
+              </div>
+              <Controller control={control} name="isPopular" render={({ field }) => (
+                <Switch checked={field.value} onCheckedChange={field.onChange} className="scale-75" />
+              )} />
             </div>
-            <Controller control={control} name="isPopular" render={({ field }) => (
-              <Switch checked={field.value} onCheckedChange={field.onChange} />
-            )} />
-          </div>
 
-          <div className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm">
-            <div className="space-y-0.5">
-              <Label className="text-base">Paling Laris</Label>
-              <p className="text-sm text-muted-foreground">Beri predikat "Best Seller".</p>
+            <div className="flex items-center justify-between p-3 rounded-xl bg-stone-50 border border-stone-100 shadow-sm">
+              <div className="space-y-0.5">
+                <Label className="text-[10px] font-bold uppercase text-stone-500">Paling Laris</Label>
+                <p className="text-[9px] text-stone-400 italic font-mono">BEST SELLER</p>
+              </div>
+              <Controller control={control} name="isBestseller" render={({ field }) => (
+                <Switch checked={field.value} onCheckedChange={field.onChange} className="scale-75" />
+              )} />
             </div>
-            <Controller control={control} name="isBestseller" render={({ field }) => (
-              <Switch checked={field.value} onCheckedChange={field.onChange} />
-            )} />
-          </div>
 
-          <div className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm">
-            <div className="space-y-0.5">
-              <Label className="text-base">Produk Baru</Label>
-              <p className="text-sm text-muted-foreground">Beri label "New Arrival".</p>
+            <div className="flex items-center justify-between p-3 rounded-xl bg-stone-50 border border-stone-100 shadow-sm">
+              <div className="space-y-0.5">
+                <Label className="text-[10px] font-bold uppercase text-stone-500">Produk Baru</Label>
+                <p className="text-[9px] text-stone-400 italic font-mono">NEW ARRIVAL</p>
+              </div>
+              <Controller control={control} name="isNew" render={({ field }) => (
+                <Switch checked={field.value} onCheckedChange={field.onChange} className="scale-75" />
+              )} />
             </div>
-            <Controller control={control} name="isNew" render={({ field }) => (
-              <Switch checked={field.value} onCheckedChange={field.onChange} />
-            )} />
           </div>
         </div>
       </div>
@@ -327,7 +320,7 @@ export function ProductForm({ initialData, onSubmit, isLoading }: ProductFormPro
         </Button>
         <Button type="submit" disabled={isLoading} className="bg-[#3C3025] hover:bg-[#5a4a38] text-white">
           {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {initialData?.id ? "Simpan Perubahan" : "Simpan Produk"}
+          {submitLabel ?? (initialData?.id ? "Simpan Perubahan" : "Simpan Produk")}
         </Button>
       </div>
     </form>

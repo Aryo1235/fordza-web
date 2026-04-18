@@ -1,14 +1,21 @@
 import { NextResponse } from "next/server";
 import { AdminService } from "@/backend/services/admin.service";
+import { Role } from "@/app/generated/prisma/client";
 import bcrypt from "bcryptjs";
+
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  return "Unknown error";
+}
 
 // GET: List all users
 export async function GET() {
   try {
     const users = await AdminService.getAllUsers();
     return NextResponse.json({ success: true, data: users });
-  } catch (error: any) {
-    console.error("GET /api/admin/users error:", error.message);
+  } catch (error: unknown) {
+    const errorMessage = getErrorMessage(error);
+    console.error("GET /api/admin/users error:", errorMessage);
     return NextResponse.json(
       { success: false, message: "Gagal mengambil daftar user" },
       { status: 500 }
@@ -31,14 +38,16 @@ export async function POST(req: Request) {
 
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 12);
+    const hashedPin = pin ? await bcrypt.hash(String(pin), 12) : undefined;
+
+    const normalizedRole = role === "ADMIN" ? Role.ADMIN : Role.KASIR;
 
     const newUser = await AdminService.create({
       username,
       password: hashedPassword,
       name,
-      // @ts-ignore
-      role,
-      pin,
+      role: normalizedRole,
+      pin: hashedPin,
     });
 
     return NextResponse.json({
@@ -46,10 +55,16 @@ export async function POST(req: Request) {
       message: "User berhasil dibuat",
       data: { id: newUser.id, username: newUser.username },
     });
-  } catch (error: any) {
-    console.error("POST /api/admin/users error:", error.message);
-    
-    if (error.code === "P2002") {
+  } catch (error: unknown) {
+    const errorMessage = getErrorMessage(error);
+    console.error("POST /api/admin/users error:", errorMessage);
+
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      error.code === "P2002"
+    ) {
       return NextResponse.json(
         { success: false, message: "Username sudah digunakan" },
         { status: 400 }

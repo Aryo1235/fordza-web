@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { 
+import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -18,13 +18,20 @@ interface QuickStockCheckProps {
   onClose: () => void;
 }
 
-export default function QuickStockCheck({ isOpen, onClose }: QuickStockCheckProps) {
+export default function QuickStockCheck({
+  isOpen,
+  onClose,
+}: QuickStockCheckProps) {
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 300);
-  
+
   // Ambil data produk menggunakan hook yang sudah ada
-  const { data: productsData, isLoading } = useKasirProducts(debouncedSearch, isOpen);
-  
+  const {
+    data: productsData,
+    isLoading,
+    isFetching,
+  } = useKasirProducts(debouncedSearch, isOpen);
+
   // Ratakan data dari infinite query
   const products = productsData?.pages.flatMap((page) => page.data) || [];
 
@@ -36,14 +43,14 @@ export default function QuickStockCheck({ isOpen, onClose }: QuickStockCheckProp
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[550px] p-0 overflow-hidden gap-0">
+      <DialogContent className="sm:max-w-137.5 p-0 overflow-hidden gap-0">
         <DialogHeader className="p-4 border-b">
           <DialogTitle className="flex items-center gap-2 text-stone-700">
             <Package className="w-5 h-5" />
             Cek Stok Cepat
           </DialogTitle>
         </DialogHeader>
-        
+
         <div className="p-4 bg-stone-50 border-b">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
@@ -54,41 +61,64 @@ export default function QuickStockCheck({ isOpen, onClose }: QuickStockCheckProp
               onChange={(e) => setSearch(e.target.value)}
               autoFocus
             />
-            {isLoading && (
+            {isFetching && (
               <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400 animate-spin" />
             )}
           </div>
         </div>
 
-        <div className="max-h-[350px] overflow-y-auto">
-          {products.length === 0 && !isLoading ? (
+        <div className="relative max-h-87.5 overflow-y-auto">
+          {isLoading && products.length === 0 ? (
+            <div className="p-12 text-center text-stone-400 flex flex-col items-center gap-2">
+              <Loader2 className="w-5 h-5 animate-spin text-stone-500" />
+              <p className="text-sm">Memuat stok...</p>
+            </div>
+          ) : products.length === 0 ? (
             <div className="p-12 text-center text-stone-400">
-              <p className="text-sm">Tidak ada produk ditemukan untuk "{search}"</p>
+              <p className="text-sm">
+                Tidak ada produk ditemukan untuk "{search}"
+              </p>
             </div>
           ) : (
             <div className="divide-y divide-stone-100">
               {products.map((product) => (
-                <div key={product.id} className="p-4 flex items-center justify-between hover:bg-stone-50 transition-colors">
+                <div
+                  key={product.id}
+                  className="p-4 flex items-center justify-between hover:bg-stone-50 transition-colors"
+                >
                   <div className="space-y-1">
                     <p className="text-xs font-mono font-bold text-stone-400 uppercase">
                       {product.productCode || "TANPA KODE"}
                     </p>
-                    <p className="text-sm font-semibold text-stone-800">{product.name}</p>
+                    <p className="text-sm font-semibold text-stone-800">
+                      {product.name}
+                    </p>
                     <p className="text-xs text-stone-500">{product.category}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-xs text-stone-500 mb-1">Stok Fisik</p>
-                    <div className={cn(
-                      "inline-flex items-center justify-center px-2.5 py-1 rounded-sm text-sm font-bold min-w-[40px]",
-                      product.stock <= 5 
-                        ? "bg-red-100 text-red-700" 
-                        : "bg-stone-100 text-stone-700"
-                    )}>
+                    <div
+                      className={cn(
+                        "inline-flex items-center justify-center px-2.5 py-1 rounded-sm text-sm font-bold min-w-10",
+                        product.stock <= 5
+                          ? "bg-red-100 text-red-700"
+                          : "bg-stone-100 text-stone-700",
+                      )}
+                    >
                       {product.stock}
                     </div>
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+
+          {isFetching && products.length > 0 && (
+            <div className="pointer-events-none absolute inset-x-0 top-0 flex justify-center py-2">
+              <div className="inline-flex items-center gap-2 rounded-full bg-white/95 px-3 py-1 text-[11px] font-semibold text-stone-500 shadow-sm border border-stone-200">
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                Memperbarui hasil...
+              </div>
             </div>
           )}
         </div>

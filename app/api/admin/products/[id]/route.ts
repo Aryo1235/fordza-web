@@ -61,8 +61,7 @@ export async function PUT(
     const updateData: any = {};
     const fields = [
       "productCode", "name", "shortDescription", "productType", "gender",
-      "description", "material", "closureType", "outsole",
-      "origin", "notes", "careInstructions", "sizeTemplateId",
+      "description", "material", "closureType", "outsole", "origin", "notes", "sizeTemplateId",
     ];
 
     for (const field of fields) {
@@ -70,13 +69,7 @@ export async function PUT(
       if (value !== null) updateData[field] = value;
     }
 
-    // Price
-    const price = formData.get("price");
-    if (price !== null) updateData.price = parseFloat(price as string);
-
-    // Stock
-    const stock = formData.get("stock");
-    if (stock !== null) updateData.stock = parseInt(stock as string, 10);
+    // price & stock tidak diparse dari form induk — dikelola via varian
 
     // Flags
     if (formData.get("isPopular") !== null) updateData.isPopular = formData.get("isPopular") === "true";

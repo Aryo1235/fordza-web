@@ -7,6 +7,17 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
+function extractErrorMessage(error: unknown, fallback: string) {
+  const maybeMessage = (error as any)?.response?.data?.message;
+  if (typeof maybeMessage === "string" && maybeMessage.trim())
+    return maybeMessage;
+
+  const message = (error as any)?.message;
+  if (typeof message === "string" && message.trim()) return message;
+
+  return fallback;
+}
+
 interface ImageUploadProps {
   images: { id: string; url: string }[];
   onUpload: (file: File) => Promise<void>;
@@ -38,15 +49,21 @@ export function ImageUpload({
     try {
       setIsCompressing(true);
       const options = {
-        maxSizeMB: 1,
-        maxWidthOrHeight: 1920,
+        maxSizeMB: 0.8,
+        maxWidthOrHeight: 1200,
         useWebWorker: true,
+        fileType: "image/webp",
       };
       const compressedFile = await imageCompression(file, options);
       await onUpload(compressedFile);
     } catch (error) {
       console.error(error);
-      toast.error("Gagal mengunggah gambar. Pastikan format didukung.");
+      toast.error(
+        extractErrorMessage(
+          error,
+          "Gagal mengunggah gambar. Pastikan format didukung.",
+        ),
+      );
     } finally {
       setIsCompressing(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -59,14 +76,14 @@ export function ImageUpload({
       await onRemove(id);
     } catch (error) {
       console.error(error);
-      toast.error("Gagal menghapus gambar");
+      toast.error(extractErrorMessage(error, "Gagal menghapus gambar"));
     } finally {
       setLoadingId(null);
     }
   };
 
   return (
-    <div className={cn("space-y-4", className)}>
+    <div className={cn("flex flex-col h-full space-y-4", className)}>
       {/* List Gambar */}
       {images.length > 0 && (
         <div
@@ -74,7 +91,7 @@ export function ImageUpload({
             "grid gap-4",
             maxFiles === 1
               ? "grid-cols-1"
-              : "grid-cols-2 md:grid-cols-4 lg:grid-cols-5"
+              : "grid-cols-2",
           )}
         >
           {images.map((img) => (
@@ -82,7 +99,7 @@ export function ImageUpload({
               key={img.id}
               className={cn(
                 "group relative h-32 w-full overflow-hidden rounded-lg bg-gray-100 border border-border",
-                maxFiles === 1 ? "aspect-video" : "aspect-square"
+                maxFiles === 1 ? "aspect-video" : "aspect-square",
               )}
             >
               <img
@@ -116,24 +133,28 @@ export function ImageUpload({
         <div
           onClick={() => !isCompressing && fileInputRef.current?.click()}
           className={cn(
-            "flex w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed transition-colors",
-            maxFiles === 1 ? "aspect-video" : "aspect-square",
+            "flex w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed transition-colors min-h-[180px] mt-auto",
+            maxFiles === 1 ? "aspect-video" : "",
             isCompressing
               ? "border-muted-foreground/30 bg-muted/50 cursor-not-allowed"
-              : "border-muted-foreground/30 hover:border-[#3C3025] hover:bg-secondary cursor-pointer"
+              : "border-muted-foreground/30 hover:border-[#3C3025] hover:bg-secondary cursor-pointer",
           )}
         >
           {isCompressing ? (
             <>
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground mb-2" />
-              <p className="text-sm text-muted-foreground">Mengompres & Mengunggah...</p>
+              <p className="text-sm text-muted-foreground">
+                Mengompres & Mengunggah...
+              </p>
             </>
           ) : (
             <>
               <UploadCloud className="h-8 w-8 text-muted-foreground mb-2" />
-              <p className="text-sm font-medium text-foreground">Klik untuk unggah gambar</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                JPG, PNG, WebP (Otomatis dikompres &lt; 1MB)
+              <p className="text-sm font-medium text-foreground text-center px-4">
+                {images.length === 0 ? "Unggah Gambar Utama" : "Tambah Gambar Lain"}
+              </p>
+              <p className="text-[10px] text-muted-foreground mt-1 text-center">
+                JPG, PNG, WebP
               </p>
             </>
           )}

@@ -31,7 +31,7 @@ export const AdminRepository = {
     });
   },
 
-  async create(data: { username: string; password: string; name?: string; role?: any; pin?: string }) {
+  async create(data: { username: string; password: string; name?: string; role?: Role; pin?: string }) {
     return await prisma.admin.create({
       data: {
         username: data.username,
@@ -55,14 +55,14 @@ export const AdminRepository = {
     });
   },
 
-  async findByPin(pin: string) {
-    // Cari admin berdasarkan PIN (hanya role ADMIN yang bisa otorisasi)
-    return await prisma.admin.findFirst({
-      where: { pin, role: "ADMIN" },
+  async findAdminPinCandidates() {
+    return await prisma.admin.findMany({
+      where: { role: "ADMIN", pin: { not: null } },
       select: {
         id: true,
         name: true,
         username: true,
+        pin: true,
       },
     });
   },
@@ -74,7 +74,6 @@ export const AdminRepository = {
         username: true,
         name: true,
         role: true,
-        pin: true,
         createdAt: true,
       },
       orderBy: { createdAt: "desc" },

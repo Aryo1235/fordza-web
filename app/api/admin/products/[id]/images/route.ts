@@ -35,7 +35,7 @@ export async function POST(
     // Upload ke S3
     const uploadForm = new FormData();
     uploadForm.append("file", file);
-    const res = await uploadFileToS3(uploadForm, "products");
+    const res = await uploadFileToS3(uploadForm, `products/${id}`);
 
     if (!res.success) {
       return NextResponse.json(

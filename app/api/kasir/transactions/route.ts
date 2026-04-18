@@ -32,7 +32,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { items, amountPaid, customerName, customerPhone } = body;
+    const { items, amountPaid, customerName, customerPhone, adminPin } = body;
 
     // Kasir ID diambil dari header (diset oleh middleware auth)
     const kasirId = request.headers.get("x-user-id");
@@ -65,7 +65,8 @@ export async function POST(request: Request) {
       items, 
       amountPaid,
       customerName,
-      customerPhone
+      customerPhone,
+      adminPin,
     });
 
     return NextResponse.json({
@@ -81,6 +82,9 @@ export async function POST(request: Request) {
       "tidak cukup",
       "tidak ditemukan",
       "kurang dari",
+      "tidak boleh",
+      "membutuhkan otorisasi",
+      "PIN Admin salah",
     ].some((msg) => error.message?.includes(msg));
 
     return NextResponse.json(

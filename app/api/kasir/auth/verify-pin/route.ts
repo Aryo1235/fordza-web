@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { AdminRepository } from "@/backend/repositories/admin.repo";
+import { AdminService } from "@/backend/services/admin.service";
 
 export async function POST(req: Request) {
   try {
@@ -12,7 +12,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const admin = await AdminRepository.findByPin(pin);
+    const admin = await AdminService.verifyAdminPin(pin);
 
     if (!admin) {
       return NextResponse.json(

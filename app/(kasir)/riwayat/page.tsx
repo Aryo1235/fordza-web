@@ -92,10 +92,10 @@ export default function RiwayatPage() {
   }, [debouncedSearch, dateFrom, dateTo, selectedKasirId]);
 
   return (
-    <div className="p-4 md:p-6 max-w-6xl mx-auto ">
-      <div className="flex items-center gap-4 mb-6">
-        <SidebarTrigger className="text-stone-500 md:hidden" />
-        <div>
+    <div className="p-4 md:p-6 w-full">
+      <div className="flex items-start gap-4 mb-6">
+        <SidebarTrigger className="-ml-2 text-stone-500 hover:bg-stone-200/50 mt-0.5 md:mt-0" />
+        <div className="flex flex-col items-start">
           <h1 className="text-xl font-bold text-stone-800">
             Riwayat Transaksi
           </h1>
@@ -105,9 +105,10 @@ export default function RiwayatPage() {
         </div>
       </div>
 
+
       {/* Filter Bar */}
-      <div className="bg-white border border-stone-200 rounded-md p-4 mb-6 flex flex-wrap gap-4 items-end shadow-sm">
-        <div className="flex-1 min-w-[300px] space-y-1.5">
+      <div className="bg-white border border-stone-200 rounded-md p-4 mb-6  flex flex-wrap gap-4 items-end shadow-sm ">
+        <div className="flex-1  space-y-1.5">
           <Label className="text-xs text-stone-500 font-medium">
             Cari No. Invoice
           </Label>
@@ -190,7 +191,7 @@ export default function RiwayatPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-white border border-stone-200 rounded-sm ">
+      <div className="bg-white border border-stone-200 rounded-sm overflow-x-auto">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>

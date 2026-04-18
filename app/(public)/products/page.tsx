@@ -12,6 +12,8 @@ interface Product {
   totalReviews: number;
   images: { id: string; url: string }[];
   categories: { category: { id: string; name: string } }[];
+  detail?: { material: string | null };
+  variants: { basePrice: any; discountPercent: number | null }[];
 }
 
 interface Meta {
@@ -134,6 +136,13 @@ export default function ProductsPage() {
                     {product.name}
                   </h3>
 
+                  {/* Material Info */}
+                  {product.detail?.material && (
+                    <p className="mt-1 text-[10px] text-zinc-500 uppercase tracking-tighter font-medium">
+                      Bahan: {product.detail.material}
+                    </p>
+                  )}
+
                   {/* Rating */}
                   {product.totalReviews > 0 && (
                     <div className="mt-1 flex items-center gap-1 text-xs text-zinc-500">
@@ -143,9 +152,32 @@ export default function ProductsPage() {
                     </div>
                   )}
 
-                  <p className="mt-2 text-sm font-bold text-zinc-900">
-                    {formatRupiah(product.price)}
-                  </p>
+                  <div className="mt-2 flex flex-col">
+                    {/* Hitung harga final secara lokal untuk keamanan data */}
+                    {(() => {
+                      const basePrice = Number(product.variants?.[0]?.basePrice || product.price);
+                      const discount = product.variants?.[0]?.discountPercent || 0;
+                      const finalPrice = discount > 0 ? basePrice * (1 - discount / 100) : Number(product.price);
+                      
+                      return (
+                        <>
+                          <p className="text-sm font-bold text-zinc-900">
+                            {formatRupiah(finalPrice)}
+                          </p>
+                          {discount > 0 && (
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] text-zinc-400 line-through">
+                                {formatRupiah(basePrice)}
+                              </span>
+                              <span className="text-[10px] font-bold text-red-500">
+                                -{discount}%
+                              </span>
+                            </div>
+                          )}
+                        </>
+                      );
+                    })()}
+                  </div>
                 </div>
               </Link>
             ))}

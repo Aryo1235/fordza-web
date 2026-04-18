@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { use } from "react";
 import { RelatedProducts } from "@/features/products";
+import { cn } from "@/lib/utils";
 
 interface ProductDetail {
   id: string;
@@ -24,8 +25,8 @@ interface ProductDetail {
     notes: string | null;
     careInstructions: string | null;
     material: string | null;
-    closureType: string | null;
     outsole: string | null;
+    closureType: string | null;
     origin: string | null;
     sizeTemplate: { id: string; name: string; type: string; sizes: string[] } | null;
   } | null;
@@ -35,6 +36,13 @@ interface ProductDetail {
     rating: number;
     content: string;
     createdAt: string;
+  }[];
+  variants: {
+    id: string;
+    color: string;
+    basePrice: any;
+    comparisonPrice: any;
+    discountPercent: number | null;
   }[];
 }
 
@@ -47,6 +55,7 @@ export default function ProductDetailPage({
   const [product, setProduct] = useState<ProductDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
+  const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null);
 
   useEffect(() => {
     setLoading(true);
@@ -55,11 +64,42 @@ export default function ProductDetailPage({
       .then((json) => {
         if (json.success) {
           setProduct(json.data);
+          if (json.data.variants?.length > 0) {
+            setSelectedVariantId(json.data.variants[0].id);
+          }
         }
       })
       .catch((err) => console.error(err))
       .finally(() => setLoading(false));
   }, [id]);
+
+  // Derived selected variant
+  const selectedVariant = product?.variants.find(v => v.id === selectedVariantId) || (product?.variants?.[0] || null);
+
+  // Derived Gallery Images (General + Selected Variant Images)
+  const galleryImages = useMemo(() => {
+    if (!product) return [];
+    
+    // Start with general product images
+    const images = [...product.images];
+    
+    // If a variant is selected AND it has images, we want to prioritize/include them
+    if (selectedVariant && (selectedVariant as any).images?.length > 0) {
+      const variantImgs = (selectedVariant as any).images;
+      // Prepend or replace? The user said: "muncul gambar ittuh tergantung ia klik warna hitam atau coklat"
+      // Let's prepend them so they appear first
+      return [...variantImgs, ...images];
+    }
+    
+    return images;
+  }, [product, selectedVariant]);
+
+  // When variant changes, reset gallery to first image (which will be the variant image)
+  useEffect(() => {
+    if (selectedVariantId) {
+       setSelectedImage(0);
+    }
+  }, [selectedVariantId]);
 
   const formatRupiah = (price: string | number) => {
     return new Intl.NumberFormat("id-ID", {
@@ -130,9 +170,9 @@ export default function ProductDetailPage({
           <div className="space-y-3">
             <div className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-zinc-100">
               <div className="relative aspect-square">
-                {product.images[selectedImage] ? (
+                {galleryImages[selectedImage] ? (
                   <img
-                    src={product.images[selectedImage].url}
+                    src={galleryImages[selectedImage].url}
                     alt={product.name}
                     className="h-full w-full object-cover"
                   />
@@ -147,11 +187,11 @@ export default function ProductDetailPage({
             </div>
 
             {/* Thumbnails */}
-            {product.images.length > 1 && (
-              <div className="flex gap-2 overflow-x-auto">
-                {product.images.map((img, idx) => (
+            {galleryImages.length > 1 && (
+              <div className="flex gap-2 overflow-x-auto pb-2">
+                {galleryImages.map((img: any, idx: number) => (
                   <button
-                    key={img.id}
+                    key={img.id || idx}
                     onClick={() => setSelectedImage(idx)}
                     className={`flex-shrink-0 overflow-hidden rounded-lg ring-2 transition-all ${
                       idx === selectedImage
@@ -223,7 +263,73 @@ export default function ProductDetailPage({
             )}
 
             {/* Price */}
-            <p className="text-3xl font-bold text-zinc-900">{formatRupiah(product.price)}</p>
+            <div className="flex flex-col gap-1">
+               {(() => {
+                   const finalPrice = Number(selectedVariant?.basePrice || product.price);
+                   const gimmickPrice = selectedVariant?.comparisonPrice ? Number(selectedVariant.comparisonPrice) : null;
+                   const discount = selectedVariant?.discountPercent ? Math.round(selectedVariant.discountPercent) : 0;
+
+                   return (
+                       <>
+                           <p className="text-3xl font-bold text-zinc-900">{formatRupiah(finalPrice)}</p>
+                           {gimmickPrice && gimmickPrice > finalPrice && (
+                               <div className="flex items-center gap-2">
+                                   <span className="text-sm text-zinc-400 line-through">
+                                       {formatRupiah(gimmickPrice)}
+                                   </span>
+                                   <span className="rounded-md bg-red-100 px-2 py-0.5 text-xs font-bold text-red-600">
+                                       Hemat {discount}%
+                                   </span>
+                               </div>
+                           )}
+                       </>
+                   );
+               })()}
+            </div>
+
+            {/* Variant Selection (Colors) */}
+            {product.variants.length > 0 && (
+              <div className="space-y-3">
+                <h3 className="text-sm font-semibold uppercase tracking-wider text-zinc-500">
+                  Pilih Warna
+                </h3>
+                <div className="flex flex-wrap gap-3">
+                  {product.variants.map((v) => (
+                    <button
+                      key={v.id}
+                      onClick={() => {
+                        setSelectedVariantId(v.id);
+                        // If variant has image, we want to show it.
+                        // For simplicity in this demo, we'll reset selectedImage to index that could represent variant image
+                        // or just rely on the gallery Prepended logic (implemented below)
+                      }}
+                      className={cn(
+                        "group relative flex flex-col items-center gap-2 transition-all",
+                        selectedVariantId === v.id ? "scale-105" : "opacity-60 grayscale-[0.5] hover:opacity-100 hover:grayscale-0"
+                      )}
+                    >
+                      <div 
+                        className={cn(
+                          "h-10 w-10 rounded-full border-2 transition-all p-0.5",
+                          selectedVariantId === v.id ? "border-zinc-900 scale-110" : "border-transparent"
+                        )}
+                      >
+                         <div className="h-full w-full rounded-full border border-zinc-200 bg-zinc-100 overflow-hidden">
+                            { (v as any).images && (v as any).images.length > 0 ? (
+                               <img src={(v as any).images[0].url} className="h-full w-full object-cover" alt={v.color} />
+                            ) : (
+                               <div className="h-full w-full bg-gradient-to-br from-zinc-300 to-zinc-500" />
+                            )}
+                         </div>
+                      </div>
+                      <span className="text-[10px] font-bold text-zinc-800 uppercase tracking-tighter">
+                        {v.color}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Specs */}
             {product.detail && (
@@ -234,19 +340,13 @@ export default function ProductDetailPage({
                 <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
                   {product.detail.material && (
                     <>
-                      <dt className="text-zinc-500">Material</dt>
+                      <dt className="text-zinc-500">Material Utama</dt>
                       <dd className="font-medium text-zinc-900">{product.detail.material}</dd>
-                    </>
-                  )}
-                  {product.detail.closureType && (
-                    <>
-                      <dt className="text-zinc-500">Tipe Penutup</dt>
-                      <dd className="font-medium text-zinc-900">{product.detail.closureType}</dd>
                     </>
                   )}
                   {product.detail.outsole && (
                     <>
-                      <dt className="text-zinc-500">Outsole</dt>
+                      <dt className="text-zinc-500">Material Sol (Outsole)</dt>
                       <dd className="font-medium text-zinc-900">{product.detail.outsole}</dd>
                     </>
                   )}
@@ -267,11 +367,25 @@ export default function ProductDetailPage({
             {/* Description */}
             {product.detail?.description && (
               <div>
-                <h3 className="mb-2 text-sm font-semibold uppercase tracking-wider text-zinc-500">
-                  Deskripsi
+                <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-zinc-500">
+                  Deskripsi Produk
                 </h3>
-                <p className="text-sm leading-relaxed text-zinc-700 whitespace-pre-line">
-                  {product.detail.description}
+                <div 
+                  className="prose prose-zinc prose-sm max-w-none text-zinc-700"
+                  dangerouslySetInnerHTML={{ __html: product.detail.description }}
+                />
+              </div>
+            )}
+
+            {/* Product Notes for End User */}
+            {product.detail?.notes && (
+              <div className="mt-8 rounded-2xl bg-amber-50/50 p-6 border border-amber-100/50 shadow-sm">
+                <h3 className="mb-3 text-sm font-bold uppercase tracking-widest text-amber-800 flex items-center gap-2">
+                  <div className="w-1 h-4 bg-amber-500 rounded-full" />
+                  Catatan Khas Fordza
+                </h3>
+                <p className="text-sm italic leading-relaxed text-amber-900/80">
+                  &ldquo;{product.detail.notes}&rdquo;
                 </p>
               </div>
             )}

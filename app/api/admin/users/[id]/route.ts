@@ -16,7 +16,7 @@ export async function PATCH(
     if (username) data.username = username;
     if (name) data.name = name;
     if (role) data.role = role;
-    if (pin) data.pin = pin;
+    if (pin) data.pin = await bcrypt.hash(String(pin), 12);
 
     // Hash password jika ada perubahan
     if (password) {

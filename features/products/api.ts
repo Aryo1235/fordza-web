@@ -58,8 +58,14 @@ export async function addProductImage(productId: string, file: File) {
   return res.data;
 }
 
-/** GET /api/admin/stock/logs — Histori pergerakan stok */
+/** GET /api/admin/stock/logs — Histori pergerakan stok universal */
 export async function getStockLogs(params: { page?: number; limit?: number; search?: string; type?: string } = {}) {
   const res = await api.get("/api/admin/stock/logs", { params });
+  return res.data;
+}
+
+/** GET /api/admin/stock/logs/sku — Histori pergerakan stok level SKU */
+export async function getSkuStockLogs(params: { page?: number; limit?: number; search?: string; type?: string; productId?: string; skuId?: string } = {}) {
+  const res = await api.get("/api/admin/stock/logs/sku", { params });
   return res.data;
 }
