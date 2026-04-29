@@ -30,22 +30,11 @@ export default function CategoriesPage() {
     {
       header: "Kategori",
       cell: (item: any) => (
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-lg bg-gray-100 overflow-hidden relative border shrink-0">
-            {item.imageUrl ? (
-              <img 
-                src={item.imageUrl} 
-                alt={item.name}
-                className="w-full h-full object-cover"
-              />
-            ) : null}
-          </div>
-          <div>
-            <p className="font-semibold text-[#3C3025]">{item.name}</p>
-            <p className="text-xs text-muted-foreground truncate max-w-[200px] sm:max-w-[400px]">
-              {item.shortDescription}
-            </p>
-          </div>
+        <div>
+          <p className="font-semibold text-[#3C3025]">{item.name}</p>
+          <p className="text-xs text-muted-foreground truncate max-w-[200px] sm:max-w-[400px]">
+            {item.shortDescription}
+          </p>
         </div>
       ),
     },
@@ -97,6 +86,7 @@ export default function CategoriesPage() {
         isLoading={isLoading} 
         meta={data?.meta}
         onPageChange={setPage}
+        showNumber={true}
       />
 
       <ConfirmDialog 

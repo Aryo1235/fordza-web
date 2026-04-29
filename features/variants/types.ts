@@ -20,7 +20,11 @@ export interface ProductVariant {
   color: string;
   basePrice: number;
   comparisonPrice: number | null;
-  discountPercent: number | null;
+  highestPrice?: number | null;         // Harga tertinggi untuk dicoret
+  finalPrice?: number | null;           // Harga bayar setelah promo
+  totalDiscountPercent?: number | null; // Total % gabungan
+  promoName?: string | null;            // Nama promo aktif
+  isPromoConditional?: boolean;         // Flag syarat belanja minimal
   isActive: boolean;
   productId: string;
   skus: ProductSku[];

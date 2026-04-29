@@ -13,9 +13,18 @@ export interface Testimonial {
   };
 }
 
+export interface TestimonialStats {
+  avgRating: number;
+  totalReviews: number;
+  distribution: {
+    [key: number]: number;
+  };
+}
+
 export interface TestimonialFilters {
   page?: number;
   limit?: number;
   search?: string;
   productId?: string;
+  rating?: number;
 }

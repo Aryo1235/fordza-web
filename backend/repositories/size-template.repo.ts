@@ -13,6 +13,11 @@ import { prisma } from "@/lib/prisma";
 export const SizeTemplateRepository = {
   async getAll() {
     return await prisma.sizeTemplate.findMany({
+      include: {
+        productDetails: {
+          select: { id: true, productId: true }
+        }
+      },
       orderBy: { name: "asc" },
     });
   },

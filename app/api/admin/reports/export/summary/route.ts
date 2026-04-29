@@ -62,10 +62,13 @@ export async function GET(req: Request) {
       );
       autoTable(doc, {
         startY: (doc as any).lastAutoTable.finalY + 14,
-        head: [["Kode", "Nama Produk", "Qty", "Revenue"]],
+        head: [["Kode Produk", "Kode Variant", "Nama Produk", "Warna", "Size", "Qty", "Revenue"]],
         body: topProducts.map((product: any) => [
           product.code || "-",
+          product.variantCode || "-",
           product.name,
+          product.color || "-",
+          product.size || "-",
           product.quantity,
           `Rp ${Number(product.revenue || 0).toLocaleString("id-ID")}`,
         ]),
@@ -93,12 +96,16 @@ export async function GET(req: Request) {
     ]);
     const topSheet = XLSX.utils.json_to_sheet(
       topProducts.map((product: any) => ({
-        Kode: product.code || "-",
+        "Kode Produk": product.code || "-",
+        "Kode Variant": product.variantCode || "-",
         "Nama Produk": product.name,
+        Warna: product.color || "-",
+        Ukuran: product.size || "-",
         Qty: product.quantity,
         Revenue: Number(product.revenue || 0),
-      })),
+      }))
     );
+    // Force Turbopack Rebuild: SKU-Centric Version 2.0
     const trendSheet = XLSX.utils.json_to_sheet(
       report.chartData.length > 0
         ? report.chartData

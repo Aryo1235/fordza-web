@@ -13,6 +13,7 @@ import {
   createSku,
   updateSku,
   deleteSku,
+  searchVariantsAdmin,
 } from "./api";
 import type {
   CreateVariantPayload,
@@ -113,5 +114,13 @@ export function useDeleteSku(productId: string) {
       queryClient.invalidateQueries({ queryKey: variantKeys.byProduct(productId) });
       queryClient.invalidateQueries({ queryKey: ["products", "detail", productId] });
     },
+  });
+}
+
+/** Search varian untuk dropdown admin */
+export function useVariantsAdminSearch(search: string = "", limit: number = 20) {
+  return useQuery({
+    queryKey: ["variants", "admin-search", search, limit] as const,
+    queryFn: () => searchVariantsAdmin(search, limit),
   });
 }

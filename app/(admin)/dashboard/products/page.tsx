@@ -40,22 +40,11 @@ export default function ProductsPage() {
     {
       header: "Produk",
       cell: (item: any) => (
-        <div className="flex items-center gap-3">
-          <div className="h-12 w-12 rounded-lg bg-gray-100 overflow-hidden relative border">
-            {item.images?.[0]?.url ? (
-              <img
-                src={item.images[0].url}
-                alt={item.name}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-gray-400">
-                <ImageIcon className="h-4 w-4" />
-              </div>
-            )}
-          </div>
-          <div>
-            <p className="font-semibold text-[#3C3025]">{item.name}</p>
+        <div className="flex items-center gap-3 whitespace-nowrap ">
+          <div >
+            <p className="font-semibold text-[#3C3025] truncate max-w-[200px] sm:max-w-[200px]" title={item.name}>
+              {item.name}
+            </p>
             <p className="text-xs text-muted-foreground">
               Kode Produk: {item.productCode}
             </p>
@@ -125,54 +114,40 @@ export default function ProductsPage() {
       },
     },
     {
-      header: "Harga Terendah",
+      header: "Harga & Promo",
       cell: (item: any) => {
-        const variants = item.variants || [];
-
-        // 1. Ambil harga default dari master produk
-        let displayPrice = Number(item.price || 0);
-        let originalPrice = null;
-        let discountPct = 0;
-
-        // 2. Jika punya varian, cari varian dengan basePrice (harga jual) termurah
-        if (variants.length > 0) {
-          const cheapestVariant = [...variants].sort(
-            (a, b) => Number(a.basePrice) - Number(b.basePrice),
-          )[0];
-
-          displayPrice = Number(cheapestVariant.basePrice);
-
-          // Cek apakah varian termurah ini sedang diskon (punya comparisonPrice yang lebih besar)
-          if (
-            cheapestVariant.comparisonPrice &&
-            Number(cheapestVariant.comparisonPrice) > displayPrice
-          ) {
-            originalPrice = Number(cheapestVariant.comparisonPrice);
-            // Gunakan discountPercent dari DB, atau hitung ulang manual jika null
-            discountPct =
-              cheapestVariant.discountPercent ||
-              Math.round(
-                ((originalPrice - displayPrice) / originalPrice) * 100,
-              );
-          }
-        }
+        const finalPrice = Number(item.finalPrice || 0);
+        const basePrice = Number(item.price || 0); // Di Admin, focus pada Harga Asli
+        const promoName = item.promoName;
+        const hasPromo = finalPrice < basePrice;
 
         return (
-          <div className="flex flex-col">
+          <div className="flex flex-col gap-1">
             {/* Harga Jual Final */}
-            <span className="font-bold whitespace-nowrap text-[#3C3025]">
-              Rp {displayPrice.toLocaleString("id-ID")}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="font-bold whitespace-nowrap text-[#3C3025]">
+                Rp {finalPrice.toLocaleString("id-ID")}
+              </span>
+              {hasPromo && (
+                <span className="text-[9px] font-black bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded">
+                  PROMO
+                </span>
+              )}
+            </div>
 
-            {/* Tampilkan Harga Coret Jika Ada Diskon */}
-            {originalPrice && (
-              <div className="flex items-center gap-1.5">
-                <span className="text-[10px] line-through text-stone-400">
-                  Rp {originalPrice.toLocaleString("id-ID")}
-                </span>
-                <span className="text-[10px] font-bold text-red-500">
-                  -{Math.round(discountPct)}%
-                </span>
+            {/* Tampilkan Harga Asli (Coret) Jika Ada Promo Aktif */}
+            {hasPromo && (
+              <span className="text-[10px] line-through text-stone-400 opacity-70">
+                Asli: Rp {basePrice.toLocaleString("id-ID")}
+              </span>
+            )}
+
+            {/* Nama Promo Aktif */}
+            {promoName && (
+              <div className="mt-1">
+                 <span className="text-[9px] font-bold bg-amber-50 text-amber-600 px-1.5 py-0.5 rounded border border-amber-100 truncate inline-block max-w-[120px]">
+                    🏷️ {promoName}
+                 </span>
               </div>
             )}
           </div>
@@ -267,6 +242,7 @@ export default function ProductsPage() {
             setLimit(l);
             setPage(1);
           }}
+          showNumber={true}
           className="space-y-0 [&_.rounded-md.border]:border-none [&_.rounded-md.border]:shadow-none [&_.rounded-md.border]:rounded-none"
         />
       </div>

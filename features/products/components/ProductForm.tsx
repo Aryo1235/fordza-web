@@ -22,7 +22,7 @@ import { formatNumber, parseNumber } from "@/lib/utils";
 
 // Import hooks dari feature lain
 import { useAllCategoriesAdmin } from "@/features/categories";
-import { useSizeTemplatesAdmin } from "@/features/size-templates";
+import { useSizeTemplatesAdmin } from "@/features/admin/size-templates";
 
 // Import schema & types dari feature sendiri
 import { productSchema, type ProductSchemaValues } from "../schemas";

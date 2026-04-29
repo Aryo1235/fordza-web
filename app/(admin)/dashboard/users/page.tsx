@@ -1,19 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { useUsers, useCreateUser, useUpdateUser, useDeleteUser } from "@/features/users";
+import { useUsers, useCreateUser, useUpdateUser, useDeleteUser } from "@/features/admin/users";
 import { DataTable } from "@/components/shared/DataTable";
 import { PageHeader } from "@/components/layout/admin/PageHeader";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from "@/components/ui/select";
 import {
   Dialog,
@@ -47,8 +47,8 @@ export default function UsersManagementPage() {
   const updateUser = useUpdateUser();
   const deleteUser = useDeleteUser();
 
-  const filteredData = data?.data?.filter((u: any) => 
-    u.username.toLowerCase().includes(search.toLowerCase()) || 
+  const filteredData = data?.data?.filter((u: any) =>
+    u.username.toLowerCase().includes(search.toLowerCase()) ||
     (u.name && u.name.toLowerCase().includes(search.toLowerCase()))
   ) || [];
 
@@ -75,7 +75,7 @@ export default function UsersManagementPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.username || (!editingUser && !formData.password)) {
       return toast.error("Username dan Password wajib diisi");
     }
@@ -172,8 +172,8 @@ export default function UsersManagementPage() {
 
   return (
     <div className="p-4 md:p-8 max-w-6xl mx-auto">
-      <PageHeader 
-        title="Manajemen User" 
+      <PageHeader
+        title="Manajemen User"
         description="Kelola akun Admin dan Kasir yang memiliki akses ke sistem Fordza."
         action={
           <Button onClick={handleOpenAddModal} className="bg-[#3C3025] hover:bg-[#524132] text-white">
@@ -188,8 +188,8 @@ export default function UsersManagementPage() {
           <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">Cari Pengguna</p>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" />
-            <Input 
-              placeholder="Cari nama atau username..." 
+            <Input
+              placeholder="Cari nama atau username..."
               className="pl-9 h-10 border-stone-200 focus:ring-stone-200 text-sm"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -208,28 +208,27 @@ export default function UsersManagementPage() {
             User Access Management & Authorization ({filteredData?.length || 0} Accounts)
           </p>
         </div>
-        <DataTable 
-          columns={columns} 
-          data={paginatedData} 
-          isLoading={isLoading} 
+        <DataTable
+          columns={columns}
+          data={paginatedData}
+          isLoading={isLoading}
+          meta={{
+            currentPage: page,
+            totalPage: totalPages,
+            totalItems: filteredData.length,
+            limit: limit
+          }}
+          onPageChange={setPage}
+          onLimitChange={(l) => {
+            setLimit(l);
+            setPage(1);
+          }}
+          showNumber={true}
           emptyMessage="Tidak ada pengguna ditemukan."
           className="space-y-0 [&_.rounded-md.border]:border-none [&_.rounded-md.border]:shadow-none [&_.rounded-md.border]:rounded-none"
         />
       </div>
 
-      <Pagination
-        page={page}
-        totalPages={totalPages}
-        totalItems={filteredData.length}
-        limit={limit}
-        onPageChange={setPage}
-        onLimitChange={(l) => {
-          setLimit(l);
-          setPage(1);
-        }}
-        isLoading={isLoading}
-        label="pengguna"
-      />
 
       {/* Add/Edit Modal */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
@@ -238,30 +237,30 @@ export default function UsersManagementPage() {
             <DialogHeader>
               <DialogTitle>{editingUser ? "Edit Akun" : "Tambah Akun Baru"}</DialogTitle>
             </DialogHeader>
-            
+
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
                 <Label htmlFor="name">Nama Lengkap</Label>
-                <Input 
-                  id="name" 
-                  value={formData.name} 
-                  onChange={(e) => setFormData({...formData, name: e.target.value})}
+                <Input
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="Contoh: Budi Sudarsono"
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="username">Username</Label>
-                  <Input 
-                    id="username" 
-                    value={formData.username} 
-                    onChange={(e) => setFormData({...formData, username: e.target.value})}
+                  <Input
+                    id="username"
+                    value={formData.username}
+                    onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                     placeholder="user123"
                   />
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="role">Role Akses</Label>
-                  <Select value={formData.role} onValueChange={(val) => setFormData({...formData, role: val})}>
+                  <Select value={formData.role} onValueChange={(val) => setFormData({ ...formData, role: val })}>
                     <SelectTrigger id="role" className="bg-white">
                       <SelectValue placeholder="Pilih Role" />
                     </SelectTrigger>
@@ -278,11 +277,11 @@ export default function UsersManagementPage() {
                   <Label htmlFor="password">{editingUser ? "Password Baru (Opsional)" : "Password"}</Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
-                    <Input 
-                      id="password" 
+                    <Input
+                      id="password"
                       type="password"
-                      value={formData.password} 
-                      onChange={(e) => setFormData({...formData, password: e.target.value})}
+                      value={formData.password}
+                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                       className="pl-9"
                     />
                   </div>
@@ -291,10 +290,10 @@ export default function UsersManagementPage() {
                   <Label htmlFor="pin" className="flex items-center gap-1.5 underline decoration-stone-300">
                     <Key className="w-3.5 h-3.5" /> PIN Otorisasi (6 Digit)
                   </Label>
-                  <Input 
-                    id="pin" 
-                    value={formData.pin} 
-                    onChange={(e) => setFormData({...formData, pin: e.target.value})}
+                  <Input
+                    id="pin"
+                    value={formData.pin}
+                    onChange={(e) => setFormData({ ...formData, pin: e.target.value })}
                     placeholder="123456"
                     maxLength={6}
                     className="font-mono"
@@ -313,7 +312,7 @@ export default function UsersManagementPage() {
         </DialogContent>
       </Dialog>
 
-      <ConfirmDialog 
+      <ConfirmDialog
         open={!!deleteId}
         onOpenChange={(op) => !op && setDeleteId(null)}
         title="Hapus Akun"

@@ -8,8 +8,12 @@ export const CategoryRepository = {
       prisma.category.findMany({
         where: { isActive: true },
         orderBy: [{ order: "asc" }, { name: "asc" }],
-        include: {
-          // HITUNG PRODUK (Melalui tabel pivot ProductCategory)
+        select: {
+          id: true,
+          name: true,
+          shortDescription: true,
+          order: true,
+          isActive: true,
           _count: {
             select: { products: true },
           },
@@ -68,7 +72,12 @@ export const CategoryRepository = {
     const [categories, totalItems] = await Promise.all([
       prisma.category.findMany({
         orderBy: [{ order: "asc" }, { name: "asc" }],
-        include: {
+        select: {
+          id: true,
+          name: true,
+          shortDescription: true,
+          order: true,
+          isActive: true,
           _count: { select: { products: true } },
         },
         skip,

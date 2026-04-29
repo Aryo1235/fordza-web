@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
-import { useTransactionDetail } from "@/features/transactions";
+import { useTransactionDetail } from "@/features/kasir/transactions";
 import { InvoiceModal, VoidTransactionDialog } from "@/features/kasir";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -157,8 +157,18 @@ export default function TransactionDetailPage() {
                   {transaction.items?.map((item: any, idx: number) => (
                     <tr key={idx} className="hover:bg-stone-50/50 transition-colors">
                       <td className="px-4 py-3">
-                        <p className="font-bold text-stone-800">{item.productName}</p>
-                        <p className="text-[10px] font-mono text-stone-400 uppercase">{item.productCode}</p>
+                        <p className="font-bold text-stone-800 leading-tight">{item.productName}</p>
+                        <div className="flex flex-wrap items-center gap-2 mt-1.5">
+                          <span className="text-[9px] px-1.5 py-0.5 bg-stone-100 text-stone-600 rounded-sm font-bold uppercase tracking-wider border border-stone-200">
+                            {item.variantColor || "Tanpa Varian"}
+                          </span>
+                          <span className="text-[9px] px-1.5 py-0.5 bg-amber-50 text-amber-700 rounded-sm font-bold uppercase tracking-wider border border-amber-100">
+                            Size: {item.skuSize || "-"}
+                          </span>
+                          <span className="text-[9px] font-mono text-stone-400 uppercase">
+                            {item.productCode}
+                          </span>
+                        </div>
                       </td>
                       <td className="px-4 py-3 text-center font-bold text-stone-700">
                         {item.quantity}

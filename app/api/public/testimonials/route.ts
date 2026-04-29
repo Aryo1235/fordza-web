@@ -19,12 +19,16 @@ export async function GET(req: Request) {
     const limit = parseInt(searchParams.get("limit") || "10");
 
     const result = await TestimonialService.getAll({ productId, rating, page, limit });
+    
+    // Ambil statistik (bisa global atau per produk tergantung filter)
+    const stats = await TestimonialService.getStats(productId);
 
     return NextResponse.json(
       {
         success: true,
         data: result.testimonials,
         meta: result.meta,
+        stats,
       },
       { status: 200 },
     );

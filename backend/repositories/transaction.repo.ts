@@ -30,6 +30,14 @@ function getWibDateRangeUtc(dateStr: string) {
   return { startUtc, endUtc };
 }
 
+// Mendapatkan tanggal harian yang dinormalisasi ke 00:00 WIB untuk kunci Summary Table
+function getTodayWib() {
+  const now = new Date();
+  // Geser ke WIB (+7) lalu potong jamnya menjadi 00:00:00
+  const wib = new Date(now.getTime() + 7 * 60 * 60 * 1000);
+  return new Date(Date.UTC(wib.getUTCFullYear(), wib.getUTCMonth(), wib.getUTCDate(), 0, 0, 0, 0));
+}
+
 export const TransactionRepository = {
   // Hitung jumlah transaksi hari ini → untuk generate nomor invoice
   async countToday(): Promise<number> {
@@ -71,7 +79,7 @@ export const TransactionRepository = {
       where: { id: { in: skuIds } },
       include: {
         variant: {
-          select: { color: true, basePrice: true, productId: true, product: { select: { name: true, productCode: true } } },
+          select: { color: true, variantCode: true, basePrice: true, productId: true, product: { select: { name: true, productCode: true } } },
         },
       },
     });
@@ -84,6 +92,7 @@ export const TransactionRepository = {
     amountPaid: number;
     change: number;
     kasirId: string;
+    shiftId?: string;
     customerName?: string;
     customerPhone?: string;
     items: {
@@ -98,6 +107,8 @@ export const TransactionRepository = {
       variantColor?: string | null;
       skuId?: string | null;
       skuSize?: string | null;
+      promoName?: string | null;
+      comparisonPriceAtSale?: number | null;
     }[];
   }) {
     return await prisma.$transaction(async (tx) => {
@@ -110,6 +121,7 @@ export const TransactionRepository = {
           change: data.change,
           status: "PAID",
           kasirId: data.kasirId,
+          shiftId: data.shiftId,
           customerName: data.customerName,
           customerPhone: data.customerPhone,
           items: {
@@ -120,6 +132,8 @@ export const TransactionRepository = {
               priceAtSale: i.priceAtSale,
               productName: i.productName,
               discountAmount: i.discountAmount,
+              promoName: i.promoName ?? null,
+              comparisonPriceAtSale: i.comparisonPriceAtSale ?? null,
               variantId: i.variantId ?? null,
               variantColor: i.variantColor ?? null,
               skuId: i.skuId ?? null,
@@ -141,6 +155,35 @@ export const TransactionRepository = {
             const updatedSku = await tx.productSku.update({
               where: { id: i.skuId },
               data: { stock: { decrement: i.quantity } },
+            });
+
+            // LANGKAH 3: SINKRONISASI SUMMARY TABLE (per SKU)
+            await tx.skuSalesSummary.upsert({
+              where: {
+                date_productId_variantColor_skuSize: {
+                  date: getTodayWib(),
+                  productId: i.productId,
+                  variantColor: i.variantColor || "-",
+                  skuSize: i.skuSize || "-",
+                },
+              },
+              update: {
+                totalQty: { increment: i.quantity },
+                totalRevenue: { increment: (Number(i.priceAtSale) * i.quantity) - Number(i.discountAmount ?? 0) },
+                totalOrders: { increment: 1 },
+              },
+              create: {
+                date: getTodayWib(),
+                skuId: i.skuId,
+                productId: i.productId,
+                productName: i.productName,
+                productCode: i.productCode || "-",
+                variantColor: i.variantColor || "-",
+                skuSize: i.skuSize || "-",
+                totalQty: i.quantity,
+                totalRevenue: (Number(i.priceAtSale) * i.quantity) - Number(i.discountAmount ?? 0),
+                totalOrders: 1,
+              },
             });
 
             // Catat SKU Stock Log
@@ -315,18 +358,57 @@ export const TransactionRepository = {
     operatorId?: string,
   ) {
     return await prisma.$transaction(async (tx) => {
+      // Ambil info transaksi asli + items untuk mendapatkan tanggal dan harga jual asli
+      const transaction = await tx.transaction.findUnique({
+        where: { id: transactionId },
+        include: { items: true },
+      });
+      if (!transaction) throw new Error("Transaksi tidak ditemukan");
+
+      // Normalisasi tanggal transaksi asli ke 00:00 WIB
+      const trxDate = new Date(transaction.createdAt.getTime() + 7 * 60 * 60 * 1000);
+      const normalizedTrxDate = new Date(Date.UTC(trxDate.getUTCFullYear(), trxDate.getUTCMonth(), trxDate.getUTCDate(), 0, 0, 0, 0));
+
       await tx.transaction.update({
         where: { id: transactionId },
         data: { status: "VOID", cancelReason },
       });
-
       await Promise.all(
         items.map(async (i) => {
+          const originalItem = transaction.items.find(item => item.productId === i.productId && (i.skuId ? item.skuId === i.skuId : true));
+          const priceAtSale = originalItem?.priceAtSale || 0;
+
           if (i.skuId) {
             // Produk DENGAN varian: kembalikan stok ke SKU
             const updatedSku = await tx.productSku.update({
               where: { id: i.skuId },
               data: { stock: { increment: i.quantity } },
+            });
+
+            // KURANGI NILAI DI SUMMARY TABLE (untuk tanggal transaksi asli)
+            await tx.skuSalesSummary.updateMany({
+              where: {
+                date: normalizedTrxDate,
+                productId: i.productId,
+                variantColor: i.variantColor || "-",
+                skuSize: i.skuSize || "-",
+              },
+              data: {
+                totalQty: { decrement: i.quantity },
+                totalRevenue: { decrement: Number(priceAtSale) * i.quantity },
+                totalOrders: { decrement: 1 },
+              },
+            });
+
+            // PEMBERSIH OTOMATIS: Jika total harian nol, hapus barisnya dari Summary
+            await tx.skuSalesSummary.deleteMany({
+              where: {
+                date: normalizedTrxDate,
+                productId: i.productId,
+                variantColor: i.variantColor || "-",
+                skuSize: i.skuSize || "-",
+                totalQty: { lte: 0 },
+              },
             });
 
             await tx.skuStockLog.create({
@@ -370,6 +452,21 @@ export const TransactionRepository = {
               data: { stock: { increment: i.quantity } },
             });
 
+            // KURANGI NILAI DI SUMMARY TABLE (untuk tanggal transaksi asli - produk tanpa varian)
+            await tx.skuSalesSummary.updateMany({
+              where: {
+                date: normalizedTrxDate,
+                productId: i.productId,
+                variantColor: "-",
+                skuSize: "-",
+              },
+              data: {
+                totalQty: { decrement: i.quantity },
+                totalRevenue: { decrement: Number(priceAtSale) * i.quantity },
+                totalOrders: { decrement: 1 },
+              },
+            });
+
             await tx.stockLog.create({
               data: {
                 productId: i.productId,
@@ -388,72 +485,80 @@ export const TransactionRepository = {
 
   // --- LAPORAN & STATISTIK ---
   async getReportStats(dateFrom: string, dateTo: string) {
-    const { startUtc: start } = getWibDateRangeUtc(dateFrom);
-    const { endUtc: end } = getWibDateRangeUtc(dateTo);
+    // Normalisasi input tanggal dengan validasi cadangan (Fallback)
+    let startWib = new Date(dateFrom);
+    if (isNaN(startWib.getTime())) startWib = new Date();
+    startWib.setUTCHours(0, 0, 0, 0);
 
-    const where = {
-      status: "PAID",
-      createdAt: { gte: start, lte: end },
-    };
+    let endWib = new Date(dateTo);
+    if (isNaN(endWib.getTime())) endWib = new Date();
+    endWib.setUTCHours(0, 0, 0, 0);
 
-    const [summary, rawItems, dailySales] = await Promise.all([
-      // 1. Total Pendapatan & Jumlah Transaksi
-      prisma.transaction.aggregate({
-        where: { ...where, status: "PAID" },
-        _sum: { totalPrice: true },
-        _count: { id: true },
-      }),
-
-      // 2. Data Produk Terjual (Detail untuk Audit)
-      prisma.transactionItem.findMany({
-        where: { transaction: { ...where, status: "PAID" } },
-        select: {
-          productId: true,
-          productName: true,
-          productCode: true,
-          quantity: true,
-          priceAtSale: true,
+    // 1. Ambil semua ringkasan dalam rentang tersebut dengan relasi SKU
+    const summaries = await prisma.skuSalesSummary.findMany({
+      where: {
+        date: { gte: startWib, lte: endWib },
+      },
+      include: {
+        product: true,
+        sku: {
+          include: {
+            variant: true,
+          },
         },
-      }),
-
-      // 3. Penjualan Harian
-      prisma.transaction.findMany({
-        where: { ...where, status: "PAID" },
-        select: { createdAt: true, totalPrice: true },
-        orderBy: { createdAt: "asc" },
-      }),
-    ]);
-
-    // Agregasi per nama produk + variant (agar beda warna/ukuran tampil terpisah)
+      },
+      orderBy: { date: "asc" },
+    });
+    // 2. Agregasi Global
+    let totalRevenue = 0;
+    let totalOrders = 0;
     const productAggregation: Record<string, any> = {};
-    (rawItems || []).forEach((item: any) => {
-      // Key unik: pakai skuId jika ada, fallback ke productId
-      const key = item.skuId ?? item.productId;
+    const dailyAggregation: Record<string, number> = {};
+
+    summaries.forEach((s: any) => {
+      // Penjualan Global
+      totalRevenue += Number(s.totalRevenue);
+      totalOrders += s.totalOrders;
+
+      // Agregasi Produk (untuk tabel top products)
+      const key = `${s.productName}-${s.variantColor}-${s.skuSize}`;
       if (!productAggregation[key]) {
         productAggregation[key] = {
-          name: item.productName,
-          code: item.productCode || "-",
+          name: s.productName,
+          code: s.product?.productCode || "-",
+          variantCode: s.sku?.variant?.variantCode || "-",
+          color: s.variantColor || "-",
+          size: s.skuSize || "-",
           quantity: 0,
-          priceAtSale: Number(item.priceAtSale),
           revenue: 0,
         };
       }
-      productAggregation[key].quantity += item.quantity;
-      productAggregation[key].revenue += Number(item.priceAtSale) * item.quantity;
+      productAggregation[key].quantity += s.totalQty;
+      productAggregation[key].revenue += Number(s.totalRevenue);
+
+      // Agregasi Harian (untuk grafik)
+      const dateStr = s.date.toISOString();
+      dailyAggregation[dateStr] = (dailyAggregation[dateStr] || 0) + Number(s.totalRevenue);
     });
 
-    const aggregatedProducts = Object.values(productAggregation).sort(
-      (a, b) => b.quantity - a.quantity,
-    );
+    const aggregatedProducts = Object.values(productAggregation)
+      .map(p => ({
+        ...p,
+        priceAtSale: p.quantity > 0 ? p.revenue / p.quantity : 0
+      }))
+      .filter(p => p.quantity > 0) // Sembunyikan produk yang sudah di-VOID habis
+      .sort((a, b) => b.quantity - a.quantity);
+
+    const dailySales = Object.entries(dailyAggregation).map(([date, revenue]) => ({
+      createdAt: new Date(date),
+      totalPrice: revenue,
+    }));
 
     return {
-      revenue: Number(summary?._sum?.totalPrice || 0),
-      orderCount: summary?._count?.id || 0,
+      revenue: totalRevenue,
+      orderCount: totalOrders,
       soldProducts: aggregatedProducts,
-      dailySales: (dailySales || []).map((s: any) => ({
-        createdAt: s.createdAt,
-        totalPrice: Number(s.totalPrice),
-      })),
+      dailySales: dailySales,
     };
   },
 };

@@ -57,3 +57,11 @@ export async function deleteSku(skuId: string) {
   const res = await api.delete(`/api/admin/skus/${skuId}`);
   return res.data;
 }
+
+/** GET /api/admin/variants — Search varian untuk dropdown admin */
+export async function searchVariantsAdmin(search: string = "", limit: number = 20) {
+  const res = await api.get(`/api/admin/variants`, {
+    params: { search, limit }
+  });
+  return res.data;
+}

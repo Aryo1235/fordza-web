@@ -20,6 +20,7 @@
 
 import { TransactionRepository } from "@/backend/repositories/transaction.repo";
 import { AdminService } from "@/backend/services/admin.service";
+import { ShiftRepository } from "@/backend/repositories/shift.repo";
 
 const DISCOUNT_AUTH_THRESHOLD = 300000;
 
@@ -39,9 +40,10 @@ export const TransactionService = {
       productId: string;
       quantity: number;
       discountAmount?: number;
-      // SKU-based (produk dengan varian)
       variantId?: string | null;
       skuId?: string | null;
+      promoName?: string | null;
+      comparisonPriceAtSale?: number | null;
     }[];
     amountPaid: number;
     customerName?: string;
@@ -81,6 +83,8 @@ export const TransactionService = {
       variantColor?: string | null;
       skuId?: string | null;
       skuSize?: string | null;
+      promoName?: string | null;
+      comparisonPriceAtSale?: number | null;
     }[] = [];
 
     let totalDiscount = 0;
@@ -139,17 +143,18 @@ export const TransactionService = {
 
       validatedItems.push({
         productId: item.productId,
-        productCode: dbProduct.productCode || "-",
+        productCode: item.skuId 
+          ? dbSkus.find(s => s.id === item.skuId)?.variant.variantCode || dbProduct.productCode || "-"
+          : dbProduct.productCode || "-",
         quantity: item.quantity,
         priceAtSale: price,
-        productName: skuSize
-          ? `${dbProduct.name} - ${variantColor} / ${skuSize}`
-          : dbProduct.name,
+        productName: dbProduct.name,
         discountAmount: discount,
-        variantId,
         variantColor,
         skuId,
         skuSize,
+        promoName: item.promoName,
+        comparisonPriceAtSale: item.comparisonPriceAtSale,
       });
     }
 
@@ -173,7 +178,13 @@ export const TransactionService = {
 
     const change = amountPaid - totalPrice;
 
-    // ✅ KEPUTUSAN BISNIS #5: Generate nomor invoice unik harian
+    // ✅ KEPUTUSAN BISNIS #5: Pastikan Kasir Memiliki Laci Shift yang Aktif
+    const currentShift = await ShiftRepository.findOpenShiftByAdmin(kasirId);
+    if (!currentShift) {
+        throw new Error("Laci Kasir belum dibuka! Silakan muat ulang dan masukkan Modal Awal terlebih dahulu.");
+    }
+
+    // ✅ KEPUTUSAN BISNIS #6: Generate nomor invoice unik harian
     const invoiceNo = await this.generateInvoiceNo();
 
     // ✅ Semua validasi lulus → serahkan ke Repository untuk disimpan
@@ -183,6 +194,7 @@ export const TransactionService = {
       amountPaid,
       change,
       kasirId,
+      shiftId: currentShift.id,
       customerName,
       customerPhone,
       items: validatedItems,
@@ -273,6 +285,8 @@ export const TransactionService = {
         quantity: i.quantity,
         priceAtSale: Number(i.priceAtSale),
         discountAmount: Number(i.discountAmount),
+        variantColor: i.variantColor,
+        skuSize: i.skuSize,
       })),
     }));
   },
@@ -309,6 +323,8 @@ export const TransactionService = {
         quantity: i.quantity,
         priceAtSale: Number(i.priceAtSale),
         discountAmount: Number(i.discountAmount),
+        variantColor: i.variantColor,
+        skuSize: i.skuSize,
       })),
     };
   },

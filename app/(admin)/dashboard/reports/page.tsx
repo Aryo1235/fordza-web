@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSalesReportItems, useSalesReportSummary } from "@/features/reports";
+import { useSalesReportItems, useSalesReportSummary } from "@/features/admin/reports";
 import { PageHeader } from "@/components/layout/admin/PageHeader";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Button } from "@/components/ui/button";
@@ -48,6 +48,8 @@ import { useDebounce } from "@/hooks/useDebounce";
 export default function ReportsPage() {
   const [dateFrom, setDateFrom] = useState<Date>(startOfMonth(new Date()));
   const [dateTo, setDateTo] = useState<Date>(new Date());
+  const [tableDateFrom, setTableDateFrom] = useState<Date>(startOfMonth(new Date()));
+  const [tableDateTo, setTableDateTo] = useState<Date>(new Date());
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState<"quantity" | "revenue" | "name">(
     "quantity",
@@ -63,8 +65,8 @@ export default function ReportsPage() {
     useSalesReportSummary(dateFrom, dateTo);
 
   const { data: itemsData, isLoading: isItemsLoading } = useSalesReportItems(
-    dateFrom,
-    dateTo,
+    tableDateFrom,
+    tableDateTo,
     {
       search: debouncedSearchTerm,
       sortBy,
@@ -82,7 +84,7 @@ export default function ReportsPage() {
 
   useEffect(() => {
     setPage(1);
-  }, [dateFrom, dateTo, debouncedSearchTerm, sortBy, minQuantityValue]);
+  }, [tableDateFrom, tableDateTo, debouncedSearchTerm, sortBy, minQuantityValue]);
 
   useEffect(() => {
     if (currentPage > totalPages) {
@@ -121,8 +123,8 @@ export default function ReportsPage() {
       "/api/admin/reports/export/items",
       "Laporan_Detail_Penjualan_Fordza.xlsx",
       {
-        from: format(dateFrom, "yyyy-MM-dd"),
-        to: format(dateTo, "yyyy-MM-dd"),
+        from: format(tableDateFrom, "yyyy-MM-dd"),
+        to: format(tableDateTo, "yyyy-MM-dd"),
         search: debouncedSearchTerm,
         sortBy,
         minQuantity: minQuantityValue,
@@ -137,8 +139,8 @@ export default function ReportsPage() {
       "/api/admin/reports/export/items",
       "Laporan_Detail_Penjualan_Fordza.pdf",
       {
-        from: format(dateFrom, "yyyy-MM-dd"),
-        to: format(dateTo, "yyyy-MM-dd"),
+        from: format(tableDateFrom, "yyyy-MM-dd"),
+        to: format(tableDateTo, "yyyy-MM-dd"),
         search: debouncedSearchTerm,
         sortBy,
         minQuantity: minQuantityValue,
@@ -341,9 +343,14 @@ export default function ReportsPage() {
                         <span className="font-semibold text-stone-700 truncate max-w-[180px]">
                           {p.name}
                         </span>
-                        <span className="text-[10px] text-stone-400 font-mono">
-                          {p.code}
-                        </span>
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-[10px] text-stone-500 font-medium">
+                            {p.color} - Size: {p.size}
+                          </span>
+                          <span className="text-[10px] text-stone-400 font-mono">
+                            {p.code}
+                          </span>
+                        </div>
                       </div>
                       <span className="text-stone-500 font-medium">
                         {p.quantity} Unit
@@ -373,7 +380,17 @@ export default function ReportsPage() {
               <CardTitle className="text-lg font-bold text-stone-800">
                 Tabel Penjualan Item
               </CardTitle>
-              <p className="text-sm text-stone-500">
+              <div className="flex flex-wrap items-center gap-3 mt-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold text-stone-400 uppercase">Dari:</span>
+                  <DatePicker date={tableDateFrom} setDate={(d) => d && setTableDateFrom(d)} />
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold text-stone-400 uppercase">Sampai:</span>
+                  <DatePicker date={tableDateTo} setDate={(d) => d && setTableDateTo(d)} />
+                </div>
+              </div>
+              <p className="text-sm text-stone-500 mt-2">
                 Data agregat per produk untuk analisis penjualan: cari produk,
                 urutkan, dan filter kuantitas.
               </p>
@@ -436,25 +453,27 @@ export default function ReportsPage() {
         </CardHeader>
 
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
+          <div className="overflow-auto">
             <Table>
               <TableHeader className="bg-stone-50">
                 <TableRow>
                   <TableHead className="w-16">#</TableHead>
-                  <TableHead>Kode</TableHead>
+                  <TableHead>Kode Produk</TableHead>
+                  <TableHead>Kode Variant</TableHead>
                   <TableHead>Produk</TableHead>
+                  <TableHead>Varian</TableHead>
                   <TableHead className="text-right">Qty Terjual</TableHead>
                   <TableHead className="text-right">Harga Satuan</TableHead>
                   <TableHead className="text-right">Revenue</TableHead>
                   <TableHead className="text-right">Kontribusi</TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody>
+              <TableBody className="h-30 overflow-y-auto">
                 {isItemsLoading ? (
                   Array.from({ length: 5 }).map((_, index) => (
-                    <TableRow key={index}>
+                    <TableRow key={index} className="h-14">
                       <TableCell
-                        colSpan={7}
+                        colSpan={9}
                         className="h-14 animate-pulse bg-stone-50/40"
                       />
                     </TableRow>
@@ -462,7 +481,7 @@ export default function ReportsPage() {
                 ) : paginatedSoldProducts.length === 0 ? (
                   <TableRow>
                     <TableCell
-                      colSpan={7}
+                      colSpan={9}
                       className="h-24 text-center text-stone-400"
                     >
                       Tidak ada produk yang cocok dengan filter.
@@ -483,11 +502,17 @@ export default function ReportsPage() {
                         <TableCell className="font-semibold text-stone-500">
                           {(currentPage - 1) * currentLimit + index + 1}
                         </TableCell>
-                        <TableCell className="font-mono text-xs text-stone-500">
-                          {product.code || "-"}
+                        <TableCell className="font-mono text-[10px] text-stone-500">
+                          {product.code}
+                        </TableCell>
+                        <TableCell className="font-mono text-[10px] text-stone-700 font-semibold">
+                          {product.variantCode}
                         </TableCell>
                         <TableCell className="font-semibold text-stone-800">
                           {product.name}
+                        </TableCell>
+                        <TableCell className="text-xs text-stone-500">
+                          {product.color} - Size: {product.size}
                         </TableCell>
                         <TableCell className="text-right font-medium">
                           {product.quantity}

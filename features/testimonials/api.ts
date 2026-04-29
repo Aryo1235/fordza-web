@@ -8,6 +8,12 @@ export async function getAdminTestimonials(filters: TestimonialFilters = {}) {
   return res.data;
 }
 
+/** GET /api/public/testimonials — List review publik */
+export async function getPublicTestimonials(params: TestimonialFilters = {}) {
+  const res = await api.get("/api/public/testimonials", { params });
+  return res.data;
+}
+
 export async function createTestimonial(data: any) {
   const res = await api.post("/api/admin/testimonials", data);
   return res.data;

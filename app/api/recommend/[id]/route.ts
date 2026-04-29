@@ -9,7 +9,7 @@ export async function GET(
   try {
     const { id } = await params;
 
-    const result = await RecommendationService.getRecommendations(id, 4);
+    const result = await RecommendationService.getRecommendations(id, 6);
 
     if (!result) {
       return NextResponse.json(

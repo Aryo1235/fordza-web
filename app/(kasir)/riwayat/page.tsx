@@ -8,6 +8,8 @@ import {
   Eye,
   X,
   User,
+  FileText,
+  Download,
   ChevronLeft,
   ChevronRight,
   RotateCcw,
@@ -17,7 +19,7 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { useDebounce } from "@/hooks/useDebounce";
-import { useCashiers } from "@/features/users";
+import { useCashiers } from "@/features/admin/users";
 import { useRouter } from "next/navigation";
 import {
   InvoiceModal,
@@ -54,6 +56,43 @@ export default function RiwayatPage() {
   } | null>(null);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleExport = async (formatType: "pdf" | "xlsx") => {
+    const today = format(new Date(), "yyyy-MM-dd");
+    if (dateFrom !== today || dateTo !== today) {
+      toast.error("Maaf, Ekspor laporan kasir hanya diperbolehkan untuk HARI INI guna keamanan data.");
+      return;
+    }
+
+    setIsExporting(true);
+    try {
+      const queryParams = new URLSearchParams({
+        format: formatType,
+        from: dateFrom,
+        to: dateTo,
+        kasirId: actualKasirId,
+        source: "cashier",
+      });
+
+      const response = await fetch(`/api/admin/transactions/export?${queryParams}`);
+      if (!response.ok) throw new Error("Gagal mengunduh laporan");
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Laporan_Transaksi_${formatType === "pdf" ? "Shift" : "Excel"}_${format(new Date(), "ddMMyyyy")}.${formatType === "pdf" ? "pdf" : "xlsx"}`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      toast.success(`Berhasil mengunduh laporan ${formatType.toUpperCase()}`);
+    } catch (error: any) {
+      toast.error("Gagal mengekspor data");
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   // Debounce search agar tidak fetch setiap ketikan
   const debouncedSearch = useDebounce(search, 500);
@@ -102,6 +141,29 @@ export default function RiwayatPage() {
           <p className="text-sm text-stone-500 mt-0.5">
             Daftar semua transaksi yang telah diproses
           </p>
+        </div>
+
+        <div className="flex gap-2 ml-auto">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleExport("xlsx")}
+            disabled={isExporting}
+            className="h-10 border-stone-200 text-stone-600 hover:bg-stone-50 font-bold text-xs"
+          >
+            <FileText className="w-4 h-4 mr-2 text-emerald-600" />
+            <span className="hidden sm:inline">Ekspor Excel</span>
+          </Button>
+          <Button
+            variant="default"
+            size="sm"
+            onClick={() => handleExport("pdf")}
+            disabled={isExporting}
+            className="h-10 bg-[#3C3025] hover:bg-[#5a4a38] text-white shadow-sm font-bold text-xs"
+          >
+            <Printer className="w-4 h-4 mr-2" />
+            <span className="hidden sm:inline">Cetak Laporan PDF</span>
+          </Button>
         </div>
       </div>
 
@@ -268,11 +330,10 @@ export default function RiwayatPage() {
                     </td>
                     <td className="px-4 py-3 text-center">
                       <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-semibold ${
-                          tx.status === "PAID"
+                        className={`inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-semibold ${tx.status === "PAID"
                             ? "bg-green-100 text-green-700"
                             : "bg-red-100 text-red-600"
-                        }`}
+                          }`}
                       >
                         {tx.status}
                       </span>

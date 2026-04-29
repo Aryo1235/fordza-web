@@ -2,11 +2,16 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { ProductCard } from "@/features/landing-page/ProductCard";
 
 interface RecommendedProduct {
   id: string;
   name: string;
   price: string | number;
+  isPopular?: boolean;
+  isBestseller?: boolean;
+  isNew?: boolean;
+  variants?: any[];
   gender: string;
   productType: string;
   shortDescription: string;
@@ -71,99 +76,49 @@ export function RelatedProducts({ productId }: Props) {
 
       {/* Loading Skeleton */}
       {loading && (
-        <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="animate-pulse rounded-xl bg-white p-3 shadow-sm">
-              <div className="aspect-square rounded-lg bg-zinc-200" />
-              <div className="mt-3 space-y-2">
-                <div className="h-4 w-3/4 rounded bg-zinc-200" />
-                <div className="h-3 w-1/2 rounded bg-zinc-200" />
-                <div className="h-5 w-2/3 rounded bg-zinc-200" />
+        <div
+          className="flex overflow-x-auto snap-x snap-mandatory gap-4 sm:gap-5 pb-4 custom-scrollbar"
+          style={{ scrollPaddingLeft: "0px" }}
+        >
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="snap-start shrink-0 w-[65%] sm:w-[45%] md:w-[31%] lg:w-[31%] xl:w-[23.5%] h-full">
+              <div className="animate-pulse rounded-2xl bg-white p-3 shadow-sm h-full flex flex-col">
+                <div className="aspect-square rounded-xl bg-zinc-200 w-full" />
+                <div className="mt-3 flex flex-1 flex-col gap-2">
+                  <div className="h-4 w-3/4 rounded bg-zinc-200" />
+                  <div className="h-3 w-1/2 rounded bg-zinc-200" />
+                  <div className="mt-auto h-5 w-2/3 rounded bg-zinc-200" />
+                </div>
               </div>
             </div>
           ))}
         </div>
       )}
 
-      {/* Product Cards */}
+      {/* Product Cards Carousel */}
       {!loading && products.length > 0 && (
-        <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
-          {products.map((product) => (
-            <Link
-              key={product.id}
-              href={`/products/${product.id}`}
-              className="group overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-zinc-100 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
-            >
-              {/* Image */}
-              <div className="relative aspect-square overflow-hidden bg-zinc-100">
-                {product.image ? (
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
-                ) : (
-                  <div className="flex h-full items-center justify-center text-zinc-300">
-                    <svg className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={1.5}
-                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                      />
-                    </svg>
-                  </div>
-                )}
+        <div
+          className="flex overflow-x-auto snap-x snap-mandatory gap-4 sm:gap-4 pb-4 custom-scrollbar"
+          style={{ scrollPaddingLeft: "0px" }}
+        >
+          {products.map((product) => {
+            // Mapping RecommendedProduct to Product interface for ProductCard
+            const productForCard = {
+              ...product,
+              images: product.image ? [{ url: product.image }] : [],
+              price: product.price,
+            } as any;
 
-                {/* Similarity Badge */}
-                <div className="absolute bottom-2 right-2 rounded-full bg-black/70 px-2 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm">
-                  Jarak: {product.distance}
+            return (
+              <div key={product.id} className="snap-start shrink-0 w-[65%] sm:w-[45%] md:w-[31%] lg:w-[31%] xl:w-[23.5%] h-full relative p-1">
+                <ProductCard product={productForCard} />
+                {/* Similarity Badge Overlay */}
+                <div className="absolute top-4 right-4 z-20 rounded-full bg-black/70 px-2 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm shadow-sm">
+                  Match: {product.distance}
                 </div>
               </div>
-
-              {/* Info */}
-              <div className="p-3 sm:p-4">
-                {/* Categories & Attributes */}
-                <div className="mb-1.5 flex flex-wrap gap-1">
-                  {product.gender && product.gender !== "Unisex" && (
-                    <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-medium text-blue-600">
-                      {product.gender}
-                    </span>
-                  )}
-                  {product.productType && (
-                    <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-600 capitalize">
-                      {product.productType}
-                    </span>
-                  )}
-                  {product.categories?.length > 0 && product.categories.slice(0, 1).map((catName) => (
-                    <span
-                      key={catName}
-                      className="rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-medium text-zinc-600"
-                    >
-                      {catName}
-                    </span>
-                  ))}
-                </div>
-
-                <h3 className="text-sm font-semibold leading-snug text-zinc-900 line-clamp-2">
-                  {product.name}
-                </h3>
-
-                {/* Rating */}
-                {product.totalReviews > 0 && (
-                  <div className="mt-1 flex items-center gap-1 text-xs text-zinc-500">
-                    <span className="text-amber-500">★</span>
-                    <span>{product.avgRating.toFixed(1)}</span>
-                    <span>({product.totalReviews})</span>
-                  </div>
-                )}
-
-                <p className="mt-2 text-sm font-bold text-zinc-900">
-                  {formatRupiah(product.price)}
-                </p>
-              </div>
-            </Link>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

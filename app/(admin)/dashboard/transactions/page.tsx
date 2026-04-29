@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransactions } from "@/features/transactions";
+import { useTransactions } from "@/features/kasir/transactions";
 import { PageHeader } from "@/components/layout/admin/PageHeader";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -14,8 +14,8 @@ import {
   Filter,
   ArrowRight,
   Eye,
-  FileSpreadsheet,
   FileText,
+  Printer,
 } from "lucide-react";
 import { format, startOfMonth } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -78,22 +78,22 @@ export default function AdminTransactionsPage() {
           <Button
             variant="outline"
             size="sm"
-            className="h-10 border-green-200 text-green-700 hover:bg-green-50 font-bold text-xs"
+            className="h-10 border-stone-200 text-stone-600 hover:bg-stone-50 font-bold text-xs"
             onClick={handleExportExcel}
             disabled={isLoading || transactions.length === 0}
           >
-            <FileSpreadsheet className="w-4 h-4 mr-2" />
-            Excel
+            <FileText className="w-4 h-4 mr-2 text-emerald-600" />
+            Ekspor Excel
           </Button>
           <Button
-            variant="outline"
+            variant="default"
             size="sm"
-            className="h-10 border-red-200 text-red-700 hover:bg-red-50 font-bold text-xs"
+            className="h-10 bg-[#3C3025] hover:bg-[#5a4a38] text-white shadow-sm font-bold text-xs"
             onClick={handleExportPDF}
             disabled={isLoading || transactions.length === 0}
           >
-            <FileText className="w-4 h-4 mr-2" />
-            PDF
+            <Printer className="w-4 h-4 mr-2" />
+            Cetak Laporan PDF
           </Button>
         </div>
       </div>

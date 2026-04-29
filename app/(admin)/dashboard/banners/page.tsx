@@ -141,6 +141,7 @@ export default function BannersPage() {
         isLoading={isLoading} 
         meta={data?.meta}
         onPageChange={setPage}
+        showNumber={true}
       />
 
       {/* Dialog Hapus */}

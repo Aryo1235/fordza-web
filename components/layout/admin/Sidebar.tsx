@@ -16,7 +16,9 @@ import {
   Users,
   BarChart3,
   History,
-  FileText
+  FileText,
+  Percent,
+  Wallet
 } from "lucide-react";
 import {
   Sidebar,
@@ -37,11 +39,13 @@ const navItems = [
   { href: "/dashboard/banners", label: "Banner", icon: Image },
   { href: "/dashboard/testimonials", label: "Testimoni", icon: MessageSquare },
   { href: "/dashboard/size-templates", label: "Template Ukuran", icon: Ruler },
-  // { href: "/dashboard/stock", label: "Stok Opname", icon: Package },
-  // { href: "/dashboard/stock-history", label: "Histori Stok", icon: FileText },
-  // { href: "/dashboard/users", label: "Management User", icon: Users },
-  // { href: "/dashboard/transactions", label: "Riwayat Transaksi", icon: History },
-  // { href: "/dashboard/reports", label: "Laporan", icon: BarChart3 },
+  { href: "/dashboard/promo", label: "Manajemen Promo", icon: Percent },
+  { href: "/dashboard/stock", label: "Stok Opname", icon: Package },
+  { href: "/dashboard/stock-history", label: "Histori Stok", icon: FileText },
+  { href: "/dashboard/users", label: "Management User", icon: Users },
+  { href: "/dashboard/transactions", label: "Riwayat Transaksi", icon: History },
+  { href: "/dashboard/shifts", label: "Laporan Laci", icon: Wallet },
+  { href: "/dashboard/reports", label: "Laporan Omzet", icon: BarChart3 },
 ];
 
 export function AdminSidebar() {

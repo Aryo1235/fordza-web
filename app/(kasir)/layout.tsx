@@ -5,6 +5,8 @@ import type { Metadata } from "next";
 import { Toaster } from "sonner";
 import { KasirSidebar, QuickStockCheck } from "@/features/kasir";
 import { SidebarProvider } from "@/components/ui/sidebar";
+import { useMe } from "@/features/auth/hooks";
+import { useCurrentShift, ShiftBlockerModal } from "@/features/shifts";
 
 export default function KasirLayout({
   children,
@@ -15,6 +17,12 @@ export default function KasirLayout({
   const [buttonPos, setButtonPos] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  
+  // Shift & Auth Flow
+  const { data: user, isLoading: isAuthLoading } = useMe();
+  const { data: currentShift, isLoading: isShiftLoading } = useCurrentShift();
+  const [isShiftModalOpen, setIsShiftModalOpen] = useState(false);
+  
   const hasMountedRef = useRef(false);
   const dragStateRef = useRef({
     pointerId: -1,
@@ -34,6 +42,16 @@ export default function KasirLayout({
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
+
+  useEffect(() => {
+    if (!isAuthLoading && !isShiftLoading && user) {
+      if (!currentShift) {
+        setIsShiftModalOpen(true);
+      } else {
+        setIsShiftModalOpen(false);
+      }
+    }
+  }, [isAuthLoading, isShiftLoading, user, currentShift]);
 
   useEffect(() => {
     let initialX = window.innerWidth - 180;
@@ -138,7 +156,7 @@ export default function KasirLayout({
   return (
     <SidebarProvider>
       <div className="flex min-h-screen bg-stone-50 w-full overflow-x-hidden">
-        <KasirSidebar />
+        <KasirSidebar kasirName={user?.name || undefined} />
         <main className="flex-1 flex flex-col h-dvh min-w-0 overflow-x-hidden">
           {/* Mobile top bar padding */}
           <div className="md:hidden h-14 shrink-0" />
@@ -173,6 +191,12 @@ export default function KasirLayout({
         <QuickStockCheck
           isOpen={isQuickCheckOpen}
           onClose={() => setIsQuickCheckOpen(false)}
+        />
+
+        <ShiftBlockerModal 
+          isOpen={isShiftModalOpen} 
+          kasirName={user?.name || "Kasir"} 
+          onShiftOpened={(id) => setIsShiftModalOpen(false)} 
         />
 
         <Toaster richColors position="top-right" />

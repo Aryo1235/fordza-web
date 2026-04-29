@@ -106,4 +106,8 @@ export const TestimonialService = {
 
     return { deleted: true };
   },
+
+  async getStats(productId?: string) {
+    return await TestimonialRepository.getStats(productId);
+  },
 };

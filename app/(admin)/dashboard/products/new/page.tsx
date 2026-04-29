@@ -26,7 +26,7 @@ import {
   pendingVariantToSkus,
 } from "@/features/variants";
 import { useAllCategoriesAdmin } from "@/features/categories";
-import { useSizeTemplatesAdmin } from "@/features/size-templates";
+import { useSizeTemplatesAdmin } from "@/features/admin/size-templates";
 import { useCreateProduct } from "@/features/products";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";

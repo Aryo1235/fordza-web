@@ -6,7 +6,7 @@ import {
   useCreateSizeTemplate, 
   useUpdateSizeTemplate, 
   useDeleteSizeTemplate 
-} from "@/features/size-templates";
+} from "@/features/admin/size-templates";
 import { DataTable } from "@/components/shared/DataTable";
 import { PageHeader } from "@/components/layout/admin/PageHeader";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
@@ -177,6 +177,7 @@ export default function SizeTemplatesPage() {
         columns={columns} 
         data={data?.data || []} 
         isLoading={isLoading} 
+        showNumber={true}
       />
 
       <ConfirmDialog 

@@ -1,5 +1,4 @@
-"use client";
-
+import { useState } from "react";
 import { 
   ShoppingCart, 
   History, 
@@ -9,7 +8,8 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
-  User
+  User,
+  Lock
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -25,6 +25,7 @@ import {
   useSidebar
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
+import { CloseShiftModal } from "@/features/shifts";
 
 const MENU = [
   { href: "/pos", label: "POS", icon: ShoppingCart },
@@ -36,6 +37,7 @@ export default function KasirSidebar({ kasirName }: { kasirName?: string }) {
   const pathname = usePathname();
   const router = useRouter();
   const { state, isMobile } = useSidebar();
+  const [isCloseModalOpen, setIsCloseModalOpen] = useState(false);
 
   const handleLogout = async () => {
     await fetch("/api/admin/auth/logout", { method: "POST" });
@@ -108,6 +110,14 @@ export default function KasirSidebar({ kasirName }: { kasirName?: string }) {
           </div>
         )}
         <SidebarMenuButton
+          onClick={() => setIsCloseModalOpen(true)}
+          className="h-10 text-white bg-red-600 hover:bg-red-700 shadow-md rounded-xl transition-all font-semibold my-1"
+        >
+          <Lock className="h-4 w-4 shrink-0" />
+          <span>Tutup Shift Laci</span>
+        </SidebarMenuButton>
+
+        <SidebarMenuButton
           onClick={handleLogout}
           className="h-10 text-[#c4a882] hover:bg-red-500/10 hover:text-red-400 rounded-xl transition-all"
         >
@@ -120,6 +130,11 @@ export default function KasirSidebar({ kasirName }: { kasirName?: string }) {
           </div>
         )}
       </SidebarFooter>
+
+      <CloseShiftModal 
+        isOpen={isCloseModalOpen} 
+        onClose={() => setIsCloseModalOpen(false)} 
+      />
     </Sidebar>
   );
 }
