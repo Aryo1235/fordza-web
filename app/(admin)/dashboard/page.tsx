@@ -3,7 +3,7 @@
 import { PageHeader } from "@/components/layout/admin/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ShoppingBag, FolderOpen, Image as ImageIcon, MessageSquare, Loader2 } from "lucide-react";
-import { useDashboardStats } from "@/features/dashboard";
+import { useDashboardStats } from "@/features/admin/dashboard";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 export default function DashboardPage() {

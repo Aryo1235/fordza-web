@@ -8,7 +8,7 @@ import {
   useCheckInvoice,
   type Transaction,
 } from "@/features/kasir";
-import { getTransactionById } from "@/features/transactions";
+import { getTransactionById } from "@/features/kasir/transactions";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 
 export default function CetakUlangPage() {
@@ -17,7 +17,6 @@ export default function CetakUlangPage() {
     null,
   );
   const [showModal, setShowModal] = useState(false);
-
   const { isFetching: loading, refetch } = useCheckInvoice(invoiceNo);
 
   const handleSearch = async (e: React.FormEvent) => {

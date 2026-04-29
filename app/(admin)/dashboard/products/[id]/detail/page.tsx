@@ -20,6 +20,7 @@ import {
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { formatRupiah } from "@/lib/utils";
 
 export default function ProductDetailAdminPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -43,8 +44,6 @@ export default function ProductDetailAdminPage({ params }: { params: Promise<{ i
       </div>
     );
   }
-
-  const formatRupiah = (p: any) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(Number(p));
 
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-8 pb-20">
@@ -209,15 +208,24 @@ export default function ProductDetailAdminPage({ params }: { params: Promise<{ i
                         <div>
                             <p className="text-base font-bold text-[#3C3025] flex items-center gap-2">
                                 {variant.color}
-                                {variant.discountPercent > 0 && <span className="text-[10px] bg-green-600 text-white px-2 py-0.5 rounded-md font-bold">-{Math.round(variant.discountPercent)}%</span>}
+                                {variant.finalPrice < variant.basePrice && (
+                                  <span className="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-md font-bold border border-emerald-200">
+                                    PROMO
+                                  </span>
+                                )}
                             </p>
                             <p className="text-[10px] text-stone-400 uppercase font-black tracking-widest">{variant.variantCode}</p>
+                            {variant.promoName && (
+                              <p className="text-[10px] font-bold text-amber-600 mt-1 italic">🏷️ {variant.promoName}</p>
+                            )}
                         </div>
                     </div>
                     <div className="text-right">
-                        <p className="text-lg font-black text-[#3C3025]">{formatRupiah(variant.basePrice)}</p>
-                        {variant.comparisonPrice && (
-                            <p className="text-xs text-stone-400 line-through font-medium italic opacity-70">{formatRupiah(variant.comparisonPrice)}</p>
+                        <p className="text-lg font-black text-[#3C3025]">{formatRupiah(variant.finalPrice || variant.basePrice)}</p>
+                        {variant.finalPrice < variant.basePrice && (
+                            <p className="text-xs text-stone-400 line-through font-medium opacity-70">
+                              Asli: {formatRupiah(variant.basePrice)}
+                            </p>
                         )}
                     </div>
                   </div>

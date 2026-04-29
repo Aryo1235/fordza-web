@@ -337,9 +337,9 @@ function VariantCard({
         <div className="flex-1 min-w-0">
           <div className="text-sm font-bold text-stone-800 flex items-center gap-1.5 truncate">
             {variant.color}
-            {variant.discountPercent && variant.discountPercent > 0 && (
-              <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-1 rounded">
-                -{Math.round(variant.discountPercent)}%
+            {(variant as any).finalPrice < variant.basePrice && (
+              <span className="text-[9px] font-black text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100">
+                PROMO
               </span>
             )}
           </div>
@@ -347,27 +347,29 @@ function VariantCard({
             <code className="text-[10px] font-mono bg-stone-100 text-stone-500 px-1.5 py-0.5 rounded">
               {variant.variantCode}
             </code>
+            {(variant as any).promoName && (
+               <span className="text-[9px] text-amber-600 font-bold bg-amber-50 px-1.5 rounded border border-amber-100 truncate max-w-[100px]">
+                  {(variant as any).promoName}
+               </span>
+            )}
           </div>
         </div>
 
         <div className="flex items-center gap-4 text-right">
           <div>
             <div className="flex flex-col items-end">
-              <p className="text-sm font-bold text-green-700">
-                {fmt(Number(variant.basePrice))}
+              <p className="text-sm font-bold text-zinc-900 leading-none">
+                {fmt(Number((variant as any).finalPrice || variant.basePrice))}
               </p>
-              {variant.comparisonPrice &&
-                Number(variant.comparisonPrice) > Number(variant.basePrice) && (
-                  <div className="flex items-center gap-1">
-                    <p className="text-[10px] text-stone-400 line-through">
-                      {fmt(Number(variant.comparisonPrice))}
-                    </p>
-                  </div>
-                )}
+              {(variant as any).finalPrice < variant.basePrice && (
+                <p className="text-[10px] text-stone-400 line-through mt-0.5 opacity-70">
+                  {fmt(Number(variant.basePrice))}
+                </p>
+              )}
             </div>
           </div>
           <div className="hidden sm:block">
-            <p className="text-[10px] text-stone-900 font-bold">
+            <p className="text-[10px] text-stone-900 font-bold bg-stone-100 px-1.5 rounded">
               {totalStock} Psg
             </p>
           </div>
@@ -1062,6 +1064,23 @@ function EditVariantForm({
           onChange={handleStockChange}
           onToggleBigsize={handleToggleBigsize}
         />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-2">
+        <div className="space-y-1">
+          <Label className="text-xs">Harga Khusus Bigsize</Label>
+          <Input
+            type="number"
+            value={bigsizePrice}
+            onChange={(e) =>
+              setBigsizePrice(
+                e.target.value === "" ? "" : Number(e.target.value),
+              )
+            }
+            placeholder="Rp"
+            className="h-9 border-amber-200 bg-amber-50"
+          />
+        </div>
       </div>
 
       <div className="flex justify-end gap-3 pt-4">

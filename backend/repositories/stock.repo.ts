@@ -252,9 +252,12 @@ export const StockRepository = {
         sku: {
           select: {
             size: true,
+            variantId: true,
             variant: {
               select: {
+                productId: true,
                 color: true,
+                variantCode: true,
                 product: { select: { name: true, productCode: true } },
               },
             },

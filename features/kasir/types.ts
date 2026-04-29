@@ -3,6 +3,7 @@
 // Mewakili 1 varian warna dengan daftar SKU ukurannya
 export interface ProductVariantForKasir {
   id: string;
+  variantCode: string;
   color: string;
   material?: string | null;
   basePrice: number;
@@ -12,8 +13,14 @@ export interface ProductVariantForKasir {
     size: string;
     stock: number;
     priceOverride?: number | null; // null = pakai basePrice
+    finalPrice?: number;           // Harga setelah diskon promo
   }[];
   images: { url: string }[];
+  
+  // Data promo otomatis dari backend
+  additionalDiscount?: number;
+  promoName?: string | null;
+  finalPrice?: number;
 }
 
 // Produk yang ditampilkan di grid POS
@@ -42,13 +49,16 @@ export interface CartItem {
   price: number;           // Harga yang berlaku (priceOverride ?? basePrice)
   stock: number;           // Stok SKU yang dipilih
   quantity: number;
-  discountAmount: number;  // Diskon nominal per item (Rp)
+  discountAmount: number;  // Diskon nominal per item (Rp) - Sekarang otomatis dari Admin
+  promoName: string | null; // Nama promo yang aktif
+  comparisonPriceAtSale: number | null; // Harga gimmick (coretan) saat transaksi
 
   // Referensi varian & SKU
   variantId: string | null;
   variantColor: string | null;
   skuId: string | null;
   skuSize: string | null;
+  variantCode: string | null;
 }
 
 export interface Transaction {
@@ -71,6 +81,8 @@ export interface Transaction {
     quantity: number;
     priceAtSale: number;
     discountAmount: number;
+    promoName?: string | null;
+    comparisonPriceAtSale?: number | null;
     variantColor?: string | null;
     skuSize?: string | null;
   }[];
@@ -81,6 +93,8 @@ export interface CheckoutItem {
   productId: string;
   quantity: number;
   discountAmount: number;
+  promoName?: string | null;
+  comparisonPriceAtSale?: number | null;
   variantId?: string | null;
   skuId?: string | null;
 }

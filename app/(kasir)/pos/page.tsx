@@ -9,6 +9,7 @@ import {
   Plus,
   PanelRightClose,
   PanelRight,
+  Tag,
 } from "lucide-react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { toast } from "sonner";
@@ -23,6 +24,7 @@ import {
   useCheckout,
   type Product,
   type CartItem,
+  type ProductVariantForKasir,
 } from "@/features/kasir";
 import { useSidebar } from "@/components/ui/sidebar";
 
@@ -46,7 +48,7 @@ export default function POSPage() {
   const [invoiceData, setInvoiceData] = useState<any>(null);
   const [showCartDrawer, setShowCartDrawer] = useState(false);
   const [showPinModal, setShowPinModal] = useState(false);
-  const [isCartVisible, setIsCartVisible] = useState(true); // Desktop cart visibility
+  const [isCartVisible, setIsCartVisible] = useState(true); 
   const searchInputRef = useRef<HTMLInputElement>(null);
   const amountPaidInputRef = useRef<HTMLInputElement>(null);
 
@@ -63,12 +65,19 @@ export default function POSPage() {
   const isSidebarCollapsed = state === "collapsed";
 
   const products = useMemo(() => {
-    return productsData?.pages.flatMap((page) => page.data) || [];
+    return productsData?.pages.flatMap((page: any) => page.data || []).filter(Boolean) || [];
   }, [productsData]);
 
-  // Cart helpers
-  const getQuantity = (productId: string) =>
-    cart.find((c) => c.id === productId)?.quantity ?? 0;
+  // Cart helpers - Mendukung pengecekan kuantitas per SKU atau per Produk
+  const getQuantity = (productId: string, skuId?: string) => {
+    if (skuId) {
+      return cart.find((c) => c.skuId === skuId)?.quantity ?? 0;
+    }
+    // Jika hanya cek per produk (misal untuk overlay badge total), akumulasikan semua variannya
+    return cart
+      .filter((c) => c.id === productId)
+      .reduce((sum, c) => sum + c.quantity, 0);
+  };
 
   const addToCart = (
     product: Product,
@@ -78,78 +87,84 @@ export default function POSPage() {
     skuSize: string | null = null,
     priceAtSku?: number,
     stockAtSku?: number,
+    variantCode?: string | null,
+    // Tambahkan data promo
+    promoName: string | null = null,
+    additionalDiscount: number = 0,
+    comparisonPrice: number | null = null
   ) => {
-    // Buat cartKey unik berdasarkan productId + skuId (atau productId saja jika tanpa varian)
+    // Kunci unik: productId + skuId (jika ada varian)
     const cartKey = skuId ? `${product.id}__${skuId}` : product.id;
-
     setJustAddedProductId(cartKey);
+
     const effectivePrice = priceAtSku ?? product.price;
     const effectiveStock = stockAtSku ?? product.stock;
-    const effectiveName = skuSize
-      ? `${product.name} - ${variantColor} / ${skuSize}`
+    
+    // Nama yang ditampilkan di keranjang (detail)
+    const displayName = skuSize 
+      ? `${product.name} - ${variantColor} / ${skuSize}` 
       : product.name;
 
     setCart((prev: CartItem[]) => {
-      const existing = prev.find((c: CartItem) =>
-        skuId ? c.skuId === skuId : c.id === product.id && !c.skuId,
+      const existingIndex = prev.findIndex((c) => 
+        skuId ? c.skuId === skuId : (c.id === product.id && !c.skuId)
       );
-      if (existing) {
+
+      if (existingIndex > -1) {
+        const existing = prev[existingIndex];
         if (existing.quantity >= effectiveStock) {
-          toast.warning(
-            `Stok ${effectiveName} hanya tersisa ${effectiveStock}`,
-          );
+          toast.warning(`Stok ${displayName} tidak mencukupi.`);
           return prev;
         }
-        return prev.map((c: CartItem) =>
-          (skuId ? c.skuId === skuId : c.id === product.id && !c.skuId)
-            ? { ...c, quantity: c.quantity + 1 }
-            : c,
-        );
+        const updatedCart = [...prev];
+        updatedCart[existingIndex] = { ...existing, quantity: existing.quantity + 1 };
+        return updatedCart;
       }
+
       const newItem: CartItem = {
         id: product.id,
         productCode: product.productCode,
-        name: effectiveName,
+        name: product.name,
         imageUrl: product.imageUrl,
         category: product.category,
         price: effectivePrice,
         stock: effectiveStock,
         quantity: 1,
-        discountAmount: 0,
+        discountAmount: additionalDiscount, // Otomatis dari Admin
+        promoName: promoName,               // Nama Promo Admin
+        comparisonPriceAtSale: comparisonPrice, // Harga Gimmick (Coretan asli)
         variantId,
         variantColor,
         skuId,
         skuSize,
+        variantCode: variantCode || null
       };
       return [...prev, newItem];
     });
   };
 
-  const updateDiscount = (productId: string, discount: number) => {
-    setCart((prev) =>
-      prev.map((c) =>
-        c.id === productId ? { ...c, discountAmount: discount } : c,
-      ),
-    );
-  };
-
-  const removeFromCart = (productId: string) => {
-    setJustAddedProductId(productId);
-    setCart((prev: CartItem[]) => {
-      const existing = prev.find((c: CartItem) => c.id === productId);
-      if (!existing) return prev;
-      if (existing.quantity === 1)
-        return prev.filter((c: CartItem) => c.id !== productId);
-      return prev.map((c: CartItem) =>
-        c.id === productId ? { ...c, quantity: c.quantity - 1 } : c,
+  const removeFromCart = (productId: string, skuId?: string) => {
+    setCart((prev) => {
+      const existingIndex = prev.findIndex((c) => 
+        skuId ? c.skuId === skuId : (c.id === productId && !c.skuId)
       );
+      if (existingIndex === -1) return prev;
+
+      const existing = prev[existingIndex];
+      if (existing.quantity === 1) {
+        return prev.filter((_, i) => i !== existingIndex);
+      }
+
+      const updatedCart = [...prev];
+      updatedCart[existingIndex] = { ...existing, quantity: existing.quantity - 1 };
+      return updatedCart;
     });
   };
 
-  const deleteFromCart = (productId: string) => {
-    setCart((prev: CartItem[]) =>
-      prev.filter((c: CartItem) => c.id !== productId),
-    );
+  const deleteFromCart = (productId: string, skuId?: string) => {
+    setCart((prev) => prev.filter((c) => 
+      skuId ? c.skuId !== skuId : (c.id !== productId || !!c.skuId)
+    ));
   };
 
   const clearCart = () => {
@@ -230,7 +245,6 @@ export default function POSPage() {
   const handleCheckout = async () => {
     if (cart.length === 0 || amountPaid < totalPrice || isSubmitting) return;
 
-    // 🔐 KEAMANAN: Cek ambang batas diskon (300rb)
     if (totalDiscount > 300000) {
       setShowPinModal(true);
       return;
@@ -247,13 +261,14 @@ export default function POSPage() {
           productId: c.id,
           quantity: c.quantity,
           discountAmount: c.discountAmount,
+          promoName: c.promoName,
+          comparisonPriceAtSale: c.comparisonPriceAtSale,
           variantId: c.variantId ?? undefined,
           skuId: c.skuId ?? undefined,
         })),
         amountPaid,
         customerName,
         customerPhone,
-        // Jika butuh validasi PIN admin di server-side, kirim PIN-nya
         ...(authPin && { adminPin: authPin }),
       },
       {
@@ -341,11 +356,8 @@ export default function POSPage() {
               <div
                 className={cn(
                   "grid gap-2 md:gap-2.5 lg:gap-3 transition-all duration-300",
-                  // Mobile: 2 columns
                   "grid-cols-2",
-                  // Tablet (768-1024px): no cart panel, more cols
                   isSidebarCollapsed ? "md:grid-cols-4" : "md:grid-cols-3",
-                  // Desktop (1024px+): cart visible, reduce cols
                   !isCartVisible
                     ? isSidebarCollapsed
                       ? "lg:grid-cols-5 xl:grid-cols-6"
@@ -355,14 +367,14 @@ export default function POSPage() {
                       : "lg:grid-cols-3 xl:grid-cols-4",
                 )}
               >
-                {products.map((product) => (
+                {products.map((product: Product) => (
                   <ProductCard
                     key={product.id}
                     product={product}
-                    quantityInCart={getQuantity(product.id)}
-                    isJustAdded={justAddedProductId === product.id}
-                    onAdd={() => addToCart(product)}
-                    onRemove={() => removeFromCart(product.id)}
+                    quantityInCart={(skuId) => product?.id ? getQuantity(product.id, skuId) : 0}
+                    isJustAdded={!!product && (justAddedProductId === product.id || cart.some(c => c?.id === product.id && `${c.id}__${c.skuId}` === justAddedProductId))}
+                    onAdd={addToCart}
+                    onRemove={removeFromCart}
                   />
                 ))}
               </div>
@@ -398,12 +410,7 @@ export default function POSPage() {
                 Keranjang Belanja
               </span>
               {totalItems > 0 && (
-                <span
-                  className={cn(
-                    "bg-amber-400 text-[#3C3025] text-[10px] font-black px-1.5 py-0.5 rounded-full transition-transform",
-                    justAddedProductId && "scale-110",
-                  )}
-                >
+                <span className="bg-amber-400 text-[#3C3025] text-[10px] font-black px-1.5 py-0.5 rounded-full">
                   {totalItems}
                 </span>
               )}
@@ -411,7 +418,7 @@ export default function POSPage() {
             {cart.length > 0 && (
               <button
                 onClick={clearCart}
-                className="text-white/60 hover:text-red-300 transition-colors flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider"
+                className="text-white/60 hover:text-red-300 transition-colors flex items-center gap-1 text-[10px] font-black uppercase"
               >
                 <Trash2 className="w-3 h-3" />
                 Clear
@@ -425,126 +432,122 @@ export default function POSPage() {
               <div className="flex flex-col items-center justify-center h-full text-stone-300">
                 <ShoppingCart className="w-12 h-12 mb-2" />
                 <p className="text-sm">Keranjang kosong</p>
-                <p className="text-xs mt-1">Klik produk untuk menambahkan</p>
               </div>
             ) : (
               <div className="space-y-2">
-                {cart.map((item) => (
-                  <div
-                    key={item.id}
+                {cart.map((item) => {
+                   const itemKey = item.skuId ? `${item.id}__${item.skuId}` : item.id;
+                   return (
+                   <div
+                    key={itemKey}
                     className={cn(
-                      "bg-stone-50 rounded-lg p-3 border border-stone-100 space-y-2 shadow-sm transition-colors",
-                      justAddedProductId === item.id && "bg-amber-50/80",
+                      "bg-stone-50 rounded-lg p-3 border border-stone-100 space-y-1.5 shadow-sm transition-colors",
+                      justAddedProductId === itemKey && "bg-amber-50/80 border-amber-200",
                     )}
                   >
                     <div className="flex items-start justify-between gap-2">
-                      <p className="text-xs font-semibold text-stone-800 leading-tight line-clamp-2 flex-1">
-                        {item.name}
-                      </p>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[11px] font-bold text-stone-800 leading-tight truncate" title={item.name}>
+                          {item.name}
+                        </p>
+                        {item.variantCode && (
+                          <div className="flex items-center gap-1 mt-0.5 font-mono">
+                            <span className="text-[8px] bg-white px-1 border border-stone-200 rounded text-stone-500 font-bold uppercase">{item.variantCode}</span>
+                            <span className="text-[9px] text-stone-400 uppercase font-medium">{item.variantColor} / {item.skuSize}</span>
+                          </div>
+                        )}
+                      </div>
                       <button
-                        onClick={() => deleteFromCart(item.id)}
+                        onClick={() => deleteFromCart(item.id, item.skuId || undefined)}
                         className="text-stone-300 hover:text-red-500 transition-colors p-1"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
 
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-between gap-2 pt-1">
+                      <div className="flex items-center gap-1.5">
                         <Button
                           variant="outline"
                           size="icon"
-                          onClick={() => removeFromCart(item.id)}
-                          className="h-9 w-9 bg-white"
+                          onClick={() => removeFromCart(item.id, item.skuId || undefined)}
+                          className="h-8 w-8 bg-white border-stone-200"
                         >
-                          <Minus className="w-4 h-4" />
+                          <Minus className="w-3.5 h-3.5 text-stone-600" />
                         </Button>
-                        <span className="text-sm font-bold w-6 text-center text-stone-700">
+                        <span className="text-xs font-black w-5 text-center text-stone-700">
                           {item.quantity}
                         </span>
                         <Button
                           size="icon"
                           onClick={() =>
                             addToCart(
-                              { ...item, hasVariants: false, variants: [] },
+                              { ...item, hasVariants: !!item.skuId, variants: [] },
                               item.variantId,
                               item.variantColor,
                               item.skuId,
                               item.skuSize,
                               item.price,
                               item.stock,
+                              item.variantCode
                             )
                           }
                           disabled={item.quantity >= item.stock}
-                          className="h-9 w-9 bg-[#3C3025] hover:bg-[#5a4a38] text-white"
+                          className="h-8 w-8 bg-[#3C3025] hover:bg-[#5a4a38] text-white"
                         >
-                          <Plus className="w-4 h-4" />
+                          <Plus className="w-3.5 h-3.5" />
                         </Button>
                       </div>
 
                       <div className="text-right">
-                        <p className="text-sm font-bold text-[#3C3025]">
-                          Rp{" "}
-                          {(item.price * item.quantity).toLocaleString("id-ID")}
+                        <p className="text-[11px] font-black text-[#3C3025]">
+                          Rp {(item.price * item.quantity).toLocaleString("id-ID")}
                         </p>
                         {item.discountAmount > 0 && (
-                          <p className="text-[11px] text-red-500 font-semibold">
+                          <p className="text-[10px] text-red-500 font-bold">
                             - Rp {item.discountAmount.toLocaleString("id-ID")}
                           </p>
                         )}
                       </div>
                     </div>
 
-                    {/* Desktop Item Discount Input */}
-                    <div className="flex items-center gap-2 pt-2 border-t border-stone-100">
-                      <span className="text-[10px] font-semibold text-stone-500 uppercase">
-                        Diskon
-                      </span>
-                      <Input
-                        type="text"
-                        className="h-8 text-xs px-2 bg-white border-stone-200"
-                        placeholder="Rp 0"
-                        value={formatNumber(item.discountAmount)}
-                        onChange={(e) =>
-                          updateDiscount(item.id, parseNumber(e.target.value))
-                        }
-                      />
-                    </div>
-                    {item.discountAmount > item.price * item.quantity && (
-                      <p className="text-[11px] text-red-500">
-                        Diskon melebihi subtotal item.
-                      </p>
+                    {item.discountAmount > 0 && (
+                      <div className="flex items-center gap-2 pt-2 border-t border-stone-200/60 mt-1">
+                        <Tag className="h-3 w-3 text-red-500" />
+                        <span className="text-[10px] font-bold text-red-500 uppercase tracking-tight">
+                          {item.promoName || "Diskon Admin"} (-Rp {item.discountAmount.toLocaleString("id-ID")})
+                        </span>
+                      </div>
                     )}
                   </div>
-                ))}
+                )})}
               </div>
             )}
           </div>
 
           {/* Footer: Bayar */}
           {cart.length > 0 && (
-            <div className="border-t px-4 py-4 space-y-3 bg-white shrink-0">
-              {/* Desktop Customer CRM Inputs */}
+            <div className="border-t px-4 py-4 space-y-3 bg-stone-50/50 shrink-0">
               <div className="space-y-2 pb-2">
                 <div className="grid grid-cols-2 gap-2">
                   <div className="space-y-1">
-                    <Label className="text-[10px] uppercase font-black text-stone-400">
+                    <Label className="text-[9px] uppercase font-black text-stone-400">
                       Customer
                     </Label>
                     <Input
                       placeholder="Nama"
-                      className="h-8 text-xs bg-stone-50/50"
+                      className="h-8 text-xs bg-white border-stone-200"
                       value={customerName}
                       onChange={(e) => setCustomerName(e.target.value)}
                     />
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-[10px] uppercase font-black text-stone-400">
+                    <Label className="text-[9px] uppercase font-black text-stone-400">
                       No. HP
                     </Label>
                     <Input
                       placeholder="08..."
-                      className="h-8 text-xs bg-stone-50/50"
+                      className="h-8 text-xs bg-white border-stone-200"
                       value={customerPhone}
                       onChange={(e) => setCustomerPhone(e.target.value)}
                     />
@@ -552,16 +555,16 @@ export default function POSPage() {
                 </div>
               </div>
 
-              <div className="flex justify-between font-semibold text-sm pt-2 border-t">
-                <span>Total Belanja</span>
-                <span className="text-[#3C3025] text-lg font-bold">
+              <div className="flex justify-between font-bold text-sm pt-2 border-t border-stone-200">
+                <span className="text-stone-500">Total Harga</span>
+                <span className="text-[#3C3025] text-lg font-black italic">
                   Rp {totalPrice.toLocaleString("id-ID")}
                 </span>
               </div>
 
-              <div className="space-y-1.5">
-                <Label className="text-[10px] text-stone-400 uppercase font-black">
-                  Nominal Bayar (Rp)
+              <div className="space-y-1.5 pt-1">
+                <Label className="text-[9px] text-stone-400 uppercase font-black">
+                  Uang Diterima (Rp)
                 </Label>
                 <Input
                   ref={amountPaidInputRef}
@@ -573,23 +576,17 @@ export default function POSPage() {
                       setAmountPaid(parseNumber(val));
                     }
                   }}
-                  placeholder="0"
-                  className="bg-stone-50 h-10 text-base font-bold"
+                  className="bg-white h-10 text-base font-black border-stone-300"
                 />
                 {amountPaid > 0 && amountPaid >= totalPrice && (
-                  <div className="flex justify-between items-center text-xs text-green-700 mt-1 font-bold bg-green-50 px-2 py-1.5 rounded">
+                  <div className="flex justify-between items-center text-xs text-green-700 font-bold bg-green-50 px-2 py-1.5 rounded border border-green-100">
                     <span>Kembalian:</span>
                     <span>Rp {change.toLocaleString("id-ID")}</span>
                   </div>
                 )}
                 {amountPaid > 0 && amountPaid < totalPrice && (
-                  <p className="text-[10px] text-red-500 mt-1">
-                    Kurang bayar Rp {remainingPayment.toLocaleString("id-ID")}
-                  </p>
-                )}
-                {hasInvalidDiscount && (
-                  <p className="text-[10px] text-red-500 mt-1">
-                    Cek diskon item, ada yang melebihi subtotal.
+                  <p className="text-[9px] text-red-500 font-bold bg-red-50 px-2 py-1 rounded">
+                    Kurang Bayar Rp {remainingPayment.toLocaleString("id-ID")}
                   </p>
                 )}
               </div>
@@ -599,19 +596,17 @@ export default function POSPage() {
                   checkoutMutation.isPending || isSubmitting || !canCheckout
                 }
                 className={cn(
-                  "w-full py-6 text-sm font-bold",
+                  "w-full py-6 text-sm font-black tracking-widest",
                   canCheckout
-                    ? "bg-[#3C3025] hover:bg-[#5a4a38] text-white"
-                    : "bg-stone-200 text-stone-500",
+                    ? "bg-[#3C3025] hover:bg-[#5a4a38] text-white shadow-lg"
+                    : "bg-stone-200 text-stone-400",
                 )}
               >
                 {checkoutMutation.isPending || isSubmitting
-                  ? "Memproses transaksi..."
+                  ? "MEMPROSES..."
                   : canCheckout
-                    ? `Konfirmasi Bayar Rp ${totalPrice.toLocaleString("id-ID")}`
-                    : amountPaid < totalPrice
-                      ? `Kurang Rp ${remainingPayment.toLocaleString("id-ID")}`
-                      : "Lengkapi data pembayaran"}
+                    ? `BAYAR Rp ${totalPrice.toLocaleString("id-ID")}`
+                    : "LENGKAPI DATA"}
               </Button>
             </div>
           )}
@@ -622,12 +617,12 @@ export default function POSPage() {
       {cart.length > 0 && (
         <button
           onClick={() => setShowCartDrawer(true)}
-          className="lg:hidden fixed bottom-4 md:bottom-8 left-4 right-4 z-30 flex items-center justify-between px-4 py-3.5 text-white text-sm font-semibold rounded-lg shadow-xl"
+          className="lg:hidden fixed bottom-4 md:bottom-8 left-4 right-4 z-30 flex items-center justify-between px-4 py-4 text-white text-sm font-black italic rounded-xl shadow-2xl transition-transform active:scale-95"
           style={{ backgroundColor: "#3C3025" }}
         >
           <div className="flex items-center gap-2">
-            <ShoppingCart className="w-4 h-4" />
-            <span>Keranjang ({totalItems})</span>
+            <ShoppingCart className="w-5 h-5" />
+            <span>KERANJANG ({totalItems})</span>
           </div>
           <span>Rp {totalPrice.toLocaleString("id-ID")}</span>
         </button>
@@ -636,22 +631,41 @@ export default function POSPage() {
       {/* ===== Mobile Cart Drawer ===== */}
       {showCartDrawer && (
         <CartDrawer
-          items={cart.map((c: CartItem) => ({
-            productId: c.id,
-            name: c.name,
-            price: c.price,
-            quantity: c.quantity,
-            stock: c.stock,
-            discountAmount: c.discountAmount,
-          }))}
+          items={cart}
           onClose={() => setShowCartDrawer(false)}
-          onAdd={(id: string) => {
+          onAdd={(id, skuId) => {
             const p = products.find((x: Product) => x.id === id);
-            if (p) addToCart(p);
+            if (!p) return;
+            
+            if (skuId) {
+              const variant = p.variants.find((v: ProductVariantForKasir) => v.skus.some((s: any) => s.id === skuId));
+              const sku = variant?.skus.find((s: any) => s.id === skuId);
+              if (variant && sku) {
+                // LOGIKA CERDAS: Gunakan finalPrice dan kalkulasi ulang diskon
+                const originalPrice = sku.priceOverride ?? variant.basePrice;
+                const finalPrice = (sku as any).finalPrice ?? originalPrice;
+                const discountAmount = originalPrice - finalPrice;
+
+                addToCart(
+                  p, 
+                  variant.id, 
+                  variant.color, 
+                  sku.id, 
+                  sku.size, 
+                  originalPrice, // Pakai harga asli agar diskon terbaca
+                  sku.stock, 
+                  variant.variantCode,
+                  variant.promoName,
+                  discountAmount,
+                  variant.comparisonPrice || originalPrice
+                );
+              }
+            } else {
+              addToCart(p);
+            }
           }}
           onRemove={removeFromCart}
           onDelete={deleteFromCart}
-          onUpdateDiscount={updateDiscount}
           amountPaid={amountPaid}
           onAmountPaidChange={setAmountPaid}
           customerName={customerName}
@@ -660,7 +674,6 @@ export default function POSPage() {
           onCustomerPhoneChange={setCustomerPhone}
           onCheckout={handleCheckout}
           isLoading={checkoutMutation.isPending}
-          highlightedProductId={justAddedProductId}
         />
       )}
 

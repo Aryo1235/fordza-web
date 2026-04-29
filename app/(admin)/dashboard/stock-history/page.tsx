@@ -61,7 +61,43 @@ export default function StockLogsPage() {
   const currentData = activeTab === "universal" ? universalData : skuData;
   
   // Gunakan useMemo untuk mapping logs agar tidak recalculate saat re-render ringan
-  const logs = useMemo(() => currentData?.data || [], [currentData]);
+  const logs = useMemo(() => {
+    const rawLogs = currentData?.data || [];
+    if (activeTab === "universal") {
+      return groupUniversalLogs(rawLogs);
+    }
+    return rawLogs;
+  }, [currentData, activeTab]);
+
+  function groupUniversalLogs(logs: any[]) {
+    if (logs.length === 0) return [];
+    
+    const grouped: any[] = [];
+    let currentGroup: any = null;
+    const THRESHOLD = 1000 * 5; // 5 detik
+
+    logs.forEach((log) => {
+      const logTime = new Date(log.createdAt).getTime();
+
+      const canGroup = 
+        currentGroup &&
+        currentGroup.productId === log.productId &&
+        currentGroup.type === log.type &&
+        currentGroup.operatorId === log.operatorId &&
+        Math.abs(new Date(currentGroup.createdAt).getTime() - logTime) <= THRESHOLD;
+
+      if (canGroup) {
+        currentGroup.delta += log.delta;
+        currentGroup.itemCount = (currentGroup.itemCount || 1) + 1;
+        currentGroup.isGrouped = true;
+      } else {
+        currentGroup = { ...log, itemCount: 1, isGrouped: false };
+        grouped.push(currentGroup);
+      }
+    });
+
+    return grouped;
+  }
 
   const handleExportExcel = async () => {
     const endpoint = activeTab === "universal" 
@@ -213,7 +249,14 @@ export default function StockLogsPage() {
                             </div>
                           </TableCell>
                           <TableCell>{getLogBadge(log.type)}</TableCell>
-                          <TableCell className="text-right font-black"><DeltaBadge delta={log.delta} /></TableCell>
+                          <TableCell className="text-right font-black">
+                            <DeltaBadge delta={log.delta} />
+                            {log.isGrouped && (
+                              <div className="text-[9px] text-amber-600 font-black uppercase mt-0.5 tracking-tighter">
+                                {log.itemCount} Item
+                              </div>
+                            )}
+                          </TableCell>
                           <TableCell className="text-right font-mono text-stone-600 font-bold">{log.currentStock}</TableCell>
                           <TableCell className="text-[10px] font-bold text-stone-500 uppercase">{log.operator?.name || "Sistem"}</TableCell>
                           <TableCell className="text-xs text-stone-400 italic truncate max-w-[150px]">{log.notes || "-"}</TableCell>

@@ -40,6 +40,9 @@ export const RecommendationService = {
         id: true,
         name: true,
         price: true,
+        isPopular: true,
+        isBestseller: true,
+        isNew: true,
         productType: true,
         gender: true,
         shortDescription: true,
@@ -54,11 +57,25 @@ export const RecommendationService = {
         },
         detail: { select: { material: true } },
         // Ambil material & basePrice varian aktif (untuk hitung harga terendah + material override)
-        variants: {
-          where: { isActive: true },
-          select: { basePrice: true },
-          take: 5,
-        },
+          variants: {
+            where: { isActive: true },
+            select: { 
+              id: true,
+              basePrice: true,
+              comparisonPrice: true,
+              discountPercent: true,
+              isActive: true,
+              skus: {
+                where: { isActive: true },
+                select: {
+                  id: true,
+                  priceOverride: true,
+                  isActive: true
+                }
+              }
+            },
+            take: 5,
+          },
       },
     });
 
@@ -118,6 +135,9 @@ export const RecommendationService = {
         id: product.id,
         name: product.name,
         price: product.price,
+        isPopular: product.isPopular,
+        isBestseller: product.isBestseller,
+        isNew: product.isNew,
         gender: product.gender,
         productType: product.productType,
         shortDescription: product.shortDescription,
@@ -125,6 +145,7 @@ export const RecommendationService = {
         totalReviews: product.totalReviews,
         image: product.images[0]?.url || null,
         categories: product.categories.map((c) => c.category.name),
+        variants: product.variants,
         distance: Math.round(neighbor.distance * 10000) / 10000, // 4 desimal
       };
     });

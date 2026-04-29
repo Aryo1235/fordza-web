@@ -17,6 +17,8 @@ const variantSchema = z.object({
   })).optional(),
 });
 
+import { PromoRepository } from "@/backend/repositories/promo.repo";
+
 // GET /api/admin/products/[id]/variants — List semua varian produk
 export async function GET(
   req: Request,
@@ -30,11 +32,64 @@ export async function GET(
       include: {
         skus: { orderBy: { size: "asc" } },
         images: true,
+        product: {
+            include: {
+                categories: true
+            }
+        }
       },
       orderBy: { createdAt: "asc" },
     });
 
-    return NextResponse.json({ success: true, data: variants });
+    const activePromos = await PromoRepository.getActive();
+
+    // Mapping dg logika agregasi
+    const enrichedVariants = variants.map((v: any) => {
+        const basePrice = Number(v.basePrice);
+        const gimmickPrice = v.comparisonPrice ? Number(v.comparisonPrice) : null;
+        const highestPrice = gimmickPrice && gimmickPrice > basePrice ? gimmickPrice : basePrice;
+
+        let bestPromo: any = activePromos.find(promo => promo.targetType === "VARIANT" && promo.targetIds.includes(v.id));
+        if (!bestPromo) {
+            bestPromo = activePromos.find(promo => promo.targetType === "PRODUCT" && promo.targetIds.includes(productId));
+        }
+        if (!bestPromo) {
+            const pCategoryIds = v.product.categories.map((c: any) => c.categoryId);
+            bestPromo = activePromos.find(promo => promo.targetType === "CATEGORY" && promo.targetIds.some(id => pCategoryIds.includes(id)));
+        }
+        if (!bestPromo) bestPromo = activePromos.find(promo => promo.targetType === "GLOBAL");
+
+        let additionalDiscount = 0;
+        let isConditional = false;
+
+        if (bestPromo) {
+            if (Number(bestPromo.minPurchase || 0) > 0) {
+                isConditional = true;
+            } else {
+                if (bestPromo.type === "PERCENTAGE") additionalDiscount = (basePrice * Number(bestPromo.value)) / 100;
+                else additionalDiscount = Number(bestPromo.value);
+            }
+        }
+
+        const finalPrice = basePrice - Math.min(additionalDiscount, basePrice);
+        let totalDiscountPercent = 0;
+        if (highestPrice > finalPrice) {
+            totalDiscountPercent = Math.floor(((highestPrice - finalPrice) / highestPrice) * 100);
+        }
+
+        return {
+            ...v,
+            basePrice,
+            comparisonPrice: gimmickPrice,
+            highestPrice,
+            finalPrice,
+            totalDiscountPercent,
+            promoName: bestPromo?.name || null,
+            isPromoConditional: isConditional
+        };
+    });
+
+    return NextResponse.json({ success: true, data: enrichedVariants });
   } catch (error: any) {
     return NextResponse.json({ success: false, message: error.message }, { status: 500 });
   }

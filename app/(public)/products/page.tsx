@@ -1,212 +1,109 @@
-"use client";
-
-import { useState, useEffect } from "react";
+import { Suspense } from "react";
 import Link from "next/link";
+import { ProductService } from "@/backend/services/products.service";
+import { CategoryService } from "@/backend/services/category.service";
+import { ProductCard } from "@/features/products/components/ProductCard";
+import { ProductFilters } from "@/features/products/components/ProductFilters";
+import { ProductCatalogHeader } from "@/features/products/components/ProductCatalogHeader";
+import { cn } from "@/lib/utils";
+import { PublicPagination } from "@/components/shared/PublicPagination";
+import { PackageSearch } from "lucide-react";
 
-interface Product {
-  id: string;
-  name: string;
-  shortDescription: string;
-  price: string | number;
-  avgRating: number;
-  totalReviews: number;
-  images: { id: string; url: string }[];
-  categories: { category: { id: string; name: string } }[];
-  detail?: { material: string | null };
-  variants: { basePrice: any; discountPercent: number | null }[];
-}
+// Server Component (Next.js 15+ style)
+export default async function ProductsPage(props: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
+  const searchParams = await props.searchParams;
 
-interface Meta {
-  totalItems: number;
-  totalPage: number;
-  currentPage: number;
-  limit: number;
-}
+  // 1. Persiapkan Filters
+  const page = parseInt((searchParams.page as string) || "1");
+  const limit = 12; // Sesuai grid 2(HP)/3(Tab)/4(Desktop)
 
-export default function ProductsPage() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [meta, setMeta] = useState<Meta | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(1);
+  // Ambil multiple categoryIds jika ada
+  const catParam = searchParams.categoryId;
+  const categoryIds = Array.isArray(catParam)
+    ? catParam
+    : catParam ? [catParam] : undefined;
 
-  useEffect(() => {
-    setLoading(true);
-    fetch(`/api/public/products?page=${page}&limit=12`)
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.success) {
-          setProducts(json.data);
-          setMeta(json.meta);
-        }
-      })
-      .catch((err) => console.error(err))
-      .finally(() => setLoading(false));
-  }, [page]);
-
-  const formatRupiah = (price: string | number) => {
-    return new Intl.NumberFormat("id-ID", {
-      style: "currency",
-      currency: "IDR",
-      minimumFractionDigits: 0,
-    }).format(Number(price));
+  const filters = {
+    page,
+    limit,
+    search: (searchParams.search as string) || undefined,
+    categoryIds,
+    gender: (searchParams.gender as string) || undefined,
+    isPopular: searchParams.isPopular === "true" || undefined,
+    isBestseller: searchParams.isBestseller === "true" || undefined,
+    isNew: searchParams.isNew === "true" || undefined,
+    minPrice: searchParams.minPrice ? parseFloat(searchParams.minPrice as string) : undefined,
+    maxPrice: searchParams.maxPrice ? parseFloat(searchParams.maxPrice as string) : undefined,
+    sortBy: (searchParams.sortBy as string) || "latest",
   };
 
+  // 2. Data Fetching (Paralel)
+  const [productsData, categoriesData] = await Promise.all([
+    ProductService.getAll(filters),
+    CategoryService.getAll(1, 100), // Ambil semua kategori untuk filter
+  ]);
+
+  const products = productsData.products;
+  const meta = productsData.meta;
+  const categories = categoriesData.categories;
+
   return (
-    <div className="min-h-screen bg-zinc-50">
-      {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-zinc-200 bg-white/80 backdrop-blur-md">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-          <Link href="/products" className="text-xl font-bold tracking-tight text-zinc-900">
-            FORDZA
-          </Link>
-          <nav className="flex gap-6 text-sm font-medium text-zinc-600">
-            <Link href="/products" className="text-zinc-900">Produk</Link>
-          </nav>
-        </div>
-      </header>
+    <div className="min-h-screen bg-[#FDFCFB]">
+      <main className="mx-auto max-w-7xl px-4 sm:px-6  py-8 sm:py-12">
+        <div className="flex flex-col lg:flex-row gap-8">
 
-      {/* Page Content */}
-      <main className="mx-auto max-w-7xl px-6 py-10">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-zinc-900">Semua Produk</h1>
-          <p className="mt-2 text-zinc-500">
-            {meta ? `Menampilkan ${products.length} dari ${meta.totalItems} produk` : "Memuat..."}
-          </p>
-        </div>
+          {/* Sidebar Filter - Desktop Sticky, Mobile Drawer via component */}
+          <aside className="w-full lg:w-64 flex-shrink-0 lg:sticky lg:top-24 lg:self-start z-30">
+            <Suspense fallback={<div className="h-96 w-full bg-zinc-100 animate-pulse rounded-xl" />}>
+              <ProductFilters categories={categories} />
+            </Suspense>
+          </aside>
 
-        {/* Loading State */}
-        {loading && (
-          <div className="grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3 lg:grid-cols-4">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="animate-pulse rounded-xl bg-white p-3 shadow-sm">
-                <div className="aspect-square rounded-lg bg-zinc-200" />
-                <div className="mt-3 space-y-2">
-                  <div className="h-4 w-3/4 rounded bg-zinc-200" />
-                  <div className="h-3 w-1/2 rounded bg-zinc-200" />
-                  <div className="h-5 w-2/3 rounded bg-zinc-200" />
-                </div>
+          {/* Main Content */}
+          <div className="flex-1 min-h-[1000px]">
+            {/* Header Dinamis */}
+            <Suspense fallback={<div className="h-20 w-full bg-zinc-50 animate-pulse rounded-xl mb-10" />}>
+              <ProductCatalogHeader categories={categories} />
+            </Suspense>
+
+            {/* Hasil Produk */}
+            {products.length > 0 ? (
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4  transition-all duration-500">
+                {products.map((product: any) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
               </div>
-            ))}
-          </div>
-        )}
-
-        {/* Product Grid */}
-        {!loading && (
-          <div className="grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3 lg:grid-cols-4">
-            {products.map((product) => (
-              <Link
-                key={product.id}
-                href={`/products/${product.id}`}
-                className="group overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-zinc-100 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
-              >
-                {/* Image */}
-                <div className="relative aspect-square overflow-hidden bg-zinc-100">
-                  {product.images[0] ? (
-                    <img
-                      src={product.images[0].url}
-                      alt={product.name}
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                  ) : (
-                    <div className="flex h-full items-center justify-center text-zinc-300">
-                      <svg className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                    </div>
-                  )}
+            ) : (
+              <div className="flex flex-col items-center justify-center py-24 text-center">
+                <div className="bg-[var(--fordza-cream)] p-6 rounded-full mb-4">
+                  <PackageSearch className="size-12 text-[var(--fordza-brown)]/40" />
                 </div>
+                <h3 className="text-xl font-bold text-zinc-900">Produk Tidak Ditemukan</h3>
+                <p className="text-zinc-500 mt-2 max-w-xs">
+                  Maaf, kami tidak menemukan produk yang sesuai dengan kriteria filter Anda.
+                </p>
+                <Link
+                  href="/products"
+                  className="mt-6 text-sm font-bold text-[var(--fordza-brown)] underline underline-offset-4"
+                >
+                  Lihat Semua Produk
+                </Link>
+              </div>
+            )}
 
-                {/* Info */}
-                <div className="p-3 sm:p-4">
-                  {/* Categories */}
-                  {product.categories.length > 0 && (
-                    <div className="mb-1.5 flex flex-wrap gap-1">
-                      {product.categories.slice(0, 2).map((c) => (
-                        <span
-                          key={c.category.id}
-                          className="rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-medium text-zinc-600"
-                        >
-                          {c.category.name}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-
-                  <h3 className="text-sm font-semibold leading-snug text-zinc-900 line-clamp-2">
-                    {product.name}
-                  </h3>
-
-                  {/* Material Info */}
-                  {product.detail?.material && (
-                    <p className="mt-1 text-[10px] text-zinc-500 uppercase tracking-tighter font-medium">
-                      Bahan: {product.detail.material}
-                    </p>
-                  )}
-
-                  {/* Rating */}
-                  {product.totalReviews > 0 && (
-                    <div className="mt-1 flex items-center gap-1 text-xs text-zinc-500">
-                      <span className="text-amber-500">★</span>
-                      <span>{product.avgRating.toFixed(1)}</span>
-                      <span>({product.totalReviews})</span>
-                    </div>
-                  )}
-
-                  <div className="mt-2 flex flex-col">
-                    {/* Hitung harga final secara lokal untuk keamanan data */}
-                    {(() => {
-                      const basePrice = Number(product.variants?.[0]?.basePrice || product.price);
-                      const discount = product.variants?.[0]?.discountPercent || 0;
-                      const finalPrice = discount > 0 ? basePrice * (1 - discount / 100) : Number(product.price);
-                      
-                      return (
-                        <>
-                          <p className="text-sm font-bold text-zinc-900">
-                            {formatRupiah(finalPrice)}
-                          </p>
-                          {discount > 0 && (
-                            <div className="flex items-center gap-2">
-                              <span className="text-[10px] text-zinc-400 line-through">
-                                {formatRupiah(basePrice)}
-                              </span>
-                              <span className="text-[10px] font-bold text-red-500">
-                                -{discount}%
-                              </span>
-                            </div>
-                          )}
-                        </>
-                      );
-                    })()}
-                  </div>
-                </div>
-              </Link>
-            ))}
+            {/* Paginasi Modern */}
+            <PublicPagination
+              currentPage={meta.currentPage}
+              totalPage={meta.totalPage}
+              useLinks={true}
+            />
           </div>
-        )}
-
-        {/* Pagination */}
-        {meta && meta.totalPage > 1 && (
-          <div className="mt-10 flex items-center justify-center gap-2">
-            <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page <= 1}
-              className="rounded-lg border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              ← Sebelumnya
-            </button>
-            <span className="px-4 text-sm text-zinc-500">
-              Halaman {meta.currentPage} dari {meta.totalPage}
-            </span>
-            <button
-              onClick={() => setPage((p) => Math.min(meta.totalPage, p + 1))}
-              disabled={page >= meta.totalPage}
-              className="rounded-lg border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              Selanjutnya →
-            </button>
-          </div>
-        )}
+        </div>
       </main>
     </div>
   );
 }
+
+

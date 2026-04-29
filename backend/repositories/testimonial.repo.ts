@@ -39,7 +39,7 @@ export const TestimonialRepository = {
         take: limit,
         include: {
           product: {
-            select: { name: true, images: { take: 1, select: { url: true } } },
+            select: { name: true },
           },
         },
       }),
@@ -86,7 +86,7 @@ export const TestimonialRepository = {
         take: limit,
         include: {
           product: {
-            select: { name: true, images: { take: 1, select: { url: true } } },
+            select: { name: true },
           },
         },
       }),
@@ -139,5 +139,37 @@ export const TestimonialRepository = {
       _avg: { rating: true },
       _count: { rating: true },
     });
+  },
+
+  async getStats(productId?: string) {
+    const where = { 
+      isActive: true,
+      ...(productId && { productId })
+    };
+
+    const [aggregations, distribution] = await Promise.all([
+      prisma.testimonial.aggregate({
+        where,
+        _avg: { rating: true },
+        _count: { rating: true },
+      }),
+      prisma.testimonial.groupBy({
+        by: ["rating"],
+        where,
+        _count: { rating: true },
+      }),
+    ]);
+
+    // Format distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
+    const distMap: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    distribution.forEach((item) => {
+      distMap[item.rating] = item._count.rating;
+    });
+
+    return {
+      avgRating: aggregations._avg.rating || 0,
+      totalReviews: aggregations._count.rating || 0,
+      distribution: distMap,
+    };
   },
 };

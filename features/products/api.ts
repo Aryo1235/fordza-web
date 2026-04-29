@@ -14,9 +14,15 @@ export async function getAdminProducts(filters: ProductFilters = {}) {
   return res.data;
 }
 
-/** GET /api/admin/products/:id — Detail 1 produk */
+/** GET /api/admin/products/:id — Detail 1 produk (Admin) */
 export async function getProductById(id: string) {
   const res = await api.get(`/api/admin/products/${id}`);
+  return res.data.data;
+}
+
+/** GET /api/public/products/:id — Detail 1 produk (Public) */
+export async function getPublicProductById(id: string) {
+  const res = await api.get(`/api/public/products/${id}`);
   return res.data.data;
 }
 

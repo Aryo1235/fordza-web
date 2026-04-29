@@ -96,7 +96,9 @@ export async function proxy(request: NextRequest) {
   const isMeEndpoint = pathname === "/api/admin/auth/me";
   const isLogoutEndpoint = pathname === "/api/admin/auth/logout";
   const isCashierListEndpoint = pathname === "/api/admin/cashiers" && request.method === "GET";
-  const isKasirAllowedApi = isMeEndpoint || isLogoutEndpoint || isCashierListEndpoint;
+  const isExportEndpoint = pathname === "/api/admin/transactions/export" && request.method === "GET";
+  const isShiftEndpoint = pathname.startsWith("/api/admin/shifts");
+  const isKasirAllowedApi = isMeEndpoint || isLogoutEndpoint || isCashierListEndpoint || isExportEndpoint || isShiftEndpoint;
   
   if (isAdminApi && role !== "ADMIN" && !isKasirAllowedApi) {
     return NextResponse.json({ success: false, message: "Akses ditolak." }, { status: 403 });

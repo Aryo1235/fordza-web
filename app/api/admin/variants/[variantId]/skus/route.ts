@@ -52,10 +52,41 @@ export async function POST(
         where: { variant: { productId: variant.productId } },
         _sum: { stock: true },
       });
+      const newTotalStock = totalStock._sum.stock ?? 0;
       await tx.product.update({
         where: { id: variant.productId },
-        data: { stock: totalStock._sum.stock ?? 0 },
+        data: { stock: newTotalStock },
       });
+
+      // ─── Auto Stock Log (RESTOCK) untuk SKU baru ─────────────────────────────
+      if (data.stock > 0) {
+        const operatorId = req.headers.get("x-user-id") ??
+          (await tx.admin.findFirst({ select: { id: true } }))?.id ?? null;
+
+        await tx.skuStockLog.create({
+          data: {
+            skuId: created.id,
+            delta: data.stock,
+            currentStock: data.stock,
+            size: data.size,
+            color: variant.color,
+            type: "RESTOCK",
+            notes: `Tambah Ukuran Baru ${data.size} ke Varian ${variant.color}`,
+            operatorId,
+          },
+        });
+
+        await tx.stockLog.create({
+          data: {
+            productId: variant.productId,
+            delta: data.stock,
+            currentStock: newTotalStock,
+            type: "RESTOCK",
+            notes: `Tambah Ukuran ${data.size} (${variant.color}) — Stok Awal: ${data.stock}`,
+            operatorId,
+          },
+        });
+      }
 
       return created;
     });

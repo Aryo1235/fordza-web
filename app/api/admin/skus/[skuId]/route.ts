@@ -54,10 +54,11 @@ export async function PATCH(
 
       // ─── Logging Penyesuaian Manual ──────────────────────────────────────────
       if (delta !== 0) {
-        let effectiveOperatorId = (req as any).adminId; // Depends on auth middleware
+        // Baca operator dari header (sesuai pola middleware Fordza)
+        let effectiveOperatorId: string | null = req.headers.get("x-user-id");
         if (!effectiveOperatorId) {
           const firstAdmin = await tx.admin.findFirst({ select: { id: true } });
-          effectiveOperatorId = firstAdmin?.id;
+          effectiveOperatorId = firstAdmin?.id ?? null;
         }
 
         await tx.skuStockLog.create({
@@ -73,7 +74,7 @@ export async function PATCH(
           },
         });
 
-        // Dual Logging
+        // Dual Logging ke StockLog (level produk)
         await tx.stockLog.create({
           data: {
             productId: updated.variant.productId,
@@ -104,11 +105,14 @@ export async function DELETE(
     const { skuId } = await params;
 
     await prisma.$transaction(async (tx) => {
+      // Ambil info SKU lengkap SEBELUM dihapus (untuk log)
       const sku = await tx.productSku.findUnique({
         where: { id: skuId },
-        include: { variant: { select: { productId: true } } },
+        include: { variant: { select: { productId: true, color: true } } },
       });
       if (!sku) throw new Error("SKU tidak ditemukan");
+
+      const stockSebelumHapus = sku.stock;
 
       await tx.productSku.delete({ where: { id: skuId } });
 
@@ -116,10 +120,28 @@ export async function DELETE(
         where: { variant: { productId: sku.variant.productId } },
         _sum: { stock: true },
       });
+      const newTotalStock = totalStock._sum.stock ?? 0;
       await tx.product.update({
         where: { id: sku.variant.productId },
-        data: { stock: totalStock._sum.stock ?? 0 },
+        data: { stock: newTotalStock },
       });
+
+      // ─── Log penghapusan SKU (stok hilang) ───────────────────────────────────
+      if (stockSebelumHapus > 0) {
+        const operatorId = req.headers.get("x-user-id") ??
+          (await tx.admin.findFirst({ select: { id: true } }))?.id ?? null;
+
+        await tx.stockLog.create({
+          data: {
+            productId: sku.variant.productId,
+            delta: -stockSebelumHapus,
+            currentStock: newTotalStock,
+            type: "ADJUSTMENT",
+            notes: `Hapus Ukuran ${sku.size} (${sku.variant.color}) — Stok berkurang ${stockSebelumHapus}`,
+            operatorId,
+          },
+        });
+      }
     });
 
     return NextResponse.json({ success: true, message: "SKU berhasil dihapus" });

@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect } from "react";
+import { use, useEffect, useMemo } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -19,7 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAllCategoriesAdmin } from "@/features/categories";
-import { useSizeTemplatesAdmin } from "@/features/size-templates";
+import { useSizeTemplatesAdmin } from "@/features/admin/size-templates";
 import { Package, Save, Loader2, ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/layout/admin/PageHeader";
@@ -55,6 +55,39 @@ export default function EditProductPage({
   const categories = categoriesData?.data || [];
   const templates = templatesData?.data || [];
 
+  // 🛠️ PAKET DATA REAKTIF: Memetakan data API ke struktur Form secara stabil
+  const formValues = useMemo(() => {
+    if (!product) return undefined;
+
+    const catIds = Array.isArray(product.categories)
+      ? product.categories
+          .map((c: any) => c.category?.id || c.categoryId || (typeof c === 'string' ? c : null))
+          .filter(Boolean)
+      : [];
+
+    const stId = product.detail?.sizeTemplateId || product.detail?.sizeTemplate?.id || "";
+
+    return {
+      productCode: product.productCode || "",
+      name: product.name || "",
+      shortDescription: product.shortDescription || "",
+      description: product.detail?.description || "",
+      productType: (product.productType?.toLowerCase() as any) || "shoes",
+      gender: (product.gender as any) || "Unisex",
+      material: product.detail?.material || "",
+      outsole: product.detail?.outsole || "",
+      closureType: product.detail?.closureType || "",
+      origin: product.detail?.origin || "",
+      notes: product.detail?.notes || "",
+      isActive: !!product.isActive,
+      isPopular: !!product.isPopular,
+      isBestseller: !!product.isBestseller,
+      isNew: !!product.isNew,
+      categoryIds: catIds,
+      sizeTemplateId: stId,
+    };
+  }, [product]);
+
   const {
     register,
     handleSubmit,
@@ -64,6 +97,27 @@ export default function EditProductPage({
     formState: { errors, isDirty },
   } = useForm<ProductSchemaValues>({
     resolver: zodResolver(productSchema) as any,
+    // INI KUNCINYA: Form akan otomatis reset saat data product mendarat/berubah
+    values: formValues,
+    defaultValues: {
+      productCode: "",
+      name: "",
+      shortDescription: "",
+      description: "",
+      productType: "shoes",
+      gender: "Unisex",
+      material: "",
+      outsole: "",
+      closureType: "",
+      origin: "",
+      notes: "",
+      isActive: true,
+      isPopular: false,
+      isBestseller: false,
+      isNew: true,
+      categoryIds: [],
+      sizeTemplateId: "",
+    },
   });
 
   const watchSizeTemplateId = watch("sizeTemplateId") || "";
@@ -72,42 +126,10 @@ export default function EditProductPage({
   );
 
   useEffect(() => {
-  if (Object.keys(errors).length > 0) {
-    console.log("Form Errors:", errors); // Lihat di console browser, error apa yang muncul
-  }
-}, [errors]);
-
-  useEffect(() => {
-    // Hanya reset form jika data selesai diload awal atau ID berbeda,
-    // dan JANGAN reset jika user sedang mengedit (isDirty) agar inputan tidak hilang saat auto-save gambar.
-    if (!isFetching && product && !isDirty) {
-      const catIds = Array.isArray(product.categories)
-        ? product.categories
-            .map((c: any) => c.category?.id || c.categoryId)
-            .filter(Boolean)
-        : [];
-
-      reset({
-        productCode: product.productCode || "",
-        name: product.name || "",
-        shortDescription: product.shortDescription || "",
-        description: product.detail?.description || "",
-        productType: (product.productType?.toLowerCase() as any) || "shoes",
-        gender: (product.gender as any) || "Unisex",
-        material: product.detail?.material || "",
-        outsole: product.detail?.outsole || "",
-        closureType: product.detail?.closureType || "",
-        origin: product.detail?.origin || "",
-        notes: product.detail?.notes || "",
-        isActive: !!product.isActive,
-        isPopular: !!product.isPopular,
-        isBestseller: !!product.isBestseller,
-        isNew: !!product.isNew,
-        categoryIds: catIds,
-        sizeTemplateId: product.detail?.sizeTemplateId || "",
-      });
+    if (Object.keys(errors).length > 0) {
+      console.log("❌ Form Errors:", errors);
     }
-  }, [product?.id, isFetching, reset]); // Gunakan product.id agar tidak trigger saat data field lain diupdate
+  }, [errors]);
 
   const handleUploadImage = async (file: File | Blob) => {
     // Karena ImageUpload mengembalikan Blob hasil kompresi, kita bungkus jadi File
@@ -166,10 +188,16 @@ export default function EditProductPage({
     );
   };
 
-  if (isFetching && !product) {
+  // Loading terintegrasi: Tunggu Produk, Kategori, dan Template
+  const isInitialLoading = isFetching || !product || !categoriesData || !templatesData;
+
+  if (isInitialLoading) {
     return (
-      <div className="flex h-[60vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-[#3C3025]" />
+      <div className="flex h-[60vh] flex-col items-center justify-center gap-4">
+        <Loader2 className="h-10 w-10 animate-spin text-[#3C3025]" />
+        <p className="text-sm font-medium text-stone-500 animate-pulse">
+           Menyiapkan data produk & referensi...
+        </p>
       </div>
     );
   }
@@ -183,7 +211,7 @@ export default function EditProductPage({
           </Button>
           <PageHeader
             title="Edit Produk"
-            description={`ID: ${product.productCode}`}
+            description={`ID: ${product?.productCode}`}
           />
         </div>
         {isDirty && (
@@ -264,6 +292,7 @@ export default function EditProductPage({
                     render={({ field }) => (
                       <div className="space-y-1">
                         <Select
+                          key={`cat-${field.value?.[0]}-${categories.length}`}
                           value={field.value?.[0] || ""}
                           onValueChange={(v) => field.onChange(v ? [v] : [])}
                         >
@@ -271,11 +300,16 @@ export default function EditProductPage({
                             <SelectValue placeholder="Pilih..." />
                           </SelectTrigger>
                           <SelectContent>
-                            {categories.map((c: any) => (
-                              <SelectItem key={c.id} value={c.id}>
-                                {c.name}
-                              </SelectItem>
-                            ))}
+                            {categories.map((c: any) => {
+                              if (field.value?.includes(c.id)) {
+                                console.log("✅ Match Found for Category:", c.name);
+                              }
+                              return (
+                                <SelectItem key={c.id} value={c.id}>
+                                  {c.name}
+                                </SelectItem>
+                              );
+                            })}
                           </SelectContent>
                         </Select>
                         {errors.categoryIds && (
@@ -345,6 +379,7 @@ export default function EditProductPage({
                     render={({ field }) => (
                       <div className="space-y-1">
                         <Select
+                          key={`tpl-${field.value}-${templates.length}`}
                           value={field.value}
                           onValueChange={field.onChange}
                         >
@@ -352,11 +387,16 @@ export default function EditProductPage({
                             <SelectValue placeholder="Pilih..." />
                           </SelectTrigger>
                           <SelectContent>
-                            {templates.map((t: any) => (
-                              <SelectItem key={t.id} value={t.id}>
-                                {t.name}
-                              </SelectItem>
-                            ))}
+                            {templates.map((t: any) => {
+                              if (field.value === t.id) {
+                                console.log("✅ Match Found for Template:", t.name);
+                              }
+                              return (
+                                <SelectItem key={t.id} value={t.id}>
+                                  {t.name}
+                                </SelectItem>
+                              );
+                            })}
                           </SelectContent>
                         </Select>
                         {errors.sizeTemplateId && (

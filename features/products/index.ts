@@ -8,3 +8,4 @@ export * from "./hooks";
 export * from "./schemas";
 export * from "./components/ProductForm";
 export * from "./components/RelatedProducts";
+export * from "./components/ProductTestimonials";

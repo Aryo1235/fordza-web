@@ -4,6 +4,7 @@
 export interface ProductImage {
   id: string;
   url: string;
+  key?: string | null;
 }
 
 export interface ProductCategory {
@@ -24,6 +25,7 @@ export interface ProductDetail {
   closureType?: string | null;
   outsole?: string | null;
   origin?: string | null;
+  sizeTemplateId?: string | null;
   sizeTemplate?: {
     id: string;
     name: string;
@@ -37,6 +39,7 @@ export interface ProductSku {
   size: string;
   stock: number;
   priceOverride?: number | null; // null = pakai basePrice varian
+  finalPrice?: number | null;   // Harga akhir setelah diskon promo
   isActive: boolean;
   variantId: string;
 }
@@ -47,10 +50,16 @@ export interface ProductVariant {
   color: string;
   basePrice: number;
   comparisonPrice?: number | null;
+  highestPrice?: number | null;         // Harga tertinggi untuk dicoret (Gimmick vs Asli)
+  finalPrice?: number | null;           // Harga setelah diskon promo
   discountPercent?: number | null;
+  totalDiscountPercent?: number | null; // Agregasi Gimmick % + Promo %
+  promoDiscountPercent?: number | null; // Diskon promo murni
+  promoName?: string | null;            // Nama promo aktif
+  isPromoConditional?: boolean;         // Flag jika butuh minPurchase
   isActive: boolean;
   skus: ProductSku[];
-  images: { id: string; url: string }[];
+  images: ProductImage[];
 }
 
 export interface Product {
@@ -58,9 +67,12 @@ export interface Product {
   productCode: string;
   name: string;
   shortDescription: string;
-  price?: number | string | null;       // Nullable: fallback dari varian termurah
-  discountPercent?: number | null;
-  stock: number;                         // Cached total semua SKU
+  price?: number | string | null;
+  finalPrice?: number | null;           // Harga termurah dari varian (setelah promo)
+  highestPrice?: number | null;         // Harga tertinggi untuk referensi coret lead
+  totalDiscountPercent?: number | null; // Diskon tertinggi untuk lencana kartu
+  promoName?: string | null;            // Nama promo aktif (lead)
+  stock: number;
   productType: string;
   gender: string;
   isPopular: boolean;
@@ -72,7 +84,7 @@ export interface Product {
   createdAt: string;
   images: ProductImage[];
   categories: ProductCategory[];
-  variants: ProductVariant[];           // Daftar varian warna + SKU
+  variants: ProductVariant[];
   detail?: ProductDetail | null;
 }
 
@@ -94,4 +106,10 @@ export type ProductFilters = {
   limit?: number;
   search?: string;
   categoryId?: string;
+  gender?: string;
+  isPopular?: boolean;
+  isBestseller?: boolean;
+  isNew?: boolean;
+  minPrice?: number;
+  maxPrice?: number;
 };

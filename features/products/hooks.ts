@@ -15,14 +15,16 @@ import {
   addProductImage,
   getStockLogs,
   getSkuStockLogs,
+  getPublicProductById,
 } from "./api";
-import type { ProductFilters } from "./types";
+import type { ProductFilters, Product } from "./types";
 
 // Query Keys — terpusat agar mudah di-invalidate
 export const productKeys = {
   all: ["products"] as const,
   adminList: (filters: ProductFilters) => ["products", "admin-list", filters] as const,
   detail: (id: string) => ["products", "detail", id] as const,
+  publicDetail: (id: string) => ["products", "public-detail", id] as const,
   stockLogs: (params: any) => ["products", "stock-logs", params.detail, params] as const,
 };
 
@@ -62,12 +64,22 @@ export function useSkuStockLogs(
   });
 }
 
-/** Detail 1 produk berdasarkan ID */
+/** Detail 1 produk berdasarkan ID (Admin) */
 export function useProduct(id: string) {
-  return useQuery({
+  return useQuery<Product>({
     queryKey: productKeys.detail(id),
     queryFn: () => getProductById(id),
     enabled: !!id,
+  });
+}
+
+/** Detail 1 produk untuk halaman publik (dengan cache 5 menit) */
+export function usePublicProduct(id: string) {
+  return useQuery<Product>({
+    queryKey: productKeys.publicDetail(id),
+    queryFn: () => getPublicProductById(id),
+    enabled: !!id,
+    staleTime: 1000 * 60 * 5, // 5 Menit data dianggap segar
   });
 }
 

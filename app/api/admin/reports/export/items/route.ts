@@ -56,17 +56,31 @@ export async function GET(req: Request) {
 
       autoTable(doc, {
         startY: 33,
-        head: [["Kode", "Nama Produk", "Harga Satuan", "Qty", "Revenue"]],
+        head: [
+          [
+            "Kode Produk",
+            "Kode Variant",
+            "Nama Produk",
+            "Warna",
+            "Size",
+            "Harga Satuan",
+            "Qty",
+            "Revenue",
+          ],
+        ],
         body:
           detailRows.length > 0
             ? detailRows.map((product: any) => [
                 product.code || "-",
+                product.variantCode || "-",
                 product.name,
+                product.color || "-",
+                product.size || "-",
                 `Rp ${Number(product.priceAtSale || 0).toLocaleString("id-ID")}`,
                 product.quantity,
                 `Rp ${Number(product.revenue || 0).toLocaleString("id-ID")}`,
               ])
-            : [["-", "Tidak ada data", "-", "-", "-"]],
+            : [["-", "-", "Tidak ada data", "-", "-", "-", "-", "-"]],
         styles: { fontSize: 8 },
         headStyles: { fillColor: [60, 48, 37] },
       });
@@ -84,8 +98,11 @@ export async function GET(req: Request) {
     const detailSheet = XLSX.utils.json_to_sheet(
       detailRows.length > 0
         ? detailRows.map((product: any) => ({
-            Kode: product.code || "-",
+            "Kode Produk": product.code || "-",
+            "Kode Variant": product.variantCode || "-",
             "Nama Produk": product.name,
+            Warna: product.color || "-",
+            Ukuran: product.size || "-",
             "Harga Satuan": Number(product.priceAtSale || 0),
             Qty: product.quantity,
             Revenue: Number(product.revenue || 0),
