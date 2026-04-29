@@ -9,7 +9,9 @@ import { cn } from "@/lib/utils";
 import { ArrowLeft, MessageSquareQuote } from "lucide-react";
 import { PublicPagination } from "@/components/shared/PublicPagination";
 
-export default function TestimonialsPage() {
+import { Suspense } from "react";
+
+function TestimonialsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const productId = searchParams.get("productId") || undefined;
@@ -99,11 +101,13 @@ export default function TestimonialsPage() {
             </div>
 
             {/* Pagination */}
-            <PublicPagination
-              currentPage={page}
-              totalPage={meta.totalPage}
-              onPageChange={setPage}
-            />
+            {meta && meta.totalPage > 1 && (
+              <PublicPagination
+                currentPage={page}
+                totalPage={meta.totalPage}
+                onPageChange={setPage}
+              />
+            )}
           </>
         ) : (
           <div className="text-center py-24 bg-zinc-50 rounded-3xl border border-dashed border-zinc-200">
@@ -114,3 +118,12 @@ export default function TestimonialsPage() {
     </div>
   );
 }
+
+export default function TestimonialsPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#FDFCFB] animate-pulse" />}>
+      <TestimonialsContent />
+    </Suspense>
+  );
+}
+
