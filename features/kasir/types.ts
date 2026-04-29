@@ -7,6 +7,7 @@ export interface ProductVariantForKasir {
   color: string;
   material?: string | null;
   basePrice: number;
+  comparisonPrice?: number | null;
   discountPercent?: number | null;
   skus: {
     id: string;
