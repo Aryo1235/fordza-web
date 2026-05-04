@@ -5,7 +5,7 @@
 // Pure local state — tidak memanggil API sampai parent submit
 
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
@@ -24,7 +24,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
+import { cn, formatNumber, parseNumber } from "@/lib/utils";
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -196,6 +196,7 @@ function AddVariantInlineForm({
     handleSubmit,
     watch,
     setValue,
+    control,
     formState: { errors },
   } = useForm<VariantFormValues>({
     resolver: zodResolver(variantFormSchema) as any,
@@ -430,22 +431,36 @@ function AddVariantInlineForm({
               <Label className="text-xs font-bold text-stone-400">
                 Harga Reguler (Coret)
               </Label>
-              <Input
-                type="number"
-                {...register("comparisonPrice")}
-                placeholder="Rp"
-                className="h-9 border-stone-200 bg-stone-50"
+              <Controller
+                control={control}
+                name="comparisonPrice"
+                render={({ field }) => (
+                  <Input
+                    type="text"
+                    value={field.value ? formatNumber(field.value) : ""}
+                    onChange={(e) => field.onChange(parseNumber(e.target.value))}
+                    placeholder="Rp"
+                    className="h-9 border-stone-200 bg-stone-50"
+                  />
+                )}
               />
             </div>
             <div className="space-y-1">
               <Label className="text-xs font-bold text-green-700">
                 Harga Jual (Promo) *
               </Label>
-              <Input
-                type="number"
-                {...register("basePrice")}
-                placeholder="Rp"
-                className="h-9 border-green-200 bg-green-50/50"
+              <Controller
+                control={control}
+                name="basePrice"
+                render={({ field }) => (
+                  <Input
+                    type="text"
+                    value={field.value ? formatNumber(field.value) : ""}
+                    onChange={(e) => field.onChange(parseNumber(e.target.value))}
+                    placeholder="Rp"
+                    className="h-9 border-green-200 bg-green-50/50"
+                  />
+                )}
               />
               {errors.basePrice && (
                 <p className="text-xs text-red-500">
@@ -467,11 +482,18 @@ function AddVariantInlineForm({
       <div className="pt-4 border-t border-stone-200 grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-1">
           <Label className="text-xs">Harga Khusus Bigsize (Opsional)</Label>
-          <Input
-            type="number"
-            {...register("bigsizePrice")}
-            placeholder="Rp"
-            className="h-9 border-amber-300 bg-amber-50"
+          <Controller
+            control={control}
+            name="bigsizePrice"
+            render={({ field }) => (
+              <Input
+                type="text"
+                value={field.value ? formatNumber(field.value) : ""}
+                onChange={(e) => field.onChange(parseNumber(e.target.value))}
+                placeholder="Rp"
+                className="h-9 border-amber-300 bg-amber-50"
+              />
+            )}
           />
           {errors.bigsizePrice && (
             <p className="text-xs text-red-500">

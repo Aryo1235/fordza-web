@@ -5,7 +5,7 @@
 // Menampilkan daftar varian (per warna) + tabel SKU (per ukuran) di bawah masing-masing varian
 
 import { useState, useMemo } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import {
@@ -39,6 +39,7 @@ import {
 import type { ProductVariant, ProductSku } from "../types";
 import { StockGrid } from "./VariantBuilder";
 import { deleteFileFromS3 } from "@/actions/upload";
+import { formatNumber, parseNumber } from "@/lib/utils";
 
 // ─── Helpers ──────────────────────────────────────────────
 
@@ -127,6 +128,7 @@ function AddSkuForm({
     register,
     handleSubmit,
     reset,
+    control,
     formState: { errors },
   } = useForm<SkuSchemaValues>({
     resolver: zodResolver(skuSchema) as any,
@@ -192,11 +194,18 @@ function AddSkuForm({
         </div>
         <div className="space-y-1 flex-1">
           <Label className="text-xs">Harga Override</Label>
-          <Input
-            type="number"
-            {...register("priceOverride")}
-            placeholder={`Default ${fmt(basePrice)}`}
-            className="h-8 text-sm"
+          <Controller
+            control={control}
+            name="priceOverride"
+            render={({ field }) => (
+              <Input
+                type="text"
+                value={field.value ? formatNumber(field.value) : ""}
+                onChange={(e) => field.onChange(parseNumber(e.target.value))}
+                placeholder={`Default ${fmt(basePrice)}`}
+                className="h-8 text-sm"
+              />
+            )}
           />
           <p className="text-xs text-stone-400">Kosongkan jika harga sama</p>
         </div>
@@ -464,6 +473,7 @@ function AddVariantForm({
     handleSubmit,
     reset,
     watch,
+    control,
     formState: { errors },
   } = useForm<VariantSchemaValues>({
     resolver: zodResolver(variantSchema) as any,
@@ -689,22 +699,36 @@ function AddVariantForm({
               <Label className="text-xs font-bold text-stone-400">
                 Harga Reguler (Coret)
               </Label>
-              <Input
-                type="number"
-                {...register("comparisonPrice")}
-                placeholder="Rp"
-                className="h-9 border-stone-200 bg-stone-50"
+              <Controller
+                control={control}
+                name="comparisonPrice"
+                render={({ field }) => (
+                  <Input
+                    type="text"
+                    value={field.value ? formatNumber(field.value) : ""}
+                    onChange={(e) => field.onChange(parseNumber(e.target.value))}
+                    placeholder="Rp"
+                    className="h-9 border-stone-200 bg-stone-50"
+                  />
+                )}
               />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs font-bold text-green-700">
                 Harga Jual (Promo) *
               </Label>
-              <Input
-                type="number"
-                {...register("basePrice")}
-                placeholder="Rp"
-                className="h-9 border-green-200 bg-green-50/50"
+              <Controller
+                control={control}
+                name="basePrice"
+                render={({ field }) => (
+                  <Input
+                    type="text"
+                    value={field.value ? formatNumber(field.value) : ""}
+                    onChange={(e) => field.onChange(parseNumber(e.target.value))}
+                    placeholder="Rp"
+                    className="h-9 border-green-200 bg-green-50/50"
+                  />
+                )}
               />
             </div>
             <div className="space-y-1.5">

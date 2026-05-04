@@ -36,7 +36,7 @@ export function CategoryForm({ initialData, onSubmit, isLoading }: CategoryFormP
     defaultValues: initialData || {
       name: "",
       shortDescription: "",
-      order: 0,
+      order: 1,
     },
   });
 
@@ -93,7 +93,7 @@ export function CategoryForm({ initialData, onSubmit, isLoading }: CategoryFormP
 
           <div className="space-y-1.5">
             <Label>Urutan Tampil (Order)</Label>
-            <Input type="number" {...register("order")} placeholder="0" />
+            <Input type="number" min={1} {...register("order")} placeholder="1" />
             <p className="text-xs text-muted-foreground">Angka lebih kecil tampil lebih dulu (misal: 1 paling atas)</p>
             {errors.order && <p className="text-xs text-red-500">{errors.order.message}</p>}
           </div>

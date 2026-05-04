@@ -8,6 +8,13 @@ export async function getCategoriesAdmin(page = 1, limit = 10) {
   return res.data;
 }
 
+export async function getPublicCategories(page = 1, limit = 12) {
+  const res = await api.get("/api/public/categories", {
+    params: { page, limit },
+  });
+  return res.data;
+}
+
 export async function getCategoryById(id: string) {
   const res = await api.get(`/api/admin/categories/${id}`);
   return res.data.data;

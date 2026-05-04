@@ -12,6 +12,8 @@ export const CategoryRepository = {
           id: true,
           name: true,
           shortDescription: true,
+          imageUrl: true,
+          imageKey: true,
           order: true,
           isActive: true,
           _count: {
@@ -37,6 +39,10 @@ export const CategoryRepository = {
 
   async create(data: any) {
     const orderNum = parseInt(data.order) || 0;
+
+    if (orderNum <= 0) {
+      throw new Error("Urutan kategori harus lebih besar dari 0");
+    }
 
     const existingOrder = await prisma.category.findFirst({
       where: { order: orderNum, isActive: true },
@@ -76,6 +82,8 @@ export const CategoryRepository = {
           id: true,
           name: true,
           shortDescription: true,
+          imageUrl: true,
+          imageKey: true,
           order: true,
           isActive: true,
           _count: { select: { products: true } },
@@ -107,6 +115,11 @@ export const CategoryRepository = {
 
     if (data.order !== undefined) {
       const orderNum = parseInt(data.order) || 0;
+      
+      if (orderNum <= 0) {
+        throw new Error("Urutan kategori harus lebih besar dari 0");
+      }
+
       const existingOrder = await prisma.category.findFirst({
         where: { 
           order: orderNum, 

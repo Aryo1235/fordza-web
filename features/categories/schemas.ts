@@ -7,7 +7,7 @@ export const categorySchema = z.object({
   shortDescription: z.string().optional(),
   order: z.preprocess(
     (val) => parseInt(val as string) || 0,
-    z.number().int().nonnegative("Urutan harus angka positif"),
+    z.number().int().min(1, "Urutan harus angka lebih besar dari 0"),
   ),
   image: fileSchema.optional(), // Kategori biasanya hanya 1 gambar utama
 });
