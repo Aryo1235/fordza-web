@@ -15,9 +15,9 @@ import { Separator } from "@/components/ui/separator";
 const navLinks = [
   { label: "Beranda", href: "/" },
   { label: "Produk", href: "/products" },
-  { label: "Kategori", href: "/products?filter=category" },
+  { label: "Kategori", href: "/categories" },
   { label: "Promo", href: "/products?filter=promo" },
-  { label: "Tentang", href: "#tentang" },
+  { label: "Tentang", href: "/about" },
 ];
 
 export default function PublicNavbar() {

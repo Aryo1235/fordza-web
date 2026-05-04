@@ -3,6 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   getCategoriesAdmin,
+  getPublicCategories,
   getCategoryById,
   createCategory,
   updateCategory,
@@ -11,6 +12,7 @@ import {
 
 export const categoryKeys = {
   all: ["categories"] as const,
+  publicList: (page: number) => ["public-categories", page] as const,
   adminList: (page: number) => ["admin-categories", page] as const,
   adminListAll: ["admin-categories-all"] as const,
   detail: (id: string) => ["category", id] as const,
@@ -20,6 +22,14 @@ export function useCategoriesAdmin(page = 1, limit = 10) {
   return useQuery({
     queryKey: categoryKeys.adminList(page),
     queryFn: () => getCategoriesAdmin(page, limit),
+    placeholderData: (prev) => prev,
+  });
+}
+
+export function usePublicCategories(page = 1, limit = 12) {
+  return useQuery({
+    queryKey: categoryKeys.publicList(page),
+    queryFn: () => getPublicCategories(page, limit),
     placeholderData: (prev) => prev,
   });
 }
