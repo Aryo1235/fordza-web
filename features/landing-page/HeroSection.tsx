@@ -22,11 +22,11 @@ const TEXT_SLIDES = [
   },
   {
     heading: "Gaya Formal\nTak Pernah Usang",
-    sub: "Koleksi pakaian premium\nuntuk pria berkarakter",
+    sub: "Koleksi Sepatu premium\nuntuk pria berkarakter",
   },
   {
     heading: "Percaya Diri\nDalam Setiap Momen",
-    sub: "Outerwear eksklusif sebagai\nwujud kualitas terbaik",
+    sub: "Koleksi Sepatu premium\nsebagai wujud kualitas terbaik",
   },
 ];
 
@@ -46,7 +46,7 @@ export default function HeroSection() {
         setAnimating(false);
       }, 700);
     },
-    [animating, current]
+    [animating, current],
   );
 
   /* Auto-play Carousel Gambar (Independen) */
@@ -84,7 +84,7 @@ export default function HeroSection() {
           key={s.id}
           className={cn(
             "absolute inset-0 transition-opacity duration-1000 ease-in-out",
-            i === current ? "opacity-100 z-10" : "opacity-0 z-0"
+            i === current ? "opacity-100 z-10" : "opacity-0 z-0",
           )}
           aria-hidden={i !== current}
         >
@@ -121,8 +121,8 @@ export default function HeroSection() {
             className={cn(
               "transition-all duration-300 rounded-full",
               i === current
-                ? "w-5 h-2 bg-[var(--fordza-cream)]"
-                : "size-2 bg-white/30 hover:bg-white/70"
+                ? "w-5 h-2 bg-[(--fordza-cream)]"
+                : "size-2 bg-white/30 hover:bg-white/70",
             )}
           />
         ))}
@@ -146,12 +146,12 @@ function TypewriterOverlay() {
 
   useEffect(() => {
     let timeout: NodeJS.Timeout;
-    
+
     // Kecepatan Mesin Tik
-    const typeHeadingSpeed = 45; 
+    const typeHeadingSpeed = 45;
     const typeSubSpeed = 30; // Sub font kecil lebih cepat
-    const idleDelay = 4000; 
-    const eraseSpeed = 20; 
+    const idleDelay = 4000;
+    const eraseSpeed = 20;
 
     if (phase === "typing") {
       if (displayHeading.length < currentHeading.length) {
@@ -187,7 +187,10 @@ function TypewriterOverlay() {
 
   // Logika Pemosisian Kursor (pindah dari H1 ke P secara mulus)
   const isTypingSub = displayHeading.length === currentHeading.length;
-  const showCursorOnHeading = (!isTypingSub && phase === "typing") || (displaySub.length === 0 && phase === "erasing") || (displayHeading.length === 0);
+  const showCursorOnHeading =
+    (!isTypingSub && phase === "typing") ||
+    (displaySub.length === 0 && phase === "erasing") ||
+    displayHeading.length === 0;
   const showCursorOnSub = !showCursorOnHeading;
 
   return (
@@ -200,14 +203,16 @@ function TypewriterOverlay() {
           fontWeight: 800,
           textShadow: "0 4px 18px rgba(0,0,0,0.5)",
           whiteSpace: "pre-line",
-          minHeight: "2.3em" // Ruang kaku disesuaikan dengan leading lebih rapat
+          minHeight: "2.3em", // Ruang kaku disesuaikan dengan leading lebih rapat
         }}
       >
         {displayHeading}
         {showCursorOnHeading && (
-          <span 
+          <span
             className="inline-block align-bottom w-[3px] md:w-[4px] h-[0.9em] ml-1.5 md:ml-2 bg-[var(--fordza-cream)] shadow-[0_0_8px_rgba(235,215,190,0.8)]"
-            style={{ animation: "pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite" }}
+            style={{
+              animation: "pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+            }}
           />
         )}
       </h1>
@@ -220,14 +225,16 @@ function TypewriterOverlay() {
             fontFamily: "var(--font-playfair), Georgia, serif",
             textShadow: "0 2px 4px rgba(0,0,0,0.5)",
             whiteSpace: "pre-line",
-            minHeight: "2.6em" // Ruang disesuaikan dengan leading yang ditarik rapat
+            minHeight: "2.6em", // Ruang disesuaikan dengan leading yang ditarik rapat
           }}
         >
           {displaySub}
           {showCursorOnSub && (
-            <span 
+            <span
               className="inline-block align-bottom w-[2px] md:w-[3px] h-[1em] ml-1 bg-white/70 shadow-[0_0_8px_rgba(255,255,255,0.5)]"
-              style={{ animation: "pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite" }}
+              style={{
+                animation: "pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+              }}
             />
           )}
         </p>
@@ -240,7 +247,7 @@ function TypewriterOverlay() {
             "bg-[var(--fordza-brown)] text-[var(--fordza-cream)]",
             "border border-[var(--fordza-cream)]/40 hover:scale-105",
             "hover:bg-[var(--fordza-cream)] hover:text-[var(--fordza-brown)]",
-            "transition-all duration-300"
+            "transition-all duration-300",
           )}
         >
           <Link href="/products">Lihat Sepatu Kami</Link>

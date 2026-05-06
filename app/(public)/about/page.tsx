@@ -115,7 +115,6 @@ const faqs = [
 export default function AboutPage() {
   return (
     <div className="min-h-screen bg-[#FDFCFB]">
-
       {/* ── HERO ── */}
       <section className="relative bg-[#4A3B2E] overflow-hidden">
         {/* Decorative orbs */}
@@ -134,8 +133,9 @@ export default function AboutPage() {
             Craft Yang <span className="text-amber-400">Berbicara</span>
           </h1>
           <p className="text-zinc-300 text-lg md:text-2xl max-w-2xl mx-auto leading-relaxed">
-            Fordza lahir dari satu keyakinan sederhana: sepatu yang dibuat dengan
-            tangan dan cinta akan menemani Anda melewati ribuan perjalanan.
+            Fordza lahir dari satu keyakinan sederhana: sepatu yang dibuat
+            dengan tangan dan cinta akan menemani Anda melewati ribuan
+            perjalanan.
           </p>
         </div>
       </section>
@@ -164,16 +164,29 @@ export default function AboutPage() {
           {/* Text side */}
           <div className="flex flex-col gap-3 text-[#4A3B2E]/70 md:text-lg leading-relaxed text-justify">
             <p>
-              Fordza lahir dari passion untuk menghadirkan sepatu kulit berkualitas yang accessible untuk semua orang. Dimulai pada tahun 2019 di Bogor, kami percaya bahwa setiap orang berhak memiliki sepatu yang tidak hanya nyaman, tetapi juga tahan lama dan stylish.
+              Fordza lahir dari passion untuk menghadirkan sepatu kulit
+              berkualitas yang accessible untuk semua orang. Dimulai pada tahun
+              2019 di Bogor, kami percaya bahwa setiap orang berhak memiliki
+              sepatu yang tidak hanya nyaman, tetapi juga tahan lama dan
+              stylish.
             </p>
             <p>
-              Kami berkomitmen untuk mempertahankan tradisi craftsmanship sambil terus berinovasi dalam desain. Setiap produk Fordza adalah hasil kolaborasi antara pengrajin berpengalaman dan desainer muda yang memahami kebutuhan pasar modern.
+              Kami berkomitmen untuk mempertahankan tradisi craftsmanship sambil
+              terus berinovasi dalam desain. Setiap produk Fordza adalah hasil
+              kolaborasi antara pengrajin berpengalaman dan desainer muda yang
+              memahami kebutuhan pasar modern.
             </p>
             <blockquote className="border-l-4 border-amber-500 pl-4 py-1 italic font-semibold text-[#4A3B2E]">
               "Kualitas yang bertahan, gaya yang abadi."
             </blockquote>
             <p>
-              Fordza adalah brand lokal yang berfokus pada produk kulit berkualitas, meliputi sepatu, sandal kulit, dan aksesori. Kami berdedikasi menghadirkan produk dengan material pilihan, pengerjaan yang detail, serta desain fungsional dengan harga yang tetap terjangkau. Setiap produk Fordza dirancang untuk memberikan kenyamanan, daya tahan, dan gaya yang dapat diandalkan dalam menunjang aktivitas Anda sehari-hari.
+              Fordza adalah brand lokal yang berfokus pada produk kulit
+              berkualitas, meliputi sepatu, sandal kulit, dan aksesori. Kami
+              berdedikasi menghadirkan produk dengan material pilihan,
+              pengerjaan yang detail, serta desain fungsional dengan harga yang
+              tetap terjangkau. Setiap produk Fordza dirancang untuk memberikan
+              kenyamanan, daya tahan, dan gaya yang dapat diandalkan dalam
+              menunjang aktivitas Anda sehari-hari.
             </p>
           </div>
 
@@ -182,7 +195,11 @@ export default function AboutPage() {
             {[
               { num: "2019", label: "Tahun Berdiri", sub: "Sejak Bogor" },
               { num: "100+", label: "Model Desain", sub: "Terus bertambah" },
-              { num: "12", label: "Pengrajin Ahli", sub: "Avg. 15 thn pengalaman" },
+              {
+                num: "12",
+                label: "Pengrajin Ahli",
+                sub: "Avg. 15 thn pengalaman",
+              },
               { num: "100%", label: "Handcrafted", sub: "No shortcuts, ever." },
             ].map((s, i) => (
               <div
@@ -195,8 +212,12 @@ export default function AboutPage() {
                 >
                   {s.num}
                 </p>
-                <p className="text-sm md:text-base font-bold text-[#4A3B2E]">{s.label}</p>
-                <p className="text-xs md:text-sm text-[#4A3B2E]/50 mt-0.5">{s.sub}</p>
+                <p className="text-sm md:text-base font-bold text-[#4A3B2E]">
+                  {s.label}
+                </p>
+                <p className="text-xs md:text-sm text-[#4A3B2E]/50 mt-0.5">
+                  {s.sub}
+                </p>
               </div>
             ))}
           </div>
@@ -225,12 +246,18 @@ export default function AboutPage() {
               key={i}
               className="bg-white rounded-2xl border border-[#e8d8c4] p-6 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-200 flex flex-col gap-4"
             >
-              <div className={`inline-flex items-center justify-center w-11 h-11 rounded-xl border ${item.accent}`}>
+              <div
+                className={`inline-flex items-center justify-center w-11 h-11 rounded-xl border ${item.accent}`}
+              >
                 <item.icon className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="font-bold text-[#4A3B2E] md:text-lg mb-1.5">{item.title}</h3>
-                <p className="text-sm md:text-base text-[#4A3B2E]/60 leading-relaxed">{item.desc}</p>
+                <h3 className="font-bold text-[#4A3B2E] md:text-lg mb-1.5">
+                  {item.title}
+                </h3>
+                <p className="text-sm md:text-base text-[#4A3B2E]/60 leading-relaxed">
+                  {item.desc}
+                </p>
               </div>
             </div>
           ))}
@@ -239,10 +266,13 @@ export default function AboutPage() {
 
       {/* ── PROSES PEMBUATAN ── */}
       <section className="bg-[#4A3B2E] py-16 md:py-20 lg:py-28 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-5" style={{
-          backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 0)`,
-          backgroundSize: "32px 32px",
-        }} />
+        <div
+          className="absolute inset-0 opacity-5"
+          style={{
+            backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 0)`,
+            backgroundSize: "32px 32px",
+          }}
+        />
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-14">
@@ -260,17 +290,22 @@ export default function AboutPage() {
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 xl:gap-6">
             {processSteps.map((step, i) => (
               <div key={i} className="relative flex flex-col gap-4">
-
                 <div className="">
                   <p
                     className="text-5xl md:text-7xl xl:text-8xl font-black text-white/10 leading-none mb-2"
-                    style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}
+                    style={{
+                      fontFamily: "var(--font-playfair), Georgia, serif",
+                    }}
                   >
                     {step.step}
                   </p>
                   <div className="w-10 h-1 bg-amber-400 rounded-full mb-4" />
-                  <h3 className="font-bold text-white md:text-lg mb-2">{step.title}</h3>
-                  <p className="text-sm md:text-base text-white/60 leading-relaxed ">{step.desc}</p>
+                  <h3 className="font-bold text-white md:text-lg mb-2">
+                    {step.title}
+                  </h3>
+                  <p className="text-sm md:text-base text-white/60 leading-relaxed ">
+                    {step.desc}
+                  </p>
                 </div>
               </div>
             ))}
@@ -301,10 +336,14 @@ export default function AboutPage() {
                 <MapPin className="w-5 h-5 text-[#4A3B2E]" />
               </div>
               <div>
-                <p className="font-bold text-[#4A3B2E] mb-1">Showroom & Workshop</p>
+                <p className="font-bold text-[#4A3B2E] mb-1">
+                  Showroom & Workshop
+                </p>
                 <p className="text-sm text-[#4A3B2E]/60 leading-relaxed">
-                  Jl. Raya Cibaduyut No. 123, Kec. Bojongloa Kidul,<br />
-                  Bandung, Jawa Barat 40239
+                  Jl.Raya Cilebut Kp, Jl. Bojong Sempu Samping Puri Kintamani
+                  No.Rt.03/06, Cilebut Bar., Kec. Sukaraja
+                  <br />
+                  Kabupaten Bogor, Jawa Barat 16710
                 </p>
               </div>
             </div>
@@ -318,13 +357,23 @@ export default function AboutPage() {
                 <p className="font-bold text-[#4A3B2E] mb-3">Jam Operasional</p>
                 <div className="flex flex-col gap-2 text-sm">
                   {[
-                    { day: "Senin – Jumat", hours: "09.00 – 18.00 WIB", open: true },
+                    {
+                      day: "Senin – Jumat",
+                      hours: "09.00 – 18.00 WIB",
+                      open: true,
+                    },
                     { day: "Sabtu", hours: "09.00 – 16.00 WIB", open: true },
-                    { day: "Minggu & Libur Nasional", hours: "Tutup", open: false },
+                    {
+                      day: "Minggu & Libur Nasional",
+                      hours: "Tutup",
+                      open: false,
+                    },
                   ].map((row, i) => (
                     <div key={i} className="flex justify-between items-center">
                       <span className="text-[#4A3B2E]/70">{row.day}</span>
-                      <span className={`font-semibold ${row.open ? "text-[#4A3B2E]" : "text-rose-500"}`}>
+                      <span
+                        className={`font-semibold ${row.open ? "text-[#4A3B2E]" : "text-rose-500"}`}
+                      >
                         {row.hours}
                       </span>
                     </div>
@@ -367,15 +416,14 @@ export default function AboutPage() {
           {/* Google Maps Embed */}
           <div className="rounded-2xl overflow-hidden border border-[#e8d8c4] shadow-sm h-[340px] md:h-full md:min-h-[380px] lg:min-h-[440px]">
             <iframe
-              title="Lokasi Fordza Bandung"
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3960.8826!2d107.5836!3d-6.9483!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e68e9adf177bf8d%3A0x437398bb6a4a3b4e!2sCibaduyut%2C%20Bandung!5e0!3m2!1sid!2sid!4v1680000000000!5m2!1sid!2sid"
-              width="100%"
-              height="100%"
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3964.0257200516207!2d106.7919373248397!3d-6.518428013725551!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e69c3bac092f053%3A0x45d25143df867555!2sFordza%20Indonesia!5e0!3m2!1sid!2sid!4v1778065104282!5m2!1sid!2sid"
+              width="600"
+              height="500"
               style={{ border: 0 }}
               allowFullScreen
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
-            />
+            ></iframe>
           </div>
         </div>
       </section>
@@ -425,7 +473,8 @@ export default function AboutPage() {
             Siap Memulai Perjalanan Anda?
           </h2>
           <p className="text-white/60 md:text-lg mb-8 max-w-xl mx-auto">
-            Jelajahi koleksi terbaru kami atau kunjungi showroom kami langsung di Bandung.
+            Jelajahi koleksi terbaru kami atau kunjungi showroom kami langsung
+            di Bandung.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
@@ -445,7 +494,6 @@ export default function AboutPage() {
           </div>
         </div>
       </section>
-
     </div>
   );
 }
