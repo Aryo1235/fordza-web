@@ -17,6 +17,7 @@ export default function CetakUlangPage() {
     null,
   );
   const [showModal, setShowModal] = useState(false);
+
   const { isFetching: loading, refetch } = useCheckInvoice(invoiceNo);
 
   const handleSearch = async (e: React.FormEvent) => {
@@ -62,7 +63,7 @@ export default function CetakUlangPage() {
   };
 
   return (
-    <div className="flex-1 w-full mx-auto p-4 md:p-6">
+    <div className="  p-4  md:p-6 mx-auto">
       <div className="mb-6 flex items-start gap-4">
         <SidebarTrigger className="-ml-2 text-stone-500 hover:bg-stone-200/50 mt-0.5 md:mt-0" />
         <div className="flex flex-col items-start ">
@@ -76,11 +77,11 @@ export default function CetakUlangPage() {
         </div>
       </div>
 
-          {/* Search Form */}
-          <form
-            onSubmit={handleSearch}
-            className="bg-white border border-stone-200 rounded-sm p-5 mb-5"
-          >
+      {/* Search Form */}
+      <form
+        onSubmit={handleSearch}
+        className="bg-white border border-stone-200 rounded-sm p-5 mb-5"
+      >
         <label className="block text-xs font-semibold text-stone-600 uppercase tracking-wider mb-2">
           Nomor Invoice
         </label>
@@ -108,11 +109,11 @@ export default function CetakUlangPage() {
         <p className="text-xs text-stone-400 mt-2">
           Format: FDZ-YYYYMMDD-XXXX (contoh: FDZ-20260408-0001)
         </p>
-          </form>
+      </form>
 
-          {/* Result Preview */}
-          {modalTransaction && (
-            <div className="bg-white border border-stone-200 rounded-sm overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-300">
+      {/* Result Preview */}
+      {modalTransaction && (
+        <div className="bg-white border border-stone-200 rounded-sm overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-300">
           <div
             className="px-4 py-3 border-b flex items-center justify-between"
             style={{ backgroundColor: "#3C3025" }}
@@ -176,16 +177,16 @@ export default function CetakUlangPage() {
               Buka Struk & Cetak
             </button>
           </div>
-            </div>
-          )}
-
-          {/* Invoice Modal */}
-          {showModal && modalTransaction && (
-            <InvoiceModal
-              transaction={modalTransaction}
-              onClose={() => setShowModal(false)}
-            />
-          )}
         </div>
+      )}
+
+      {/* Invoice Modal */}
+      {showModal && modalTransaction && (
+        <InvoiceModal
+          transaction={modalTransaction}
+          onClose={() => setShowModal(false)}
+        />
+      )}
+    </div>
   );
 }

@@ -35,7 +35,7 @@ function StatusBadge({
     <span
       className={cn(
         "inline-flex items-center rounded-[3px] px-2 py-1.5 text-[10px] font-medium leading-none whitespace-nowrap",
-        styles[color]
+        styles[color],
       )}
     >
       {label}
@@ -80,8 +80,19 @@ export function ProductCard({ product }: { product: Product }) {
 
     if (minPrice !== Infinity) {
       displayFinalPrice = minPrice;
-      displayHighestPrice = Number(targetVariant.highestPrice ?? targetVariant.comparisonPrice ?? targetVariant.basePrice ?? minPrice);
-      displayDiscount = Math.round(Number(targetVariant.totalDiscountPercent ?? targetVariant.discountPercent ?? 0));
+      displayHighestPrice = Number(
+        targetVariant.highestPrice ??
+          targetVariant.comparisonPrice ??
+          targetVariant.basePrice ??
+          minPrice,
+      );
+      displayDiscount = Math.round(
+        Number(
+          targetVariant.totalDiscountPercent ??
+            targetVariant.discountPercent ??
+            0,
+        ),
+      );
     }
   }
 
@@ -98,9 +109,9 @@ export function ProductCard({ product }: { product: Product }) {
         style={{ clipPath: "polygon(0 0, 100% 0, 0 100%)" }}
       />
 
-
       {/* ── Area Gambar Putih ── */}
-      <div className="relative w-full bg-white rounded-xl overflow-hidden shadow-sm z-10"
+      <div
+        className="relative w-full bg-white rounded-xl overflow-hidden shadow-sm z-10"
         style={{ aspectRatio: "1 / 1" }}
       >
         {/* Gambar Sepatu - MENGGUNAKAN IMG STANDAR UNTUK MENGHINDARI LIMIT VERCEL */}
@@ -120,20 +131,26 @@ export function ProductCard({ product }: { product: Product }) {
 
       {/* ── Body ── */}
       <div className="flex flex-1 flex-col gap-2 p-1 pb-3 pt-3 z-10">
-
         {/* Badges */}
         <div className="flex flex-wrap gap-1.5 min-h-[24px]">
           {(product.isPopular || product.isBestseller || product.isNew) && (
             <>
-              {product.isPopular && <StatusBadge label="Populer" color="brown" />}
-              {product.isBestseller && <StatusBadge label="Terlaris" color="red" />}
+              {product.isPopular && (
+                <StatusBadge label="Populer" color="brown" />
+              )}
+              {product.isBestseller && (
+                <StatusBadge label="Terlaris" color="red" />
+              )}
               {product.isNew && <StatusBadge label="Terbaru" color="blue" />}
             </>
           )}
         </div>
 
         {/* Nama produk */}
-        <p className="text-sm font-bold text-gray-900 leading-snug line-clamp-2 min-h-[40px]" style={{ fontFamily: "Inter, sans-serif" }}>
+        <p
+          className="text-sm font-bold text-gray-900 leading-snug line-clamp-2 min-h-[40px]"
+          style={{ fontFamily: "Inter, sans-serif" }}
+        >
           {product.name}
         </p>
 
@@ -174,7 +191,7 @@ export function ProductCard({ product }: { product: Product }) {
           </div>
 
           {/* Wishlist button */}
-          <button
+          {/* <button
             aria-label="Tambah ke wishlist"
             onClick={(e) => {
               e.preventDefault();
@@ -188,7 +205,7 @@ export function ProductCard({ product }: { product: Product }) {
             )}
           >
             <Heart className={cn("size-3.5", wished && "fill-white text-rose-500")} />
-          </button>
+          </button> */}
         </div>
       </div>
     </Link>
