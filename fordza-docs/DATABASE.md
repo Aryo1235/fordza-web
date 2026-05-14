@@ -71,6 +71,8 @@ Tabel utama untuk produk. Menyimpan data cached untuk performa (price, stock, ra
 | isActive | Boolean | No | true | Status aktif |
 | avgRating | Float | No | 0 | Rating rata-rata (cached) |
 | totalReviews | Int | No | 0 | Jumlah review (cached) |
+| **createdById** | **String** | **Yes** | **null** | **Admin yang buat** |
+| **updatedById** | **String** | **Yes** | **null** | **Admin yang update** |
 | createdAt | DateTime | No | now() | Waktu dibuat |
 | updatedAt | DateTime | No | auto | Waktu diupdate |
 | deletedAt | DateTime | Yes | null | Soft delete timestamp |
@@ -80,6 +82,9 @@ Tabel utama untuk produk. Menyimpan data cached untuk performa (price, stock, ra
 - `isActive`
 - `gender`
 - `deletedAt`
+- **`createdAt`** ← New
+- **`createdById`** ← New (foreign key)
+- **`updatedById`** ← New (foreign key)
 
 **Relations:**
 - `detail` → ProductDetail (1:1)
@@ -90,6 +95,8 @@ Tabel utama untuk produk. Menyimpan data cached untuk performa (price, stock, ra
 - `transactionItems` → TransactionItem[] (1:N)
 - `stockLogs` → StockLog[] (1:N)
 - `salesSummaries` → SkuSalesSummary[] (1:N)
+- **`createdBy` → Admin (N:1, onDelete: SetNull)** ← New
+- **`updatedBy` → Admin (N:1, onDelete: SetNull)** ← New
 
 ---
 
@@ -243,14 +250,22 @@ Kategori produk.
 | imageKey | String | Yes | S3 object key |
 | isActive | Boolean | No | Status aktif |
 | order | Int | No | Urutan tampilan |
+| **createdById** | **String** | **Yes** | **Admin yang buat** |
+| **updatedById** | **String** | **Yes** | **Admin yang update** |
+| **createdAt** | **DateTime** | **No** | **Waktu dibuat** |
+| **updatedAt** | **DateTime** | **No** | **Waktu diupdate** |
 | deletedAt | DateTime | Yes | Soft delete timestamp |
 
 **Indexes:**
 - `isActive`
 - `order`
+- **`createdById`** ← New (foreign key)
+- **`updatedById`** ← New (foreign key)
 
 **Relations:**
 - `products` → ProductCategory[] (M:N via pivot)
+- **`createdBy` → Admin (N:1, onDelete: SetNull)** ← New
+- **`updatedBy` → Admin (N:1, onDelete: SetNull)** ← New
 
 ---
 
@@ -337,10 +352,20 @@ Banner homepage.
 | imageKey | String | No | S3 object key |
 | linkUrl | String | Yes | URL tujuan |
 | isActive | Boolean | No | Status aktif |
+| **createdById** | **String** | **Yes** | **Admin yang buat** |
+| **updatedById** | **String** | **Yes** | **Admin yang update** |
 | createdAt | DateTime | No | Waktu dibuat |
+| **updatedAt** | **DateTime** | **No** | **Waktu diupdate** |
+| **deletedAt** | **DateTime** | **Yes** | **Soft delete timestamp** |
 
 **Indexes:**
 - `isActive`
+- **`createdById`** ← New (foreign key)
+- **`updatedById`** ← New (foreign key)
+
+**Relations:**
+- **`createdBy` → Admin (N:1, onDelete: SetNull)** ← New
+- **`updatedBy` → Admin (N:1, onDelete: SetNull)** ← New
 
 ---
 
@@ -371,6 +396,14 @@ User admin & kasir.
 - `shifts` → CashierShift[] (1:N)
 - `stockLogs` → StockLog[] (1:N)
 - `skuStockLogs` → SkuStockLog[] (1:N)
+- **`productsCreated` → Product[] (1:N)** ← New
+- **`productsUpdated` → Product[] (1:N)** ← New
+- **`categoriesCreated` → Category[] (1:N)** ← New
+- **`categoriesUpdated` → Category[] (1:N)** ← New
+- **`promosCreated` → Promo[] (1:N)** ← New
+- **`promosUpdated` → Promo[] (1:N)** ← New
+- **`bannersCreated` → Banner[] (1:N)** ← New
+- **`bannersUpdated` → Banner[] (1:N)** ← New
 
 **Enums:**
 - `Role`: ADMIN, KASIR
@@ -404,7 +437,9 @@ Transaksi penjualan.
 - `status`
 - `kasirId`
 - `shiftId`
-- `createdAt`
+- **`createdAt`** ← New
+- **`(kasirId, createdAt)` composite** ← New
+- **`(status, createdAt)` composite** ← New
 
 **Relations:**
 - `kasir` → Admin (N:1)
@@ -475,6 +510,8 @@ History stok level produk (cached total).
 - `type`
 - `operatorId`
 - `createdAt`
+- **`(productId, createdAt)` composite** ← New
+- **`(type, createdAt)` composite** ← New
 
 **Relations:**
 - `product` → Product (N:1)
@@ -506,6 +543,8 @@ History stok level SKU (per ukuran).
 - `type`
 - `operatorId`
 - `createdAt`
+- **`(skuId, createdAt)` composite** ← New
+- **`(type, createdAt)` composite** ← New
 
 **Relations:**
 - `sku` → ProductSku (N:1)
@@ -577,6 +616,8 @@ Shift kasir (modal awal/akhir).
 **Enums:**
 - `ShiftStatus`: OPEN, CLOSED
 
+**Note:** Untuk mencegah multiple open shifts, gunakan unique constraint di application layer atau database trigger.
+
 ---
 
 ### **19. Promo**
@@ -598,6 +639,8 @@ Sistem promo & diskon.
 | isActive | Boolean | No | Status aktif |
 | startDate | DateTime | No | Tanggal mulai |
 | endDate | DateTime | No | Tanggal akhir |
+| **createdById** | **String** | **Yes** | **Admin yang buat** |
+| **updatedById** | **String** | **Yes** | **Admin yang update** |
 | createdAt | DateTime | No | Waktu dibuat |
 | updatedAt | DateTime | No | Waktu diupdate |
 
@@ -606,6 +649,12 @@ Sistem promo & diskon.
 - `startDate`
 - `endDate`
 - `targetType`
+- **`createdById`** ← New (foreign key)
+- **`updatedById`** ← New (foreign key)
+
+**Relations:**
+- **`createdBy` → Admin (N:1, onDelete: SetNull)** ← New
+- **`updatedBy` → Admin (N:1, onDelete: SetNull)** ← New
 
 **Enums:**
 - `PromoType`: PERCENTAGE, NOMINAL
@@ -628,6 +677,7 @@ Sistem promo & diskon.
 - Tidak hapus data fisik
 - Set timestamp saat delete
 - Untuk audit trail & history
+- **Updated:** Banner sekarang juga support soft delete
 
 ### **3. Snapshot Fields**
 
@@ -635,6 +685,7 @@ Sistem promo & diskon.
 - Snapshot data saat transaksi
 - Jika produk berubah/dihapus, invoice tetap valid
 - Immutable transaction history
+- **Updated:** productId sekarang nullable dengan onDelete: SetNull
 
 ### **4. OLAP Table**
 
@@ -648,6 +699,29 @@ Sistem promo & diskon.
 **targetType: VARIANT → PRODUCT → CATEGORY → GLOBAL**
 - Priority order untuk apply promo
 - Flexible targeting
+
+### **6. Audit Trail (New)**
+
+**createdById, updatedById fields**
+- Track siapa yang buat/edit record
+- Relasi ke Admin model
+- onDelete: SetNull untuk preserve history
+- Diterapkan di: Product, Category, Promo, Banner
+
+### **7. Performance Indexes (New)**
+
+**Composite indexes untuk query optimization:**
+- `(kasirId, createdAt)` - Filter kasir + date range
+- `(status, createdAt)` - Filter status + date range
+- `(productId, createdAt)` - Stock logs per product + date
+- `(type, createdAt)` - Filter by type + date
+
+### **8. Cascade Delete Strategy**
+
+**Consistent onDelete behavior:**
+- **Cascade:** ProductDetail, ProductImage (data turunan)
+- **SetNull:** TransactionItem.productId, audit fields (preserve history)
+- **Restrict:** Default untuk prevent accidental deletion
 
 ---
 

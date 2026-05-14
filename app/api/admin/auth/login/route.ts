@@ -7,9 +7,32 @@ import {
   getAccessCookieConfig,
   getRefreshCookieConfig,
 } from "@/lib/auth";
+import { loginLimiter } from "@/lib/rate-limit";
 
 export async function POST(req: Request) {
   try {
+    // Rate limiting (5 attempts per minute per IP)
+    const ip = req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "unknown";
+    const rateLimitResult = loginLimiter.check(5, ip);
+
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Terlalu banyak percobaan login. Silakan coba lagi nanti.",
+          retryAfter: rateLimitResult.reset,
+        },
+        {
+          status: 429,
+          headers: {
+            "X-RateLimit-Limit": rateLimitResult.limit.toString(),
+            "X-RateLimit-Remaining": rateLimitResult.remaining.toString(),
+            "X-RateLimit-Reset": rateLimitResult.reset.toISOString(),
+          },
+        }
+      );
+    }
+
     const body = await req.json();
     const { username, password } = body;
 

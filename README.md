@@ -223,13 +223,20 @@ Lihat [FOLDER_STRUCTURE.md](./fordza-docs/FOLDER_STRUCTURE.md) untuk detail leng
 
 ## 🔐 Security
 
-- JWT-based authentication (Access + Refresh tokens)
-- Password hashing dengan bcrypt
+- JWT-based authentication (separate Access + Refresh token secrets)
+- Password hashing dengan bcrypt (configurable rounds)
 - Role-based access control (ADMIN, KASIR)
 - Admin PIN untuk void transaction
 - HTTP-only cookies untuk token storage
-- Input validation dengan Zod
+- Input validation dengan Zod schemas
 - SQL injection protection (Prisma ORM)
+- Rate limiting (brute force protection)
+- Request ID tracking & audit trail
+- Centralized error handling
+- Structured logging (Pino)
+- Health monitoring endpoint
+
+**See [SECURITY.md](./fordza-docs/SECURITY.md) for complete security documentation.**
 
 ---
 

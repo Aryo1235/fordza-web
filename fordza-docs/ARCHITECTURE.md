@@ -471,32 +471,63 @@ s3://bucket-name/
 
 ---
 
-## 🔧 Environment Variables
+## 🔍 Audit Trail System
 
-```env
-# Database
-DATABASE_URL="postgresql://user:password@localhost:5432/fordza"
+### **Audit Fields**
 
-# JWT
-JWT_ACCESS_SECRET="your-access-secret"
-JWT_REFRESH_SECRET="your-refresh-secret"
+Untuk tracking siapa yang membuat dan mengupdate record penting.
 
-# AWS S3
-AWS_REGION="ap-southeast-1"
-AWS_ACCESS_KEY_ID="your-access-key"
-AWS_SECRET_ACCESS_KEY="your-secret-key"
-AWS_S3_BUCKET_NAME="fordza-assets"
+**Models dengan Audit Trail:**
+- **Product** - `createdById`, `updatedById`
+- **Category** - `createdById`, `updatedById`
+- **Promo** - `createdById`, `updatedById`
+- **Banner** - `createdById`, `updatedById`
 
-# App
-NEXT_PUBLIC_API_URL="http://localhost:3000"
+**Implementation:**
+```typescript
+model Product {
+  createdById String? @map("created_by_id")
+  updatedById String? @map("updated_by_id")
+  
+  createdBy Admin? @relation("ProductCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy Admin? @relation("ProductUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+}
+```
+
+**Benefits:**
+- Track siapa yang buat/edit produk
+- Accountability untuk perubahan data
+- Audit trail lengkap
+- History preserved (onDelete: SetNull)
+
+**Usage:**
+```typescript
+// Create product
+await prisma.product.create({
+  data: {
+    name: "Product Name",
+    createdById: adminId,
+    updatedById: adminId,
+  }
+})
+
+// Update product
+await prisma.product.update({
+  where: { id },
+  data: {
+    name: "Updated Name",
+    updatedById: adminId, // Track who updated
+  }
+})
 ```
 
 ---
 
-## 🚀 Performance Optimizations
+## 🚀 Performance Optimizations (Updated)
 
 ### **1. Database**
 - **Indexes:** Pada foreign keys, unique fields, query fields
+- **Composite Indexes:** `(kasirId, createdAt)`, `(status, createdAt)`, `(productId, createdAt)`, `(type, createdAt)`
 - **Cached Fields:** `Product.price`, `Product.stock`, `Product.avgRating`
 - **OLAP Table:** `SkuSalesSummary` untuk dashboard
 
@@ -520,25 +551,48 @@ NEXT_PUBLIC_API_URL="http://localhost:3000"
 ## 🔒 Security
 
 ### **1. Authentication**
-- JWT dengan expiry pendek (15 menit)
-- Refresh token rotation
+- JWT dengan separate secrets (access & refresh)
+- Access token expiry: 15 menit (configurable)
+- Refresh token expiry: 7 hari (configurable)
 - HTTP-only cookies (XSS protection)
-- bcrypt untuk password hashing
+- bcrypt untuk password hashing (12 rounds, configurable)
+- Automatic secret validation on startup (min 32 chars)
 
 ### **2. Authorization**
 - Role-based access control (ADMIN, KASIR)
-- Middleware protection untuk admin routes
+- Proxy protection untuk admin routes
 - Admin PIN untuk void transaction
 
-### **3. Input Validation**
-- Zod schema validation
+### **3. Rate Limiting**
+- In-memory LRU cache (single server)
+- Login: 5 attempts/minute per IP
+- Refresh: 10 attempts/minute per IP
+- PIN verification: 3 attempts/minute per IP
+- Configurable limits via environment variables
+
+### **4. Input Validation**
+- Zod schema validation di service layer
 - Server-side validation (double check)
 - SQL injection protection (Prisma ORM)
+- Type-safe inputs
 
-### **4. File Upload**
+### **5. Error Handling**
+- Custom error classes (AppError, ValidationError, NotFoundError, etc.)
+- Centralized error handler
+- Prisma error mapping (P2002, P2025, P2003)
+- Consistent error responses
+
+### **6. Audit Trail**
+- Request ID tracking (x-request-id)
+- User ID injection (x-user-id, x-user-role)
+- createdById/updatedById fields
+- Structured logging dengan Pino
+
+### **7. File Upload**
 - File type validation
 - File size limit
 - Unique filename (prevent overwrite)
+- S3 secure storage
 
 ---
 

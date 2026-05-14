@@ -20,6 +20,8 @@ async function main() {
 
   const hashedPassword = await bcrypt.hash("fordza2026", 12);
 
+  let adminId: string;
+
   if (!existingAdmin) {
     const admin = await prisma.admin.create({
       data: {
@@ -30,8 +32,10 @@ async function main() {
         pin: "123456",
       },
     });
+    adminId = admin.id;
     console.log("✅ Admin dibuat:", admin.username);
   } else {
+    adminId = existingAdmin.id;
     console.log("⏭️  Admin sudah ada, skip.");
   }
 
@@ -86,7 +90,7 @@ async function main() {
   const existingProducts = await prisma.product.count();
 
   if (existingProducts === 0) {
-    // 1. Create Categories first
+    // 1. Create Categories first (with audit fields)
     const catSepatu = await prisma.category.create({
       data: {
         name: "Sepatu Kulit",
@@ -94,6 +98,8 @@ async function main() {
         imageUrl: "https://placehold.co/400x400/png?text=Sepatu+Kulit",
         imageKey: "seed/sepatu.png",
         order: 1,
+        createdById: adminId,
+        updatedById: adminId,
       },
     });
 
@@ -104,6 +110,8 @@ async function main() {
         imageUrl: "https://placehold.co/400x400/png?text=Sandal",
         imageKey: "seed/sandal.png",
         order: 2,
+        createdById: adminId,
+        updatedById: adminId,
       },
     });
     console.log("✅ Categories dibuat (2 kategori)");
@@ -111,7 +119,7 @@ async function main() {
     // 2. Need generic size template to link
     const sampleSz = await prisma.sizeTemplate.findFirst({ where: { type: "shoes" } });
 
-    // 3. Create Products
+    // 3. Create Products (with audit fields)
     const p1 = await prisma.product.create({
       data: {
         productCode: "FDZ-SHOE-001",
@@ -125,6 +133,8 @@ async function main() {
         isBestseller: true,
         isNew: false,
         isActive: true,
+        createdById: adminId,
+        updatedById: adminId,
         detail: {
           create: {
             description: "Sepatu klasik berdesain elegan. Terbuat dari kulit asli pilihan dengan jahitan kokoh.",
@@ -159,6 +169,8 @@ async function main() {
         isBestseller: false,
         isNew: true,
         isActive: true,
+        createdById: adminId,
+        updatedById: adminId,
         detail: {
           create: {
             description: "Sandal pria cocok untuk akhir pekan dengan insole empuk.",

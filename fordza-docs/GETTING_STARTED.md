@@ -47,9 +47,9 @@ Edit `.env` dengan konfigurasi kamu:
 # Database
 DATABASE_URL="postgresql://username:password@localhost:5432/fordza_db"
 
-# JWT Secrets (generate random string)
-JWT_ACCESS_SECRET="your-super-secret-access-key-min-32-chars"
-JWT_REFRESH_SECRET="your-super-secret-refresh-key-min-32-chars"
+# JWT Secrets (REQUIRED - Generate with: openssl rand -base64 32)
+JWT_ACCESS_SECRET="your-access-secret-min-32-chars-CHANGE-THIS"
+JWT_REFRESH_SECRET="your-refresh-secret-min-32-chars-CHANGE-THIS"
 
 # AWS S3
 AWS_REGION="ap-southeast-1"
@@ -57,11 +57,33 @@ AWS_ACCESS_KEY_ID="your-aws-access-key"
 AWS_SECRET_ACCESS_KEY="your-aws-secret-key"
 AWS_S3_BUCKET_NAME="fordza-assets"
 
-# App URL
+# App Config (Optional)
+NODE_ENV="development"
 NEXT_PUBLIC_API_URL="http://localhost:3000"
+
+# Security Config (Optional)
+BCRYPT_ROUNDS="12"
+ACCESS_TOKEN_EXPIRY="15m"
+REFRESH_TOKEN_EXPIRY="7d"
+
+# Rate Limiting (Optional)
+RATE_LIMIT_LOGIN="5"
+RATE_LIMIT_REFRESH="10"
+RATE_LIMIT_PIN="3"
+RATE_LIMIT_WINDOW="60000"
+
+# Pagination (Optional)
+DEFAULT_PAGE_LIMIT="10"
+MAX_PAGE_LIMIT="100"
+
+# Logging (Optional)
+LOG_LEVEL="info"
 ```
 
-**Generate JWT Secrets:**
+**⚠️ IMPORTANT: Generate Strong JWT Secrets**
+
+JWT secrets **MUST** be at least 32 characters. Server will throw error if not set or too short.
+
 ```bash
 # Linux/Mac
 openssl rand -base64 32
@@ -69,6 +91,8 @@ openssl rand -base64 32
 # Windows (PowerShell)
 [Convert]::ToBase64String((1..32 | ForEach-Object { Get-Random -Maximum 256 }))
 ```
+
+Generate **2 different secrets** - one for access token, one for refresh token.
 
 ---
 
@@ -184,6 +208,55 @@ npm run dev
 ```
 
 Server akan berjalan di: **http://localhost:3000**
+
+---
+
+## 🔒 Security Features
+
+Fordza-Web dilengkapi dengan security features production-ready:
+
+### **1. JWT Authentication**
+- Separate secrets untuk access & refresh tokens
+- Access token: 15 menit (configurable)
+- Refresh token: 7 hari (configurable)
+- Automatic validation on startup
+
+### **2. Rate Limiting**
+- Login: 5 attempts/minute per IP
+- Refresh: 10 attempts/minute per IP
+- PIN verification: 3 attempts/minute per IP
+- Prevents brute force attacks
+
+### **3. Request Tracking**
+- Unique request ID (x-request-id) untuk setiap request
+- Audit trail dengan createdById/updatedById
+- Structured logging dengan Pino
+
+### **4. Error Handling**
+- Centralized error handling
+- Custom error classes
+- Consistent error responses
+- Prisma error mapping
+
+### **5. Input Validation**
+- Zod schemas untuk semua inputs
+- Type-safe validation
+- Clear error messages
+
+### **Health Check Endpoint**
+```bash
+curl http://localhost:3000/api/health
+```
+
+Response:
+```json
+{
+  "status": "healthy",
+  "timestamp": "2026-05-14T20:00:00.000Z",
+  "uptime": 123.45,
+  "database": "connected"
+}
+```
 
 ---
 
@@ -352,6 +425,35 @@ npx prisma generate
 Generate secret minimal 32 karakter:
 ```bash
 openssl rand -base64 32
+```
+
+Update `.env`:
+```env
+JWT_ACCESS_SECRET="<generated-secret-1>"
+JWT_REFRESH_SECRET="<generated-secret-2>"
+```
+
+---
+
+### **Error: "JWT_ACCESS_SECRET must be set"**
+
+**Solusi:**
+Server memvalidasi JWT secrets saat startup. Pastikan `.env` ada dan berisi:
+```env
+JWT_ACCESS_SECRET="your-secret-min-32-chars"
+JWT_REFRESH_SECRET="your-secret-min-32-chars"
+```
+
+Restart server setelah update `.env`.
+
+---
+
+### **Error: "Too many login attempts"**
+
+**Solusi:**
+Rate limiting aktif. Tunggu 1 menit atau ubah limit di `.env`:
+```env
+RATE_LIMIT_LOGIN="10"  # Default: 5
 ```
 
 ---
