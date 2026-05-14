@@ -68,6 +68,7 @@ export async function POST(req: Request) {
       description: formData.get("description"),
       material: formData.get("material"),
       outsole: formData.get("outsole"),
+      insole: formData.get("insole"),
       closureType: formData.get("closureType"),
       origin: formData.get("origin"),
       notes: formData.get("notes"),

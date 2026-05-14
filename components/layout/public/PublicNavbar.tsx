@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { Menu, X, ShoppingBag, ChevronRight } from "lucide-react";
 import {
   Sheet,
@@ -11,6 +12,7 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 
 const navLinks = [
   { label: "Beranda", href: "/" },
@@ -21,12 +23,29 @@ const navLinks = [
 ];
 
 export default function PublicNavbar() {
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  // Glass transparan di semua halaman KECUALI /products (bg terang, tulisan jadi tak terbaca)
+  const isProducts = pathname.startsWith("/products");
+  const isGlass = !isProducts && !scrolled;
+
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 30);
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   return (
     <header
-      className="sticky inset-x-0 top-0 z-50"
-      style={{ background: "var(--fordza-brown)" }}
+      className={cn(
+        "fixed inset-x-0 top-0 z-50 transition-all duration-500 ease-in-out",
+        isGlass
+          ? "bg-white/10 backdrop-blur-md border-b border-white/10"
+          : "bg-[var(--fordza-brown)] shadow-lg shadow-black/10"
+      )}
     >
       <div className="mx-auto flex h-15 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
 
@@ -37,7 +56,10 @@ export default function PublicNavbar() {
           aria-label="Fordza Home"
         >
           {/* icon mark */}
-          <div className="flex size-7 items-center justify-center rounded-md bg-white/15">
+          <div className={cn(
+            "flex size-7 items-center justify-center rounded-md transition-colors duration-500",
+            scrolled ? "bg-white/15" : "bg-white/20"
+          )}>
             <svg
               viewBox="0 0 24 24"
               fill="none"
@@ -51,7 +73,7 @@ export default function PublicNavbar() {
             </svg>
           </div>
           <span
-            className="text-xl font-bold tracking-wide"
+            className="text-xl font-bold tracking-wide transition-colors duration-500"
             style={{
               color: "var(--fordza-cream)",
               fontFamily: "var(--font-playfair), Georgia, serif",
@@ -69,7 +91,7 @@ export default function PublicNavbar() {
             <Link
               key={link.href}
               href={link.href}
-              className="px-3 py-1.5 text-sm font-medium rounded-lg transition-colors duration-150 text-white/70 hover:text-white hover:bg-white/10"
+              className="px-3 py-1.5 text-sm font-medium rounded-lg transition-colors duration-150 text-white/80 hover:text-white hover:bg-white/10"
             >
               {link.label}
             </Link>
@@ -97,7 +119,6 @@ export default function PublicNavbar() {
               aria-label="Buka menu"
               className="lg:hidden flex items-center justify-center size-9 rounded-lg text-white/80 hover:bg-white/10 transition-colors duration-150"
             >
-              {/* 3-line hamburger icon matching Figma */}
               <div className="flex flex-col gap-[5px]">
                 <span className="block h-[2px] w-5 rounded-full bg-white" />
                 <span className="block h-[2px] w-5 rounded-full bg-white" />

@@ -73,9 +73,12 @@ export default function EditProductPage({
       shortDescription: product.shortDescription || "",
       description: product.detail?.description || "",
       productType: (product.productType?.toLowerCase() as any) || "shoes",
-      gender: (product.gender as any) || "Unisex",
+      gender: product.gender 
+        ? (product.gender.charAt(0).toUpperCase() + product.gender.slice(1).toLowerCase() as any) 
+        : "Unisex",
       material: product.detail?.material || "",
       outsole: product.detail?.outsole || "",
+      insole: product.detail?.insole || "",
       closureType: product.detail?.closureType || "",
       origin: product.detail?.origin || "",
       notes: product.detail?.notes || "",
@@ -108,6 +111,7 @@ export default function EditProductPage({
       gender: "Unisex",
       material: "",
       outsole: "",
+      insole: "",
       closureType: "",
       origin: "",
       notes: "",
@@ -354,6 +358,7 @@ export default function EditProductPage({
                     name="gender"
                     render={({ field }) => (
                       <Select
+                        key={`gender-${field.value}`}
                         value={field.value}
                         onValueChange={field.onChange}
                       >
@@ -427,6 +432,12 @@ export default function EditProductPage({
                     Outsole
                   </Label>
                   <Input {...register("outsole")} className="h-10" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-[10px] uppercase font-bold text-stone-400">
+                    Insole
+                  </Label>
+                  <Input {...register("insole")} className="h-10" placeholder="Cth: Memory Foam / EVA" />
                 </div>
               </div>
 

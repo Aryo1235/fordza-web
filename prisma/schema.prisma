@@ -54,6 +54,7 @@ model Product {
 
   createdAt        DateTime          @default(now()) @map("created_at")
   updatedAt        DateTime          @updatedAt @map("updated_at")
+  deletedAt        DateTime?         @map("deleted_at")
 
   @@map("products")
 }
@@ -69,6 +70,7 @@ model ProductDetail {
 
   material         String?       @map("material")
   outsole          String?       @map("outsole")
+  insole           String?       @map("insole")
   closureType      String?       @map("closure_type")
   origin           String?       @map("origin")
 
@@ -96,6 +98,7 @@ model ProductVariant {
   transactionItems TransactionItem[]      // Relasi balik dari TransactionItem
   createdAt       DateTime               @default(now()) @map("created_at")
   updatedAt       DateTime               @updatedAt @map("updated_at")
+  deletedAt       DateTime?              @map("deleted_at")
 
   @@map("product_variants")
 }
@@ -117,6 +120,7 @@ model ProductSku {
 
   createdAt     DateTime       @default(now()) @map("created_at")
   updatedAt     DateTime       @updatedAt @map("updated_at")
+  deletedAt     DateTime?      @map("deleted_at")
 
   @@unique([variantId, size]) // 1 varian tidak boleh punya 2 SKU ukuran yang sama
   @@map("product_skus")
@@ -156,6 +160,7 @@ model Category {
   imageKey         String?           @map("image_key")
   isActive         Boolean           @default(true) @map("is_active")
   order            Int               @default(0)
+  deletedAt        DateTime?         @map("deleted_at")
 
   products         ProductCategory[]
 
@@ -232,6 +237,7 @@ model Admin {
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
 
   @@map("admins")
 }

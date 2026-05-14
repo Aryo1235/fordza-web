@@ -15,6 +15,7 @@ import {
   addProductImage,
   getStockLogs,
   getSkuStockLogs,
+  bulkImportProducts,
   getPublicProductById,
 } from "./api";
 import type { ProductFilters, Product } from "./types";
@@ -100,10 +101,10 @@ export function useUpdateProduct() {
   return useMutation({
     mutationFn: ({ id, formData }: { id: string; formData: FormData }) =>
       updateProduct(id, formData),
-    onSuccess: () => {
-      // Hanya invalidate list — tidak perlu invalidate detail
-      // karena halaman langsung redirect setelah update
+    onSuccess: (_, variables) => {
+      // Invalidate list AND the specific product detail
       queryClient.invalidateQueries({ queryKey: productKeys.all });
+      queryClient.invalidateQueries({ queryKey: productKeys.detail(variables.id) });
     },
   });
 }
@@ -139,6 +140,17 @@ export function useAddProductImage() {
       addProductImage(productId, file),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: productKeys.detail(variables.productId) });
+    },
+  });
+}
+
+/** Bulk Import Produk */
+export function useBulkImportProducts() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (products: any[]) => bulkImportProducts(products),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: productKeys.all });
     },
   });
 }

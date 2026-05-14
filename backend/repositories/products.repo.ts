@@ -18,7 +18,7 @@ export const ProductRepository = {
     } = filters;
 
     const skip = (page - 1) * limit;
-    const where: any = { isActive: true };
+    const where: any = { isActive: true, deletedAt: null };
 
     if (search) {
       where.name = { contains: search, mode: "insensitive" };
@@ -63,14 +63,14 @@ export const ProductRepository = {
           totalReviews: true,
           createdAt: true,
           variants: {
-            where: { isActive: true },
+            where: { isActive: true, deletedAt: null },
             select: { 
               id: true, 
               basePrice: true, 
               comparisonPrice: true, 
               discountPercent: true,
               skus: {
-                where: { isActive: true },
+                where: { isActive: true, deletedAt: null },
                 select: { id: true, priceOverride: true }
               }
             },
@@ -232,7 +232,7 @@ export const ProductRepository = {
             isActive: true,
             skus: { create: skusData },
             images: {
-              create: v.images.map((img: { url: string; key: string }) => ({
+              create: (v.images || []).map((img: { url: string; key: string }) => ({
                 url: img.url,
                 key: img.key,
               })),
@@ -259,6 +259,7 @@ export const ProductRepository = {
                 description: data.description || "",
                 material: data.material || null,
                 outsole: data.outsole || null,
+                insole: data.insole || null,
                 closureType: data.closureType || null,
                 origin: data.origin || null,
                 notes: data.notes || null,
@@ -266,9 +267,14 @@ export const ProductRepository = {
               },
             },
             categories: {
-              create: data.categoryIds?.map((id: string) => ({ category: { connect: { id } } })) || [],
+              create: (data.categoryIds || []).map((id: string) => ({ category: { connect: { id } } })),
             },
-            images: { create: data.images },
+            images: { 
+              create: (data.images || []).map((img: { url: string; key: string }) => ({
+                url: img.url,
+                key: img.key,
+              })),
+            },
             variants: { create: variantsData },
           },
           include: { images: true, categories: { include: { category: true } }, detail: true },
@@ -320,8 +326,8 @@ export const ProductRepository = {
   },
 
   async getById(id: string) {
-    const product: any = await prisma.product.findUnique({
-      where: { id },
+    const product: any = await prisma.product.findFirst({
+      where: { id, deletedAt: null },
       select: {
         id: true,
         productCode: true,
@@ -346,6 +352,7 @@ export const ProductRepository = {
                 notes: true,
                 material: true,
                 outsole: true,
+                insole: true,
                 closureType: true,
                 origin: true,
                 sizeTemplateId: true,
@@ -353,7 +360,7 @@ export const ProductRepository = {
             },
         },
         variants: {
-          where: { isActive: true },
+          where: { isActive: true, deletedAt: null },
           orderBy: { createdAt: "asc" },
           select: {
             id: true,
@@ -365,7 +372,7 @@ export const ProductRepository = {
             isActive: true,
             images: { select: { id: true, url: true } },
             skus: {
-              where: { isActive: true },
+              where: { isActive: true, deletedAt: null },
               orderBy: { size: "asc" },
               select: { id: true, size: true, stock: true, priceOverride: true, isActive: true, variantId: true },
             },
@@ -463,8 +470,8 @@ export const ProductRepository = {
   },
 
   async getRelated(productId: string, limit: number = 4) {
-    const currentProduct = await prisma.product.findUnique({
-      where: { id: productId },
+    const currentProduct = await prisma.product.findFirst({
+      where: { id: productId, deletedAt: null },
       include: { categories: true },
     });
     if (!currentProduct) return [];
@@ -472,6 +479,7 @@ export const ProductRepository = {
     const primaryRelated = await prisma.product.findMany({
       where: {
         id: { not: productId },
+        deletedAt: null,
         isActive: true,
         gender: currentProduct.gender,
         categories: { some: { categoryId: { in: categoryIds } } },
@@ -484,7 +492,7 @@ export const ProductRepository = {
       const needed = limit - primaryRelated.length;
       const excludedIds = [productId, ...primaryRelated.map((p) => p.id)];
       const fallbackProducts = await prisma.product.findMany({
-        where: { id: { notIn: excludedIds }, isActive: true, gender: currentProduct.gender },
+        where: { id: { notIn: excludedIds }, isActive: true, gender: currentProduct.gender, deletedAt: null },
         include: { images: true, categories: { include: { category: true } } },
         orderBy: [{ isBestseller: "desc" }, { createdAt: "desc" }],
         take: needed,
@@ -497,7 +505,7 @@ export const ProductRepository = {
   async getAllAdmin(filters: any) {
     const { search, page = 1, limit = 10 } = filters;
     const skip = (page - 1) * limit;
-    const where: any = {};
+    const where: any = { deletedAt: null };
     if (search) {
       where.OR = [
         { name: { contains: search, mode: "insensitive" } },
@@ -525,9 +533,9 @@ export const ProductRepository = {
           createdAt: true,
           updatedAt: true,
           categories: { select: { category: { select: { id: true, name: true } } } },
-          detail: { select: { material: true, outsole: true } },
+          detail: { select: { material: true, outsole: true, insole: true } },
           variants: {
-            where: { isActive: true },
+            where: { isActive: true, deletedAt: null },
             select: {
               id: true,
               color: true,
@@ -536,7 +544,7 @@ export const ProductRepository = {
               comparisonPrice: true,
               discountPercent: true,
               skus: { 
-                where: { isActive: true }, 
+                where: { isActive: true, deletedAt: null }, 
                 select: { id: true, size: true, stock: true, priceOverride: true }, 
                 orderBy: { size: "asc" } 
               },
@@ -698,7 +706,7 @@ export const ProductRepository = {
       await tx.product.update({ where: { id }, data: updateData });
 
       // --- 2. UPDATE DETAIL PRODUK ---
-      const detailFields = ["description", "material", "outsole", "closureType", "origin", "notes", "sizeTemplateId"];
+      const detailFields = ["description", "material", "outsole", "insole", "closureType", "origin", "notes", "sizeTemplateId"];
       const hasDetailChange = detailFields.some((f) => data[f] !== undefined);
       if (hasDetailChange) {
         const detailUpdate: any = {};
@@ -796,7 +804,32 @@ export const ProductRepository = {
 
 
   async delete(id: string) {
-    return await prisma.product.update({ where: { id }, data: { isActive: false } });
+    const now = new Date();
+    return await prisma.$transaction(async (tx) => {
+      // 1. Ambil semua ID varian untuk produk ini
+      const variants = await tx.productVariant.findMany({ where: { productId: id }, select: { id: true } });
+      const variantIds = variants.map(v => v.id);
+
+      if (variantIds.length > 0) {
+        // 2. Soft delete semua SKU milik varian-varian tersebut
+        await tx.productSku.updateMany({
+          where: { variantId: { in: variantIds } },
+          data: { isActive: false, deletedAt: now }
+        });
+
+        // 3. Soft delete semua varian produk ini
+        await tx.productVariant.updateMany({
+          where: { productId: id },
+          data: { isActive: false, deletedAt: now }
+        });
+      }
+
+      // 4. Soft delete produk utama
+      return await tx.product.update({
+        where: { id },
+        data: { isActive: false, deletedAt: now }
+      });
+    });
   },
 
   async updateRating(id: string, data: { avgRating: number; totalReviews: number }) {
@@ -844,6 +877,7 @@ export const ProductRepository = {
 
     const where: any = {
       isActive: true,
+      deletedAt: null,
       OR: search ? [
         { name: { contains: search, mode: "insensitive" } },
         { productCode: { contains: search, mode: "insensitive" } },
@@ -859,11 +893,11 @@ export const ProductRepository = {
           images: { select: { url: true }, take: 1 },
           categories: { select: { categoryId: true }, take: 10 },
           variants: {
-            where: { isActive: true }, orderBy: { createdAt: "asc" },
+            where: { isActive: true, deletedAt: null }, orderBy: { createdAt: "asc" },
             select: {
               id: true, variantCode: true, color: true, basePrice: true, comparisonPrice: true, discountPercent: true,
               images: { select: { url: true }, take: 1 },
-              skus: { where: { isActive: true }, orderBy: { size: "asc" }, select: { id: true, size: true, stock: true, priceOverride: true } },
+              skus: { where: { isActive: true, deletedAt: null }, orderBy: { size: "asc" }, select: { id: true, size: true, stock: true, priceOverride: true } },
             },
           },
         },
@@ -947,5 +981,67 @@ export const ProductRepository = {
       }
       return results;
     });
+  },
+  async bulkImport(products: any[], operatorId?: string) {
+    const results = {
+      success: 0,
+      failed: 0,
+      errors: [] as any[],
+    };
+
+    // Pre-fetch all categories and templates for fast lookup
+    const [allCategories, allTemplates] = await Promise.all([
+      prisma.category.findMany({ select: { id: true, name: true } }),
+      prisma.sizeTemplate.findMany({ select: { id: true, name: true } }),
+    ]);
+
+    for (const productData of products) {
+      try {
+        // --- SMART LOOKUP CATEGORIES ---
+        const resolvedCategoryIds = [];
+        if (productData.categoryIds && Array.isArray(productData.categoryIds)) {
+          for (const inputId of productData.categoryIds) {
+            const trimmed = inputId.trim();
+            // Cek apakah ini ID yang valid
+            const exists = allCategories.find(c => c.id === trimmed);
+            if (exists) {
+              resolvedCategoryIds.push(exists.id);
+            } else {
+              // Jika bukan ID, cari berdasarkan nama (case-insensitive)
+              const byName = allCategories.find(c => c.name.toLowerCase() === trimmed.toLowerCase());
+              if (byName) resolvedCategoryIds.push(byName.id);
+            }
+          }
+        }
+
+        // --- SMART LOOKUP SIZE TEMPLATE ---
+        let resolvedTemplateId = productData.sizeTemplateId;
+        if (resolvedTemplateId) {
+          const trimmed = resolvedTemplateId.trim();
+          const exists = allTemplates.find(t => t.id === trimmed);
+          if (!exists) {
+            const byName = allTemplates.find(t => t.name.toLowerCase() === trimmed.toLowerCase());
+            if (byName) resolvedTemplateId = byName.id;
+          }
+        }
+
+        await this.create({
+          ...productData,
+          categoryIds: resolvedCategoryIds,
+          sizeTemplateId: resolvedTemplateId,
+          isActive: false, 
+          operatorId,
+        });
+        results.success++;
+      } catch (error: any) {
+        results.failed++;
+        results.errors.push({
+          productCode: productData.productCode,
+          message: error.message,
+        });
+      }
+    }
+
+    return results;
   },
 };

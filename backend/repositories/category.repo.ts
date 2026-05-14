@@ -6,7 +6,7 @@ export const CategoryRepository = {
 
     const [categories, totalItems] = await Promise.all([
       prisma.category.findMany({
-        where: { isActive: true },
+        where: { isActive: true, deletedAt: null },
         orderBy: [{ order: "asc" }, { name: "asc" }],
         select: {
           id: true,
@@ -23,7 +23,7 @@ export const CategoryRepository = {
         skip,
         take: limit,
       }),
-      prisma.category.count({ where: { isActive: true } }),
+      prisma.category.count({ where: { isActive: true, deletedAt: null } }),
     ]);
 
     return {
@@ -45,7 +45,7 @@ export const CategoryRepository = {
     }
 
     const existingOrder = await prisma.category.findFirst({
-      where: { order: orderNum, isActive: true },
+      where: { order: orderNum, isActive: true, deletedAt: null },
     });
     if (existingOrder) {
       throw new Error(`Urutan ${orderNum} sudah digunakan oleh kategori '${existingOrder.name}'. Silakan pilih urutan lain.`);
@@ -63,8 +63,8 @@ export const CategoryRepository = {
   },
 
   async getById(id: string) {
-    return await prisma.category.findUnique({
-      where: { id },
+    return await prisma.category.findFirst({
+      where: { id, deletedAt: null },
       include: {
         _count: { select: { products: true } },
       },
@@ -77,6 +77,7 @@ export const CategoryRepository = {
 
     const [categories, totalItems] = await Promise.all([
       prisma.category.findMany({
+        where: { deletedAt: null },
         orderBy: [{ order: "asc" }, { name: "asc" }],
         select: {
           id: true,
@@ -91,7 +92,7 @@ export const CategoryRepository = {
         skip,
         take: limit,
       }),
-      prisma.category.count(),
+      prisma.category.count({ where: { deletedAt: null } }),
     ]);
 
     return {
@@ -124,6 +125,7 @@ export const CategoryRepository = {
         where: { 
           order: orderNum, 
           isActive: true,
+          deletedAt: null,
           id: { not: id }
         },
       });
@@ -142,7 +144,7 @@ export const CategoryRepository = {
   async delete(id: string) {
     return await prisma.category.update({
       where: { id },
-      data: { isActive: false },
+      data: { isActive: false, deletedAt: new Date() },
     });
   },
 };

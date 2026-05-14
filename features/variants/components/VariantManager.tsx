@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import {
   useVariants,
   useCreateVariant,
@@ -39,16 +40,7 @@ import {
 import type { ProductVariant, ProductSku } from "../types";
 import { StockGrid } from "./VariantBuilder";
 import { deleteFileFromS3 } from "@/actions/upload";
-import { formatNumber, parseNumber } from "@/lib/utils";
-
-// ─── Helpers ──────────────────────────────────────────────
-
-const fmt = (n: number) =>
-  n.toLocaleString("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    maximumFractionDigits: 0,
-  });
+import { formatNumber, parseNumber, formatRupiah } from "@/lib/utils";
 
 // ─── Sub-komponen: Row SKU ─────────────────────────────────
 
@@ -78,7 +70,7 @@ function SkuRow({ sku, basePrice }: { sku: ProductSku; basePrice: number }) {
       <span className="text-sm flex-1">
         {sku.priceOverride ? (
           <span className="text-amber-700 font-semibold">
-            {fmt(effectivePrice)} ✦ bigsize
+            {formatRupiah(effectivePrice)} ✦ bigsize
           </span>
         ) : (
           <span className="text-stone-400 italic text-xs">
@@ -202,7 +194,7 @@ function AddSkuForm({
                 type="text"
                 value={field.value ? formatNumber(field.value) : ""}
                 onChange={(e) => field.onChange(parseNumber(e.target.value))}
-                placeholder={`Default ${fmt(basePrice)}`}
+                placeholder={`Default ${formatRupiah(basePrice)}`}
                 className="h-8 text-sm"
               />
             )}
@@ -368,11 +360,11 @@ function VariantCard({
           <div>
             <div className="flex flex-col items-end">
               <p className="text-sm font-bold text-zinc-900 leading-none">
-                {fmt(Number((variant as any).finalPrice || variant.basePrice))}
+                {formatRupiah(Number((variant as any).finalPrice || variant.basePrice))}
               </p>
               {(variant as any).finalPrice < variant.basePrice && (
                 <p className="text-[10px] text-stone-400 line-through mt-0.5 opacity-70">
-                  {fmt(Number(variant.basePrice))}
+                  {formatRupiah(Number(variant.basePrice))}
                 </p>
               )}
             </div>
@@ -619,13 +611,13 @@ function AddVariantForm({
         </Badge>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+      <div className="flex flex-col gap-5">
         {/* Foto Varian */}
-        <div className="md:col-span-1 space-y-2">
+        <div className="flex flex-col items-center justify-center space-y-2">
           <Label className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">
             Foto Warna
           </Label>
-          <div className="aspect-square rounded-xl border-2 border-dashed border-stone-200 flex flex-col items-center justify-center relative overflow-hidden bg-stone-50 transition-all">
+          <div className="w-32 h-32 rounded-xl border-2 border-dashed border-stone-200 flex flex-col items-center justify-center relative overflow-hidden bg-stone-50 transition-all">
             {variantImage ? (
               <>
                 <img
@@ -666,7 +658,7 @@ function AddVariantForm({
         </div>
 
         {/* Input Data */}
-        <div className="md:col-span-4 space-y-4">
+        <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label className="text-xs">
@@ -755,13 +747,12 @@ function AddVariantForm({
         <div className="space-y-1">
           <Label className="text-xs">Harga Khusus Bigsize</Label>
           <Input
-            type="number"
-            value={bigsizePrice}
-            onChange={(e) =>
-              setBigsizePrice(
-                e.target.value === "" ? "" : Number(e.target.value),
-              )
-            }
+            type="text"
+            value={bigsizePrice ? formatNumber(Number(bigsizePrice)) : ""}
+            onChange={(e) => {
+              const val = parseNumber(e.target.value);
+              setBigsizePrice(val || "");
+            }}
             placeholder="Rp"
             className="h-9 border-amber-200 bg-amber-50"
           />
@@ -848,7 +839,7 @@ function EditVariantForm({
   const [keyToDelete, setKeyToDelete] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
-  const { register, handleSubmit, watch } = useForm<VariantSchemaValues>({
+  const { register, handleSubmit, watch, control } = useForm<VariantSchemaValues>({
     resolver: zodResolver(variantSchema) as any,
     defaultValues: {
       color: variant.color,
@@ -990,13 +981,13 @@ function EditVariantForm({
         </Badge>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+      <div className="flex flex-col gap-5">
         {/* Gallery Image */}
-        <div className="md:col-span-1 space-y-2">
+        <div className="flex flex-col items-center justify-center space-y-2">
           <Label className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">
             Foto Khusus Warna
           </Label>
-          <div className="aspect-square rounded-xl border-2 border-dashed border-blue-200 flex flex-col items-center justify-center relative overflow-hidden bg-blue-50/30">
+          <div className="w-32 h-32 rounded-xl border-2 border-dashed border-blue-200 flex flex-col items-center justify-center relative overflow-hidden bg-blue-50/30">
             {variantImage ? (
               <>
                 <img
@@ -1037,7 +1028,7 @@ function EditVariantForm({
         </div>
 
         {/* Form Fields */}
-        <div className="md:col-span-4 space-y-4">
+        <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label>Nama Warna</Label>
@@ -1056,18 +1047,34 @@ function EditVariantForm({
           <div className="grid grid-cols-3 gap-3">
             <div className="space-y-1.5">
               <Label className="text-stone-400 font-bold">Harga Coret</Label>
-              <Input
-                type="number"
-                {...register("comparisonPrice")}
-                className="h-9 bg-stone-50"
+              <Controller
+                control={control}
+                name="comparisonPrice"
+                render={({ field }) => (
+                  <Input
+                    type="text"
+                    value={field.value ? formatNumber(field.value) : ""}
+                    onChange={(e) => field.onChange(parseNumber(e.target.value))}
+                    placeholder="Rp"
+                    className="h-9 bg-stone-50"
+                  />
+                )}
               />
             </div>
             <div className="space-y-1.5">
               <Label className="text-green-700 font-bold">Harga Promo *</Label>
-              <Input
-                type="number"
-                {...register("basePrice")}
-                className="h-9 border-green-200 bg-green-50/30"
+              <Controller
+                control={control}
+                name="basePrice"
+                render={({ field }) => (
+                  <Input
+                    type="text"
+                    value={field.value ? formatNumber(field.value) : ""}
+                    onChange={(e) => field.onChange(parseNumber(e.target.value))}
+                    placeholder="Rp"
+                    className="h-9 border-green-200 bg-green-50/30"
+                  />
+                )}
               />
             </div>
             <div className="space-y-1.5">
@@ -1094,39 +1101,62 @@ function EditVariantForm({
         <div className="space-y-1">
           <Label className="text-xs">Harga Khusus Bigsize</Label>
           <Input
-            type="number"
-            value={bigsizePrice}
-            onChange={(e) =>
-              setBigsizePrice(
-                e.target.value === "" ? "" : Number(e.target.value),
-              )
-            }
+            type="text"
+            value={bigsizePrice ? formatNumber(Number(bigsizePrice)) : ""}
+            onChange={(e) => {
+              const val = parseNumber(e.target.value);
+              setBigsizePrice(val || "");
+            }}
             placeholder="Rp"
             className="h-9 border-amber-200 bg-amber-50"
           />
         </div>
       </div>
 
-      <div className="flex justify-end gap-3 pt-4">
-        <Button
-          type="button"
-          variant="ghost"
-          className="h-10"
-          onClick={onClose}
-        >
-          Batal
-        </Button>
-        <Button
-          type="submit"
-          disabled={updateVariant.isPending}
-          className="h-10 bg-blue-600 hover:bg-blue-700 text-white px-8 font-bold shadow-lg shadow-blue-100"
-        >
-          {updateVariant.isPending ? (
-            <Loader2 className="w-4 h-4 animate-spin mr-2" />
-          ) : (
-            "Simpan Perubahan"
-          )}
-        </Button>
+      <div className="flex flex-col items-end pt-4 border-t border-stone-100 gap-4">
+        <div className="flex items-center gap-3 bg-stone-50 px-4 py-2 rounded-lg border border-stone-200">
+          <Controller
+            control={control}
+            name="isActive"
+            render={({ field }) => (
+              <>
+                <Switch
+                  id="variant-active-switch"
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                  className="data-[state=checked]:bg-blue-600"
+                />
+                <Label 
+                  htmlFor="variant-active-switch" 
+                  className="text-sm font-bold text-stone-700 cursor-pointer"
+                >
+                  {field.value ? "Varian Aktif (Tampil)" : "Varian Disembunyikan"}
+                </Label>
+              </>
+            )}
+          />
+        </div>
+        <div className="flex justify-end gap-3 w-full">
+          <Button
+            type="button"
+            variant="ghost"
+            className="h-10"
+            onClick={onClose}
+          >
+            Batal
+          </Button>
+          <Button
+            type="submit"
+            disabled={updateVariant.isPending}
+            className="h-10 bg-blue-600 hover:bg-blue-700 text-white px-8 font-bold shadow-lg shadow-blue-100"
+          >
+            {updateVariant.isPending ? (
+              <Loader2 className="w-4 h-4 animate-spin mr-2" />
+            ) : (
+              "Simpan Perubahan"
+            )}
+          </Button>
+        </div>
       </div>
     </form>
   );

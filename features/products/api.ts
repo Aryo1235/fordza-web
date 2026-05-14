@@ -75,3 +75,9 @@ export async function getSkuStockLogs(params: { page?: number; limit?: number; s
   const res = await api.get("/api/admin/stock/logs/sku", { params });
   return res.data;
 }
+
+/** POST /api/admin/products/bulk-import — Bulk Import Produk */
+export async function bulkImportProducts(products: any[]) {
+  const res = await api.post("/api/admin/products/bulk-import", products);
+  return res.data;
+}

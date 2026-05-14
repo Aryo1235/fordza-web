@@ -28,13 +28,13 @@ function StatusBadge({
 }) {
   const styles = {
     brown: "bg-[#4A3B2E] text-white", // fordza-brown
-    red:   "bg-[#C14444] text-white", // soft red
-    blue:  "bg-[#2267A2] text-white", // corporate blue
+    red: "bg-[#C14444] text-white", // soft red
+    blue: "bg-[#2267A2] text-white", // corporate blue
   };
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-[3px] px-2 py-1.5 text-[10px] font-medium leading-none whitespace-nowrap",
+        "inline-flex items-center rounded-[3px] px-1 py-1.5 md:px-2 md:py-1 text-[9px] md:text-[11px] font-medium leading-none whitespace-nowrap",
         styles[color]
       )}
     >
@@ -47,7 +47,7 @@ function StatusBadge({
 export function ProductCard({ product }: { product: Product }) {
   const [wished, setWished] = useState(false);
   const image = product.images?.[0]?.url;
-  
+
   // Mencari harga varian paling murah secara dinamis
   let displayFinalPrice = Number(product.finalPrice ?? product.price ?? 0);
   let displayHighestPrice = Number(product.highestPrice ?? product.price ?? 0);
@@ -60,7 +60,7 @@ export function ProductCard({ product }: { product: Product }) {
     for (const v of product.variants) {
       if (!v.isActive) continue;
       const vPrice = Number(v.finalPrice ?? v.basePrice ?? Infinity);
-      
+
       if (vPrice < minPrice) {
         minPrice = vPrice;
         targetVariant = v;
@@ -90,48 +90,48 @@ export function ProductCard({ product }: { product: Product }) {
   return (
     <Link
       href={`/products/${product.id}`}
-      className="group relative h-full flex flex-col p-2.5 rounded-2xl overflow-hidden bg-[var(--fordza-cream)] border border-[var(--fordza-cream-dark)] shadow-sm hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:-translate-y-0.5 transition-all duration-300"
+      className="group relative h-full flex flex-col rounded-2xl overflow-hidden bg-[var(--fordza-cream)] border border-[var(--fordza-cream-dark)] shadow-sm hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:-translate-y-0.5 transition-all duration-300"
     >
       {/* ── Ornamen Segitiga Khas Fordza (Di atas Cream, Di luar kotak putih) ── */}
-      <div 
+      {/* <div 
         className="absolute top-0 left-0 w-[12rem] h-[12rem] md:w-[17rem] md:h-[15rem] lg:w-[14.5rem] lg:h-[13.5rem] xl:w-[15rem] xl:h-[14rem] bg-[#4A3B2E] z-0" 
         style={{ clipPath: "polygon(0 0, 100% 0, 0 100%)" }} 
-      />
-   
+      /> */}
+
 
       {/* ── Area Gambar Putih ── */}
-      <div className="relative w-full bg-white rounded-xl overflow-hidden shadow-sm z-10"
+      <div className="relative w-full bg-white overflow-hidden shadow-sm z-10"
         style={{ aspectRatio: "1 / 1" }}
       >
         {/* Gambar Sepatu - MENGGUNAKAN IMG STANDAR UNTUK MENGHINDARI LIMIT VERCEL */}
-          {image ? (
-            <img
-              src={image}
-              alt={product.name}
-              className="h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
-              loading="lazy"
-            />
-          ) : (
-            <div className="flex h-full items-center justify-center">
-              <Package className="size-12 text-[var(--fordza-cream-dark)]" />
-            </div>
-          )}
-        </div>
+        {image ? (
+          <img
+            src={image}
+            alt={product.name}
+            className="h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
+            loading="lazy"
+          />
+        ) : (
+          <div className="flex h-full items-center justify-center">
+            <Package className="size-12 text-[var(--fordza-cream-dark)]" />
+          </div>
+        )}
+      </div>
 
       {/* ── Body ── */}
-      <div className="flex flex-1 flex-col gap-2 p-1 pb-3 pt-3 z-10">
+      <div className="flex flex-1 flex-col gap-2 p-2  md:p-3 pb-5 pt-5 z-10">
 
         {/* Badges */}
         {(product.isPopular || product.isBestseller || product.isNew) && (
-          <div className="flex flex-wrap gap-1.5">
-            {product.isPopular    && <StatusBadge label="Populer"  color="brown" />}
-            {product.isBestseller && <StatusBadge label="Terlaris" color="red"   />}
-            {product.isNew        && <StatusBadge label="Terbaru"  color="blue"  />}
+          <div className="flex flex-wrap gap-1 md:gap-1.5">
+            {product.isPopular && <StatusBadge label="Populer" color="brown" />}
+            {product.isBestseller && <StatusBadge label="Terlaris" color="red" />}
+            {product.isNew && <StatusBadge label="Terbaru" color="blue" />}
           </div>
         )}
 
         {/* Nama produk */}
-        <p className="text-sm font-bold text-gray-900 leading-snug line-clamp-2" style={{ fontFamily: "Inter, sans-serif" }}>
+        <p className="text-xs md:text-sm font-bold text-gray-900 leading-snug line-clamp-2" style={{ fontFamily: "Inter, sans-serif" }}>
           {product.name}
         </p>
 
@@ -143,7 +143,7 @@ export function ProductCard({ product }: { product: Product }) {
         ) : null}
 
         {/* Footer */}
-        <div className="mt-auto flex items-end justify-between pt-3 border-t border-transparent">
+        <div className="mt-auto flex items-end justify-between pb-2 pt-3 border-t border-transparent">
           {/* Harga */}
           <div className="flex flex-col gap-0.5">
             <div className="flex items-center gap-1.5 flex-wrap">
@@ -151,12 +151,12 @@ export function ProductCard({ product }: { product: Product }) {
                 Harga
               </span>
               {hasDiscount && displayHighestPrice !== displayFinalPrice ? (
-                <span className="text-[9px] font-medium text-gray-400 line-through">
+                <span className="text-[10px] font-medium text-gray-400 line-through">
                   {formatRupiah(displayHighestPrice)}
                 </span>
               ) : null}
             </div>
-            
+
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-base font-bold text-gray-900 leading-none">
                 {formatRupiah(displayFinalPrice)}
@@ -169,7 +169,7 @@ export function ProductCard({ product }: { product: Product }) {
             </div>
           </div>
 
-          
+
         </div>
       </div>
     </Link>

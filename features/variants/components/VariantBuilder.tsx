@@ -24,7 +24,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { cn, formatNumber, parseNumber } from "@/lib/utils";
+import { cn, formatNumber, parseNumber, formatRupiah } from "@/lib/utils";
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -73,13 +73,6 @@ const variantFormSchema = z.object({
 });
 
 type VariantFormValues = z.infer<typeof variantFormSchema>;
-
-const fmt = (n: number) =>
-  n.toLocaleString("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    maximumFractionDigits: 0,
-  });
 
 // ─── Komponen: Stock Grid per Ukuran ───────────────────────────────────────
 
@@ -604,13 +597,13 @@ function PendingVariantCard({
           </div>
           <div className="flex items-center gap-2 mt-0.5">
             <span className="text-sm font-bold text-green-700">
-              Rp {variant.basePrice.toLocaleString()}
+              {formatRupiah(variant.basePrice)}
             </span>
             {variant.comparisonPrice &&
               variant.comparisonPrice > variant.basePrice && (
                 <>
                   <span className="text-[10px] text-stone-400 line-through">
-                    Rp {variant.comparisonPrice.toLocaleString()}
+                    {formatRupiah(variant.comparisonPrice)}
                   </span>
                   <span className="text-[9px] font-bold text-amber-600 bg-amber-50 px-1 rounded">
                     -{variant.discountPercent}%

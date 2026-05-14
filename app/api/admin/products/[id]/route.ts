@@ -61,7 +61,7 @@ export async function PUT(
     const updateData: any = {};
     const fields = [
       "productCode", "name", "shortDescription", "productType", "gender",
-      "description", "material", "closureType", "outsole", "origin", "notes", "sizeTemplateId",
+      "description", "material", "closureType", "outsole", "insole", "origin", "notes", "sizeTemplateId",
     ];
 
     for (const field of fields) {

@@ -21,7 +21,8 @@
 export interface ProductFeature {
   id: string;
   categoryIds: string[]; // Array ID kategori produk
-  material: string; // Detail material produk (gabungan atau override)
+  material: string; // Detail material produk
+  insole: string; // Insole produk (alas dalam)
   gender: string; // Gender produk (dari Product)
   productType: string; // Tipe produk (dari Product)
   price: number; // Harga produk (angka mentah)
@@ -58,22 +59,27 @@ export function extractUniqueDimensions(products: ProductFeature[]) {
     new Set(products.map((p) => p.material.toLowerCase().trim())),
   ).sort();
 
-  // 3. Kumpulkan Gender Unik
+  // 3. Kumpulkan Insole Unik
+  const insoles = Array.from(
+    new Set(products.map((p) => p.insole.toLowerCase().trim())),
+  ).sort();
+
+  // 4. Kumpulkan Gender Unik
   const genders = Array.from(
     new Set(products.map((p) => p.gender.toLowerCase().trim())),
   ).sort();
 
-  // 4. Kumpulkan Product Type Unik
+  // 5. Kumpulkan Product Type Unik
   const types = Array.from(
     new Set(products.map((p) => p.productType.toLowerCase().trim())),
   ).sort();
 
-  // 5. Cari rentang Harga
+  // 6. Cari rentang Harga
   const prices = products.map((p) => p.price);
   const minPrice = prices.length ? Math.min(...prices) : 0;
   const maxPrice = prices.length ? Math.max(...prices) : 0;
 
-  return { categoryIds, materials, genders, types, minPrice, maxPrice };
+  return { categoryIds, materials, insoles, genders, types, minPrice, maxPrice };
 }
 
 // ============================================================
@@ -93,14 +99,12 @@ export function buildProductVectors(
   products: ProductFeature[],
   dimensions: ReturnType<typeof extractUniqueDimensions>,
 ): ProductVector[] {
-  const { categoryIds, materials, genders, types, minPrice, maxPrice } =
+  const { categoryIds, materials, insoles, genders, types, minPrice, maxPrice } =
     dimensions;
   const priceRange = maxPrice - minPrice;
 
   return products.map((product) => {
     const vector: number[] = [];
-    // Set mempercepat pengecekan membership kategori saat one-hot encoding.
-    // Ini membantu ketika jumlah produk/kategori bertambah besar.
     const productCategorySet = new Set(product.categoryIds);
 
     // [1] One-Hot Encode: Kategori
@@ -114,19 +118,25 @@ export function buildProductVectors(
       vector.push(productMaterial === mat ? 1 : 0);
     }
 
-    // [3] One-Hot Encode: Gender
+    // [3] One-Hot Encode: Insole
+    const productInsole = product.insole.toLowerCase().trim();
+    for (const ins of insoles) {
+      vector.push(productInsole === ins ? 1 : 0);
+    }
+
+    // [4] One-Hot Encode: Gender
     const productGender = product.gender.toLowerCase().trim();
     for (const gen of genders) {
       vector.push(productGender === gen ? 1 : 0);
     }
 
-    // [4] One-Hot Encode: Tipe Produk
+    // [5] One-Hot Encode: Tipe Produk
     const productType = product.productType.toLowerCase().trim();
     for (const pt of types) {
       vector.push(productType === pt ? 1 : 0);
     }
 
-    // [5] Normalisasi Harga (Min-Max Scaler)
+    // [6] Normalisasi Harga (Min-Max Scaler)
     const normalizedPrice =
       priceRange === 0 ? 0 : (product.price - minPrice) / priceRange;
     vector.push(normalizedPrice);

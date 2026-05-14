@@ -15,7 +15,9 @@ import {
   Star, 
   ChevronRight,
   ShieldCheck,
-  Zap
+  Zap,
+  User,
+  Tag
 } from "lucide-react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -60,7 +62,24 @@ export default function ProductDetailAdminPage({ params }: { params: Promise<{ i
               <ChevronRight className="h-3 w-3 text-stone-300" />
               <span className="text-xs text-stone-600 font-medium">Detail Produk</span>
             </div>
-            <h1 className="text-2xl font-bold text-[#3C3025]">{product.name}</h1>
+            <h1 className="text-2xl font-black text-[#3C3025] tracking-tight">{product.name}</h1>
+            <div className="flex items-center gap-4 mt-2 text-stone-500 font-medium">
+              <div className="flex items-center gap-1.5">
+                <Tag className="h-3.5 w-3.5 text-stone-300" />
+                <span className="text-xs uppercase tracking-wider">{product.productType || "Shoes"}</span>
+              </div>
+              <div className="w-px h-3 bg-stone-200" />
+              <div className="flex items-center gap-1.5">
+                <User className="h-3.5 w-3.5 text-stone-300" />
+                <span className="text-xs">{product.gender || "Unisex"}</span>
+              </div>
+              <div className="w-px h-3 bg-stone-200" />
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] bg-stone-100 px-1.5 py-0.5 rounded text-stone-400 font-mono">
+                  {product.productCode}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
         <div className="flex gap-2">
@@ -168,7 +187,7 @@ export default function ProductDetailAdminPage({ params }: { params: Promise<{ i
                 <CardTitle className="text-sm font-bold uppercase tracking-wider text-stone-800">Spesifikasi Teknis</CardTitle>
               </div>
             </CardHeader>
-            <CardContent className="pt-6 grid grid-cols-2 md:grid-cols-4 gap-6">
+            <CardContent className="pt-6 grid grid-cols-2 md:grid-cols-5 gap-6">
                 <div>
                   <h4 className="text-[10px] font-bold text-stone-400 uppercase mb-1 tracking-widest">Material Atas</h4>
                   <p className="text-sm text-stone-800 font-bold">{product.detail?.material || "-"}</p>
@@ -176,6 +195,10 @@ export default function ProductDetailAdminPage({ params }: { params: Promise<{ i
                 <div>
                   <h4 className="text-[10px] font-bold text-stone-400 uppercase mb-1 tracking-widest">Sol (Outsole)</h4>
                   <p className="text-sm text-stone-800 font-bold">{product.detail?.outsole || "-"}</p>
+                </div>
+                <div>
+                  <h4 className="text-[10px] font-bold text-stone-400 uppercase mb-1 tracking-widest">Insole</h4>
+                  <p className="text-sm text-stone-800 font-bold">{product.detail?.insole || "-"}</p>
                 </div>
                 <div>
                   <h4 className="text-[10px] font-bold text-stone-400 uppercase mb-1 tracking-widest">Konstruksi</h4>

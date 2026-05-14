@@ -53,6 +53,7 @@ export function ProductForm({ initialData, onSubmit, isLoading, submitLabel }: P
       gender: "Unisex",
       material: "",
       outsole: "",
+      insole: "",
       closureType: "",
       origin: "",
       notes: "",
@@ -220,6 +221,10 @@ export function ProductForm({ initialData, onSubmit, isLoading, submitLabel }: P
             <div className="space-y-1.5">
               <Label>Material Sol (Outsole)</Label>
               <Input {...register("outsole")} placeholder="Cth: Rubber / TPR / Leather" />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Insole (Alas Dalam)</Label>
+              <Input {...register("insole")} placeholder="Cth: Memory Foam / EVA" />
             </div>
           </div>
 

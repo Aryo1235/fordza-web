@@ -67,6 +67,7 @@ export default function NewProductPage() {
       gender: "Unisex",
       material: "",
       outsole: "",
+      insole: "",
       closureType: "",
       origin: "",
       notes: "",
@@ -134,6 +135,7 @@ export default function NewProductPage() {
     if (data.description) formData.append("description", data.description);
     if (data.material) formData.append("material", data.material);
     if (data.outsole) formData.append("outsole", data.outsole);
+    if (data.insole) formData.append("insole", data.insole);
     if (data.closureType) formData.append("closureType", data.closureType);
     if (data.origin) formData.append("origin", data.origin);
     if (data.notes) formData.append("notes", data.notes);
@@ -335,6 +337,16 @@ export default function NewProductPage() {
                 <Input
                   {...register("outsole")}
                   placeholder="Cth: Rubber TPR"
+                  className="bg-stone-50/30 border-stone-100 h-10"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-[10px] uppercase font-bold text-stone-400">
+                  Insole (Alas Dalam)
+                </Label>
+                <Input
+                  {...register("insole")}
+                  placeholder="Cth: Memory Foam / EVA"
                   className="bg-stone-50/30 border-stone-100 h-10"
                 />
               </div>

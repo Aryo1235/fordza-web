@@ -87,11 +87,26 @@ export function ProductCatalogHeader({ categories }: { categories: Category[] })
 
   const currentStatus = useMemo(() => isPopular ? "popular" : isBestseller ? "bestseller" : isNew ? "new" : null, [isPopular, isBestseller, isNew]);
 
+  // Optimistic status — langsung update tanpa tunggu server
+  const [optimisticStatus, setOptimisticStatus] = useState<string | null>(currentStatus);
+
+  // Sync kembali kalau URL sudah berubah
+  useEffect(() => {
+    setOptimisticStatus(currentStatus);
+  }, [currentStatus]);
+
+  const toggleStatusOptimistic = useCallback((status: "popular" | "bestseller" | "new") => {
+    // Update UI langsung
+    setOptimisticStatus(prev => prev === status ? null : status);
+    // Push URL
+    toggleStatus(status);
+  }, [toggleStatus]);
+
   const title = useMemo(() => {
-    if (categoryIds.length === 1) return getCategoryName(categoryIds[0]);
     if (isPopular) return "Produk Terpopuler";
     if (isBestseller) return "Produk Terlaris";
     if (isNew) return "Produk Terbaru";
+    if (categoryIds.length === 1) return getCategoryName(categoryIds[0]);
     return "Semua Produk";
   }, [categoryIds, isPopular, isBestseller, isNew, getCategoryName]);
 
@@ -154,9 +169,9 @@ export function ProductCatalogHeader({ categories }: { categories: Category[] })
       {/* Koleksi - DI BAWAH JUDUL (Quick Filters) */}
       <div className="flex flex-col gap-3">
         <div className="flex flex-wrap gap-2">
-          <StatusBtn active={currentStatus === "popular"} onClick={() => toggleStatus("popular")}>Terpopuler</StatusBtn>
-          <StatusBtn active={currentStatus === "bestseller"} onClick={() => toggleStatus("bestseller")}>Terlaris</StatusBtn>
-          <StatusBtn active={currentStatus === "new"} onClick={() => toggleStatus("new")}>Terbaru</StatusBtn>
+          <StatusBtn active={optimisticStatus === "popular"} onClick={() => toggleStatusOptimistic("popular")}>Terpopuler</StatusBtn>
+          <StatusBtn active={optimisticStatus === "bestseller"} onClick={() => toggleStatusOptimistic("bestseller")}>Terlaris</StatusBtn>
+          <StatusBtn active={optimisticStatus === "new"} onClick={() => toggleStatusOptimistic("new")}>Terbaru</StatusBtn>
         </div>
       </div>
 

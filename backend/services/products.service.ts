@@ -42,4 +42,8 @@ export const ProductService = {
   ) {
     return await ProductRepository.bulkUpdateStock(items, operatorId);
   },
+
+  async bulkImport(products: any[], operatorId?: string) {
+    return await ProductRepository.bulkImport(products, operatorId);
+  },
 };

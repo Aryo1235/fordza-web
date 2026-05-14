@@ -14,6 +14,7 @@ export const productSchema = z.object({
   description: z.string().default("").optional().nullable(),
   material: z.string().min(1, "Material Utama wajib diisi"),
   outsole: z.string().default("").optional().nullable(),
+  insole: z.string().default("").optional().nullable(),
   closureType: z.string().default("").optional().nullable(),
   origin: z.string().default("").optional().nullable(),
   notes: z.string().default("").optional().nullable(),

@@ -16,6 +16,7 @@ import {
   Eye,
   ImageIcon,
   Package,
+  Upload,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -59,7 +60,7 @@ export default function ProductsPage() {
           {item.categories?.map((c: any) => (
             <span
               key={c.categoryId}
-              className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800"
+              className="px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800 whitespace-nowrap"
             >
               {c.category?.name}
             </span>
@@ -85,6 +86,12 @@ export default function ProductsPage() {
             title={item.detail?.outsole}
           >
             Sol: {item.detail?.outsole || "-"}
+          </span>
+          <span
+            className="text-[10px] text-stone-500 truncate"
+            title={item.detail?.insole}
+          >
+            Ins: {item.detail?.insole || "-"}
           </span>
         </div>
       ),
@@ -145,9 +152,9 @@ export default function ProductsPage() {
             {/* Nama Promo Aktif */}
             {promoName && (
               <div className="mt-1">
-                 <span className="text-[9px] font-bold bg-amber-50 text-amber-600 px-1.5 py-0.5 rounded border border-amber-100 truncate inline-block max-w-[120px]">
-                    🏷️ {promoName}
-                 </span>
+                <span className="text-[9px] font-bold bg-amber-50 text-amber-600 px-1.5 py-0.5 rounded border border-amber-100 truncate inline-block max-w-[120px]">
+                  🏷️ {promoName}
+                </span>
               </div>
             )}
           </div>
@@ -193,11 +200,18 @@ export default function ProductsPage() {
         title="Daftar Produk"
         description="Kelola semua produk toko Anda di sini."
         action={
-          <Link href="/dashboard/products/new">
-            <Button className="bg-[#3C3025] hover:bg-[#5a4a38] text-white">
-              <Plus className="mr-2 h-4 w-4" /> Tambah Produk
-            </Button>
-          </Link>
+          <div className="flex gap-2">
+            <Link href="/dashboard/products/bulk-import">
+              <Button variant="outline" className="border-stone-200 hover:bg-stone-50">
+                <Upload className="mr-2 h-4 w-4" /> Bulk Import
+              </Button>
+            </Link>
+            <Link href="/dashboard/products/new">
+              <Button className="bg-[#3C3025] hover:bg-[#5a4a38] text-white">
+                <Plus className="mr-2 h-4 w-4" /> Tambah Produk
+              </Button>
+            </Link>
+          </div>
         }
       />
 
