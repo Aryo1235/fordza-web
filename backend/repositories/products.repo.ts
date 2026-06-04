@@ -1395,6 +1395,64 @@ export const ProductRepository = {
     };
   },
 
+  /**
+   * Endpoint ringan khusus "Cek Stok Cepat" di dialog POS.
+   * Hanya mengembalikan field minimal yang dibutuhkan: id, productCode, name, category, stock.
+   * Tidak meng-query variants, skus, promo, images, gender, productType sama sekali.
+   */
+  async getForStockCheck(filters: { search: string; page: number; limit: number }) {
+    const { search, page, limit } = filters;
+    const skip = (page - 1) * limit;
+
+    const where: any = {
+      isActive: true,
+      deletedAt: null,
+      OR: search
+        ? [
+            { name: { contains: search, mode: "insensitive" } },
+            { productCode: { contains: search, mode: "insensitive" } },
+          ]
+        : undefined,
+    };
+
+    const [products, total] = await Promise.all([
+      prisma.product.findMany({
+        where,
+        skip,
+        take: limit,
+        select: {
+          id: true,
+          productCode: true,
+          name: true,
+          stock: true,
+          categories: {
+            take: 1,
+            select: {
+              category: { select: { name: true } },
+            },
+          },
+        },
+        orderBy: { name: "asc" },
+      }),
+      prisma.product.count({ where }),
+    ]);
+
+    return {
+      products: products.map((p) => ({
+        id: p.id,
+        productCode: p.productCode,
+        name: p.name,
+        stock: p.stock,
+        category: p.categories[0]?.category.name ?? null,
+      })),
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  },
 
   async bulkImport(products: any[], operatorId?: string) {
     const results = {

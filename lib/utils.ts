@@ -27,3 +27,12 @@ export function parseNumber(value: string): number {
   const num = parseInt(cleanValue, 10);
   return isNaN(num) ? 0 : num;
 }
+
+/** Sanitasi string input pencarian (Hapus tag HTML, control chars, dan batasi panjang input) */
+export function sanitizeSearch(value: string, maxLength = 50): string {
+  if (!value) return "";
+  return value
+    .replace(/<[^>]*>/g, "") // Hapus semua tag HTML
+    .replace(/[\x00-\x1F\x7F-\x9F]/g, "") // Hapus control characters
+    .substring(0, maxLength); // Batasi panjang input maks 50 karakter
+}

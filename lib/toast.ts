@@ -3,10 +3,20 @@ import { AxiosError } from "axios";
 
 export function getErrorMessage(error: unknown): string {
   if (error instanceof AxiosError) {
-    return error.response?.data?.message || error.message || "Terjadi kesalahan";
+    const data = error.response?.data;
+    const msg = data?.message || error.message || "Terjadi kesalahan";
+    const traceId = data?.traceId || error.response?.headers?.["x-request-id"];
+    if (traceId) {
+      return `${msg} [Trace ID: ${traceId}]`;
+    }
+    return msg;
   }
   
   if (error instanceof Error) {
+    const traceId = (error as any).traceId;
+    if (traceId) {
+      return `${error.message} [Trace ID: ${traceId}]`;
+    }
     return error.message;
   }
   

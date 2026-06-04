@@ -21,6 +21,13 @@ export function ErrorFallback({ error, resetErrorBoundary }: ErrorFallbackProps)
         <p className="text-muted-foreground">
           Maaf, terjadi kesalahan yang tidak terduga. Silakan coba lagi atau hubungi admin.
         </p>
+        {error?.traceId && (
+          <div className="py-1">
+            <span className="text-xs font-mono text-stone-500 bg-stone-100 dark:bg-stone-800 py-1 px-2.5 rounded select-all border border-stone-200 dark:border-stone-700">
+              Trace ID: {error.traceId}
+            </span>
+          </div>
+        )}
         {process.env.NODE_ENV === "development" && (
           <div className="mt-4 p-4 bg-red-50 rounded-lg text-left">
             <p className="text-sm font-mono text-red-800 break-all">

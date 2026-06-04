@@ -358,3 +358,9 @@
 {"level":40,"time":1780607824649,"pid":22356,"hostname":"DESKTOP-MKA7HTA","traceId":"f23bfbfd-d7b3-4bc5-a253-088ffdbf3ec1","code":"UNAUTHORIZED","msg":"Tidak ada session"}
 {"level":30,"time":1780607824726,"pid":22356,"hostname":"DESKTOP-MKA7HTA","username":"admin","ip":"::1","msg":"Access token refreshed successfully"}
 {"level":30,"time":1780607824729,"pid":22356,"hostname":"DESKTOP-MKA7HTA","username":"admin","ip":"::1","msg":"Access token refreshed successfully"}
+{"level":40,"time":1780609055409,"pid":22356,"hostname":"DESKTOP-MKA7HTA","traceId":"709e39cb-acd2-4b59-822d-334ef3a5fe37","code":"UNAUTHORIZED","msg":"Tidak ada session"}
+{"level":30,"time":1780609055455,"pid":22356,"hostname":"DESKTOP-MKA7HTA","username":"admin","ip":"::1","msg":"Access token refreshed successfully"}
+{"level":30,"time":1780609055458,"pid":22356,"hostname":"DESKTOP-MKA7HTA","username":"admin","ip":"::1","msg":"Access token refreshed successfully"}
+{"level":40,"time":1780610281908,"pid":22356,"hostname":"DESKTOP-MKA7HTA","traceId":"d88a2f5a-15da-466f-98d4-fc7f00be086c","code":"UNAUTHORIZED","msg":"Tidak ada session"}
+{"level":30,"time":1780610282532,"pid":22356,"hostname":"DESKTOP-MKA7HTA","username":"admin","ip":"::1","msg":"Access token refreshed successfully"}
+{"level":30,"time":1780610282541,"pid":22356,"hostname":"DESKTOP-MKA7HTA","username":"admin","ip":"::1","msg":"Access token refreshed successfully"}
