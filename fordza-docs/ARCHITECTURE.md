@@ -24,8 +24,8 @@ Fordza-Web adalah sistem e-commerce dan Point of Sale (POS) terintegrasi yang di
 ### **Backend**
 - **Runtime:** Node.js
 - **API:** Next.js API Routes (REST)
-- **ORM:** Prisma 7.2.0
-- **Database:** PostgreSQL
+- **ORM:** Prisma 7.2.0 (with Neon adapter via @prisma/adapter-pg)
+- **Database:** PostgreSQL (Neon serverless)
 - **Authentication:** JWT (Jose 6.1.3) + bcryptjs 3.0.3
 - **File Storage:** AWS S3 (@aws-sdk/client-s3 3.971.0)
 - **CSV Parser:** PapaParse 5.5.3
@@ -74,6 +74,40 @@ Fordza-Web adalah sistem e-commerce dan Point of Sale (POS) terintegrasi yang di
 ---
 
 ## 🗄️ Database Schema Overview
+
+### **Prisma 7 Configuration**
+
+Fordza-Web menggunakan **Prisma 7** dengan custom configuration:
+
+**Generator Configuration:**
+```prisma
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+```
+
+**Custom Output Path:** `app/generated/prisma` (bukan default `node_modules/.prisma/client`)
+
+**Neon Serverless Adapter:**
+```typescript
+import { PrismaClient } from "../app/generated/prisma/client";
+import { Pool } from "pg";
+import { PrismaPg } from "@prisma/adapter-pg";
+
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const adapter = new PrismaPg(pool);
+
+export const prisma = new PrismaClient({
+  adapter, // Required for Prisma 7 with Neon
+  log: ["error", "warn"],
+});
+```
+
+**Benefits:**
+- Serverless-optimized connection pooling
+- Better performance with Neon database
+- Custom client location for better organization
 
 ### **Core Models (16 Total)**
 

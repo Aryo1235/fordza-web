@@ -7,6 +7,12 @@ Fordza-Web menggunakan **Next.js 16 App Router** dengan struktur folder yang ter
 ```
 fordza-web/
 ├── app/                    # Next.js App Router (routes & pages)
+│   ├── generated/          # Generated files
+│   │   └── prisma/         # Prisma client (custom output)
+│   ├── (public)/           # Public pages
+│   ├── (admin)/            # Admin dashboard
+│   ├── (kasir)/            # POS system
+│   └── api/                # API routes
 ├── backend/                # Business logic layer
 ├── features/               # Feature modules (domain-driven)
 ├── lib/                    # Utilities & helpers
@@ -137,8 +143,6 @@ app/
 │   │   │   │       └── route.ts # GET, POST (variants per product)
 │   │   │   ├── bulk-import/
 │   │   │   │   └── route.ts # POST (CSV import)
-│   │   │   ├── bulk-stock/
-│   │   │   │   └── route.ts # PATCH (bulk stock update)
 │   │   │   └── export/
 │   │   │       └── route.ts # GET (export Excel)
 │   │   ├── categories/
@@ -151,8 +155,10 @@ app/
 │   │   │       └── route.ts # GET, PUT, DELETE
 │   │   ├── testimonials/
 │   │   │   ├── route.ts    # GET, POST
-│   │   │   └── [id]/
-│   │   │       └── route.ts # PUT, DELETE
+│   │   │   ├── [id]/
+│   │   │   │   └── route.ts # PUT, DELETE
+│   │   │   └── products/
+│   │   │       └── route.ts # GET (lightweight product selection)
 │   │   ├── size-templates/
 │   │   │   ├── route.ts    # GET, POST
 │   │   │   └── [id]/
@@ -173,12 +179,16 @@ app/
 │   │   ├── cashiers/
 │   │   │   └── route.ts    # GET (list kasir)
 │   │   ├── stock/
-│   │   │   └── logs/
-│   │   │       ├── route.ts # GET (product logs)
-│   │   │       ├── sku/
-│   │   │       │   └── route.ts # GET (SKU logs)
+│   │   │   ├── logs/
+│   │   │   │   ├── route.ts # GET (product logs)
+│   │   │   │   ├── sku/
+│   │   │   │   │   └── route.ts # GET (SKU logs)
+│   │   │   │   └── export/
+│   │   │   │       └── route.ts # GET (export logs)
+│   │   │   └── opname/
+│   │   │       ├── route.ts # GET, PATCH (stock opname)
 │   │   │       └── export/
-│   │   │           └── route.ts # GET (export logs)
+│   │   │           └── route.ts # GET (export opname)
 │   │   ├── reports/
 │   │   │   ├── route.ts    # GET (summary)
 │   │   │   ├── items/
@@ -203,8 +213,12 @@ app/
 │   │   │       └── route.ts # GET (export Excel)
 │   │   ├── promo/
 │   │   │   ├── route.ts    # GET, POST
-│   │   │   └── [id]/
-│   │   │       └── route.ts # GET, PATCH, DELETE
+│   │   │   ├── [id]/
+│   │   │   │   └── route.ts # GET, PATCH, DELETE
+│   │   │   ├── categories/
+│   │   │   │   └── route.ts # GET (lightweight category selection)
+│   │   │   └── products/
+│   │   │       └── route.ts # GET (lightweight product selection)
 │   │   └── dashboard/
 │   │       └── route.ts    # GET (dashboard stats)
 │   │
@@ -425,7 +439,7 @@ Library dan utility functions yang digunakan di seluruh aplikasi.
 
 ```
 lib/
-├── prisma.ts               # Prisma client singleton
+├── prisma.ts               # Prisma client singleton (with Neon adapter)
 ├── auth.ts                 # JWT functions (sign, verify, hash password)
 ├── s3.ts                   # AWS S3 client configuration
 ├── api.ts                  # Axios instance + interceptors
@@ -436,7 +450,7 @@ lib/
 ```
 
 **Penjelasan:**
-- **prisma.ts:** Singleton Prisma client (prevent multiple instances)
+- **prisma.ts:** Singleton Prisma client dengan Neon adapter (Prisma 7)
 - **auth.ts:** JWT sign/verify, bcrypt hash/compare
 - **s3.ts:** AWS S3 client config
 - **api.ts:** Axios instance dengan base URL + auth interceptor
@@ -524,7 +538,7 @@ Database schema, migrations, dan seed scripts.
 
 ```
 prisma/
-├── schema.prisma           # Database schema (16 models)
+├── schema.prisma           # Database schema (19 models)
 ├── seed.ts                 # Seed script (admin + size templates)
 ├── seed-products.ts        # Seed products (sample data)
 ├── clear-data.ts           # Clear all data script
@@ -534,6 +548,8 @@ prisma/
 
 **Penjelasan:**
 - **schema.prisma:** Single source of truth untuk database structure
+  - Generator output: `../app/generated/prisma` (custom path)
+  - Datasource: PostgreSQL
 - **seed.ts:** Seed admin default + size templates
 - **migrations/:** Auto-generated oleh Prisma
 
@@ -698,5 +714,6 @@ import { prisma } from '../../../lib/prisma'
 
 ---
 
-**Last Updated:** 2026-05-14  
+**Last Updated:** 2026-06-05  
 **Version:** 1.0.0
+

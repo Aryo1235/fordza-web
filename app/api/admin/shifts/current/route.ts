@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { ShiftService } from "@/backend/services/shift.service";
 import { verifyToken, ACCESS_COOKIE_NAME } from "@/lib/auth";
 import { cookies } from "next/headers";
+import { handleError, AppError } from "@/lib/error-handler";
 
 export async function GET(req: Request) {
   try {
@@ -13,12 +14,12 @@ export async function GET(req: Request) {
     }
 
     if (!token) {
-      return NextResponse.json({ success: false, message: "Tidak ada session" }, { status: 401 });
+      throw new AppError("Tidak ada session", 401, "UNAUTHORIZED");
     }
 
     const payload = await verifyToken(token);
     if (!payload || payload.type !== "access") {
-      return NextResponse.json({ success: false, message: "Token tidak valid" }, { status: 401 });
+      throw new AppError("Token tidak valid", 401, "UNAUTHORIZED");
     }
 
     const openShift = await ShiftService.checkCurrentShift(payload.id);
@@ -29,9 +30,6 @@ export async function GET(req: Request) {
       data: openShift || null,
     });
   } catch (error: any) {
-    return NextResponse.json(
-      { success: false, message: "Terjadi kesalahan server" },
-      { status: 500 }
-    );
+    return await handleError(error);
   }
 }

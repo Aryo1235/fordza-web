@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
 // features/variants/components/VariantManager.tsx
 // UI Admin untuk mengelola Varian + SKU sebuah produk
 // Menampilkan daftar varian (per warna) + tabel SKU (per ukuran) di bawah masing-masing varian
 
-import { useState, useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -41,18 +41,25 @@ import type { ProductVariant, ProductSku } from "../types";
 import { StockGrid } from "./VariantBuilder";
 import { deleteFileFromS3 } from "@/actions/upload";
 import { formatNumber, parseNumber, formatRupiah } from "@/lib/utils";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 
 // ─── Sub-komponen: Row SKU ─────────────────────────────────
 
 function SkuRow({ sku, basePrice }: { sku: ProductSku; basePrice: number }) {
   const effectivePrice = sku.priceOverride ?? basePrice;
   const deleteSku = useDeleteSku(sku.variantId);
+  const [showConfirm, setShowConfirm] = useState(false);
 
-  const handleDelete = () => {
-    if (!confirm(`Hapus ukuran ${sku.size}?`)) return;
+  const onConfirmDelete = () => {
     deleteSku.mutate(sku.id, {
-      onSuccess: () => toast.success(`Ukuran ${sku.size} dihapus`),
-      onError: () => toast.error("Gagal menghapus ukuran"),
+      onSuccess: () => {
+        toast.success(`Ukuran ${sku.size} dihapus`);
+        setShowConfirm(false);
+      },
+      onError: () => {
+        toast.error("Gagal menghapus ukuran");
+        setShowConfirm(false);
+      },
     });
   };
 
@@ -88,14 +95,23 @@ function SkuRow({ sku, basePrice }: { sku: ProductSku; basePrice: number }) {
       )}
       <Button
         type="button"
-        size="icon"
         variant="ghost"
+        size="icon"
         className="h-6 w-6 text-stone-300 opacity-0 group-hover:opacity-100 hover:text-red-500 transition-all"
-        onClick={handleDelete}
+        onClick={() => setShowConfirm(true)}
         disabled={deleteSku.isPending}
       >
         <Trash2 className="w-3 h-3" />
       </Button>
+
+      <ConfirmDialog
+        open={showConfirm}
+        onOpenChange={setShowConfirm}
+        onConfirm={onConfirmDelete}
+        isLoading={deleteSku.isPending}
+        title="Hapus Ukuran?"
+        description={`Apakah Anda yakin ingin menghapus ukuran ${sku.size}? Tindakan ini tidak dapat dibatalkan.`}
+      />
     </div>
   );
 }
@@ -107,11 +123,13 @@ function AddSkuForm({
   basePrice,
   productId,
   sizeTemplates,
+  existingSizes = [],
 }: {
   variantId: string;
   basePrice: number;
   productId: string;
   sizeTemplates?: string[];
+  existingSizes?: string[];
 }) {
   const [open, setOpen] = useState(false);
   const createSku = useCreateSku(productId);
@@ -121,6 +139,7 @@ function AddSkuForm({
     handleSubmit,
     reset,
     control,
+    setValue,
     formState: { errors },
   } = useForm<SkuSchemaValues>({
     resolver: zodResolver(skuSchema) as any,
@@ -155,8 +174,7 @@ function AddSkuForm({
   }
 
   return (
-    <form
-      onSubmit={handleSubmit(onSubmit)}
+    <div
       className="mt-2 p-3 border border-stone-200 rounded-md space-y-3 bg-stone-50"
     >
       <p className="text-xs font-semibold text-stone-600">Tambah Ukuran Baru</p>
@@ -202,21 +220,51 @@ function AddSkuForm({
           <p className="text-xs text-stone-400">Kosongkan jika harga sama</p>
         </div>
       </div>
-      {sizeTemplates && sizeTemplates.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
-          <span className="text-xs text-stone-400">Pilihan cepat:</span>
-          {sizeTemplates.map((s) => (
+      {(sizeTemplates?.length || existingSizes?.length) && (
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="text-[10px] font-bold text-stone-400 uppercase">Saran Ukuran:</span>
+          
+          {/* Logika Pintar: -1 dari terkecil dan +1 dari terbesar */}
+          {(() => {
+            const numericSizes = existingSizes
+              .map(s => parseInt(s))
+              .filter(n => !isNaN(n))
+              .sort((a, b) => a - b);
+            
+            if (numericSizes.length === 0) return null;
+            
+            const prevSize = numericSizes[0] - 1;
+            const nextSize = numericSizes[numericSizes.length - 1] + 1;
+            
+            return (
+              <div className="flex gap-1.5">
+                <button
+                  key="prev-size-btn"
+                  type="button"
+                  className="text-[10px] bg-stone-100 border border-stone-200 px-2 py-0.5 rounded-full hover:bg-stone-200 font-bold text-stone-600 transition-colors"
+                  onClick={() => setValue("size", prevSize.toString(), { shouldValidate: true })}
+                >
+                  {prevSize} (Bawah)
+                </button>
+                <button
+                  key="next-size-btn"
+                  type="button"
+                  className="text-[10px] bg-stone-100 border border-stone-200 px-2 py-0.5 rounded-full hover:bg-stone-200 font-bold text-stone-600 transition-colors"
+                  onClick={() => setValue("size", nextSize.toString(), { shouldValidate: true })}
+                >
+                  {nextSize} (Atas)
+                </button>
+              </div>
+            );
+          })()}
+
+          {/* Template Default jika ada */}
+          {sizeTemplates?.filter(s => !existingSizes.includes(s)).map((s) => (
             <button
               key={s}
               type="button"
-              className="text-xs border border-stone-200 px-2 py-0.5 rounded hover:bg-stone-100"
-              onClick={() =>
-                ((
-                  document.querySelector(
-                    "input[name='size']",
-                  ) as HTMLInputElement
-                ).value = s)
-              }
+              className="text-[10px] border border-stone-200 px-2 py-0.5 rounded hover:bg-stone-100 text-stone-500"
+              onClick={() => setValue("size", s, { shouldValidate: true })}
             >
               {s}
             </button>
@@ -225,10 +273,15 @@ function AddSkuForm({
       )}
       <div className="flex gap-2">
         <Button
-          type="submit"
+          type="button"
           size="sm"
           disabled={createSku.isPending}
           className="bg-[#3C3025] h-8 text-xs"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleSubmit(onSubmit)(e);
+          }}
         >
           {createSku.isPending ? (
             <Loader2 className="w-3 h-3 animate-spin" />
@@ -246,7 +299,7 @@ function AddSkuForm({
           Batal
         </Button>
       </div>
-    </form>
+    </div>
   );
 }
 
@@ -265,18 +318,12 @@ function VariantCard({
 }) {
   const [expanded, setExpanded] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const deleteVariant = useDeleteVariant(productId);
 
   const totalStock = variant.skus.reduce((s, sku) => s + sku.stock, 0);
 
-  const onDelete = () => {
-    if (
-      !confirm(
-        `Hapus varian "${variant.color}"? Semua ukuran (${variant.skus.length} SKU) akan ikut terhapus.`,
-      )
-    )
-      return;
-
+  const onConfirmDelete = async () => {
     // 1. Hapus file fisik dari S3 jika ada
     const cleanupS3 = async () => {
       if (variant.images && variant.images.length > 0) {
@@ -290,8 +337,12 @@ function VariantCard({
       onSuccess: async () => {
         await cleanupS3();
         toast.success(`Varian "${variant.color}" dihapus`);
+        setShowConfirm(false);
       },
-      onError: () => toast.error("Gagal menghapus varian"),
+      onError: () => {
+        toast.error("Gagal menghapus varian");
+        setShowConfirm(false);
+      },
     });
   };
 
@@ -321,7 +372,7 @@ function VariantCard({
         )}
 
         {/* Swatch warna / Image */}
-        <div className="w-10 h-10 rounded-lg border border-stone-200 shadow-sm flex-shrink-0 relative overflow-hidden bg-stone-100">
+        <div className="w-10 h-10 rounded-lg border border-stone-200 shadow-sm shrink-0 relative overflow-hidden bg-stone-100">
           {variant.images && variant.images.length > 0 ? (
             <img
               src={variant.images[0].url}
@@ -329,7 +380,7 @@ function VariantCard({
               alt={variant.color}
             />
           ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-stone-400 to-stone-600 opacity-20 flex items-center justify-center">
+            <div className="absolute inset-0 bg-linear-to-br from-stone-400 to-stone-600 opacity-20 flex items-center justify-center">
               <Plus className="w-4 h-4 text-stone-400" />
             </div>
           )}
@@ -349,9 +400,9 @@ function VariantCard({
               {variant.variantCode}
             </code>
             {(variant as any).promoName && (
-               <span className="text-[9px] text-amber-600 font-bold bg-amber-50 px-1.5 rounded border border-amber-100 truncate max-w-[100px]">
-                  {(variant as any).promoName}
-               </span>
+              <span className="text-[9px] text-amber-600 font-bold bg-amber-50 px-1.5 rounded border border-amber-100 truncate max-w-25">
+                {(variant as any).promoName}
+              </span>
             )}
           </div>
         </div>
@@ -360,7 +411,9 @@ function VariantCard({
           <div>
             <div className="flex flex-col items-end">
               <p className="text-sm font-bold text-zinc-900 leading-none">
-                {formatRupiah(Number((variant as any).finalPrice || variant.basePrice))}
+                {formatRupiah(
+                  Number((variant as any).finalPrice || variant.basePrice),
+                )}
               </p>
               {(variant as any).finalPrice < variant.basePrice && (
                 <p className="text-[10px] text-stone-400 line-through mt-0.5 opacity-70">
@@ -380,7 +433,7 @@ function VariantCard({
           <Button
             size="icon"
             variant="ghost"
-            className="h-8 w-8 hover:text-blue-600 flex-shrink-0"
+            className="h-8 w-8 hover:text-blue-600 shrink-0"
             onClick={(e) => {
               e.stopPropagation();
               setIsEditing(true);
@@ -391,10 +444,10 @@ function VariantCard({
           <Button
             size="icon"
             variant="ghost"
-            className="h-8 w-8 hover:text-red-500 flex-shrink-0"
+            className="h-8 w-8 hover:text-red-500 shrink-0"
             onClick={(e) => {
               e.stopPropagation();
-              onDelete();
+              setShowConfirm(true);
             }}
             disabled={deleteVariant.isPending}
           >
@@ -406,6 +459,15 @@ function VariantCard({
           </Button>
         </div>
       </div>
+
+      <ConfirmDialog
+        open={showConfirm}
+        onOpenChange={setShowConfirm}
+        onConfirm={onConfirmDelete}
+        isLoading={deleteVariant.isPending}
+        title="Hapus Varian?"
+        description={`Hapus varian "${variant.color}"? Semua ukuran (${variant.skus.length} SKU) akan ikut terhapus secara permanen.`}
+      />
 
       {/* Body: Daftar SKU */}
       {expanded && (
@@ -421,13 +483,6 @@ function VariantCard({
                 <SkuRow key={sku.id} sku={sku} basePrice={variant.basePrice} />
               ))
           )}
-
-          <AddSkuForm
-            variantId={variant.id}
-            basePrice={variant.basePrice}
-            productId={productId}
-            sizeTemplates={sizeTemplates}
-          />
         </div>
       )}
     </div>
@@ -559,10 +614,6 @@ function AddVariantForm({
   };
 
   const onSubmit = (data: VariantSchemaValues) => {
-    // 1. Ambil colorCode untuk dipakai menyusun variantCode,
-    // tapi jangan masukkan ke dalam 'validData' yang akan dikirim ke Prisma
-    const { colorCode, ...validData } = data;
-
     const skus = sizeTemplates.map((size) => ({
       size,
       stock: stockPerSize[size] || 0,
@@ -574,15 +625,13 @@ function AddVariantForm({
     }));
 
     const payload: any = {
-      ...validData, // Mengirim color, basePrice, comparisonPrice, isActive (YANG ADA DI DB)
+      ...data,
       basePrice: Number(data.basePrice) || 0,
       comparisonPrice: data.comparisonPrice
         ? Number(data.comparisonPrice)
         : null,
       images: variantImage ? [variantImage] : [],
       skus,
-      // ColorCode digunakan di sini untuk mengisi kolom variantCode yang asli
-      variantCode: `${productCode}-${colorCode || "VAR"}`,
     };
 
     createVariant.mutate(payload, {
@@ -598,8 +647,7 @@ function AddVariantForm({
     });
   };
   return (
-    <form
-      onSubmit={handleSubmit(onSubmit)}
+    <div
       className="border border-stone-200 rounded-xl p-5 bg-white space-y-5 shadow-md"
     >
       <div className="flex items-center justify-between">
@@ -678,7 +726,7 @@ function AddVariantForm({
                 Kode Custom <span className="text-zinc-400">(opt)</span>
               </Label>
               <Input
-                {...register("colorCode")}
+                {...register("colorCode", { setValueAs: (v) => v?.toUpperCase() || null })}
                 placeholder="HTM"
                 maxLength={5}
                 className="uppercase h-9"
@@ -698,7 +746,9 @@ function AddVariantForm({
                   <Input
                     type="text"
                     value={field.value ? formatNumber(field.value) : ""}
-                    onChange={(e) => field.onChange(parseNumber(e.target.value))}
+                    onChange={(e) =>
+                      field.onChange(parseNumber(e.target.value))
+                    }
                     placeholder="Rp"
                     className="h-9 border-stone-200 bg-stone-50"
                   />
@@ -716,7 +766,9 @@ function AddVariantForm({
                   <Input
                     type="text"
                     value={field.value ? formatNumber(field.value) : ""}
-                    onChange={(e) => field.onChange(parseNumber(e.target.value))}
+                    onChange={(e) =>
+                      field.onChange(parseNumber(e.target.value))
+                    }
                     placeholder="Rp"
                     className="h-9 border-green-200 bg-green-50/50"
                   />
@@ -767,9 +819,14 @@ function AddVariantForm({
             Batal
           </Button>
           <Button
-            type="submit"
+            type="button"
             disabled={createVariant.isPending}
             className="h-9 bg-[#3C3025] hover:bg-stone-800 text-white px-8 font-bold"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleSubmit(onSubmit)(e);
+            }}
           >
             {createVariant.isPending ? (
               <Loader2 className="w-4 h-4 animate-spin mr-2" />
@@ -779,7 +836,7 @@ function AddVariantForm({
           </Button>
         </div>
       </div>
-    </form>
+    </div>
   );
 }
 
@@ -835,25 +892,97 @@ function EditVariantForm({
       ? { url: variant.images[0].url, key: variant.images[0].key }
       : null,
   );
-  // Lacak key yang perlu dihapus dari S3 jika perubahan disimpan
-  const [keyToDelete, setKeyToDelete] = useState<string | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
 
-  const { register, handleSubmit, watch, control } = useForm<VariantSchemaValues>({
-    resolver: zodResolver(variantSchema) as any,
-    defaultValues: {
-      color: variant.color,
-      colorCode: variant.variantCode.split("-").pop() || "",
-      basePrice: variant.basePrice,
-      comparisonPrice: variant.comparisonPrice,
-      isActive: variant.isActive,
-    },
-  });
+  const [isUploading, setIsUploading] = useState(false);
+  const [saveState, setSaveState] = useState<"idle" | "saved">("idle");
+  const [keyToDelete, setKeyToDelete] = useState<string | null>(null);
+
+  const [deletingSize, setDeletingSize] = useState<string | null>(null);
+  const [skuToDelete, setSkuToDelete] = useState<{ id: string; size: string } | null>(null);
+
+  const { register, handleSubmit, watch, control, setValue } =
+    useForm<VariantSchemaValues>({
+      resolver: zodResolver(variantSchema) as any,
+      defaultValues: {
+        color: variant.color,
+        colorCode: variant.variantCode.split("-").pop() || "",
+        basePrice: variant.basePrice,
+        comparisonPrice: variant.comparisonPrice,
+        isActive: variant.isActive,
+      },
+    });
 
   const watchColor = watch("color");
   const watchColorCode = watch("colorCode");
   const watchBasePrice = watch("basePrice");
   const watchComparisonPrice = watch("comparisonPrice");
+
+
+  // Restore logic: deteksi perubahan agar status kembali ke 'idle'
+  useEffect(() => {
+    setSaveState("idle");
+  }, [
+    watchColor,
+    watchColorCode,
+    watchBasePrice,
+    watchComparisonPrice,
+    variantImage,
+    bigsizePrice,
+    bigsizeSizes,
+    stockPerSize,
+  ]);
+
+  // LOGIKA BARU: Sync state ketika data SKU di database berubah (misal setelah tambah ukuran)
+  useEffect(() => {
+    const newStock: Record<string, number> = {};
+    variant.skus.forEach((s) => {
+      newStock[s.size] = s.stock;
+    });
+    setStockPerSize(newStock);
+
+    const newBigsizes = variant.skus
+      .filter((s) => s.priceOverride !== null)
+      .map((s) => s.size);
+    setBigsizeSizes(newBigsizes);
+
+    const firstBigsize = variant.skus.find((s) => s.priceOverride !== null);
+    if (firstBigsize) setBigsizePrice(firstBigsize.priceOverride!);
+  }, [variant.skus]);
+
+  const deleteSku = useDeleteSku(productId);
+
+  const onConfirmDeleteSku = () => {
+    if (!skuToDelete) return;
+    
+    setDeletingSize(skuToDelete.size);
+    deleteSku.mutate(skuToDelete.id, {
+      onSuccess: () => {
+        toast.success(`Ukuran ${skuToDelete.size} berhasil dihapus`);
+        setSkuToDelete(null);
+        setDeletingSize(null);
+      },
+      onError: (err) => {
+        toast.error(err.message || "Gagal menghapus ukuran");
+        setSkuToDelete(null);
+        setDeletingSize(null);
+      },
+    });
+  };
+
+  const handleDeleteSku = (size: string) => {
+    const targetSku = variant.skus.find((s) => s.size === size);
+    if (!targetSku) {
+      // Jika ukuran belum ada di DB (hanya di template), cukup hapus dari state lokal
+      setStockPerSize((prev) => {
+        const next = { ...prev };
+        delete next[size];
+        return next;
+      });
+      return;
+    }
+
+    setSkuToDelete({ id: targetSku.id, size });
+  };
 
   const calculatedDiscount = useMemo(() => {
     if (!watchBasePrice || !watchComparisonPrice) return 0;
@@ -920,9 +1049,6 @@ function EditVariantForm({
   };
 
   const onSubmit = (data: VariantSchemaValues) => {
-    // 1. Pisahkan colorCode (data UI) dari data yang dikenal Database (validData)
-    const { colorCode, ...validData } = data;
-
     const skus = allAvailableSizes.map((size) => {
       const existingSku = variant.skus.find((s) => s.size === size);
       return {
@@ -940,15 +1066,13 @@ function EditVariantForm({
     });
 
     const payload: any = {
-      ...validData, // Hanya mengirim field yang ada di tabel Prisma
+      ...data,
       basePrice: Number(data.basePrice),
       comparisonPrice: data.comparisonPrice
         ? Number(data.comparisonPrice)
         : null,
       images: variantImage ? [variantImage] : [],
       skus,
-      // Susun ulang variantCode agar perubahan kode warna ikut tersimpan
-      variantCode: `${productCode}-${colorCode || "VAR"}`,
     };
 
     updateVariant.mutate(
@@ -957,8 +1081,9 @@ function EditVariantForm({
         onSuccess: async () => {
           // Jika ada pergantian/penghapusan gambar, hapus file lama dari S3
           if (keyToDelete) {
-             await deleteFileFromS3(keyToDelete);
+            await deleteFileFromS3(keyToDelete);
           }
+          setSaveState("saved");
           toast.success(`Varian "${data.color}" diperbarui`);
           onClose();
         },
@@ -968,17 +1093,23 @@ function EditVariantForm({
   };
 
   return (
-    <form
-      onSubmit={handleSubmit(onSubmit)}
+    <div
       className="border-2 border-blue-200 rounded-2xl p-6 bg-white shadow-2xl m-2 space-y-6"
     >
       <div className="flex items-center justify-between border-b pb-4 border-stone-100">
         <div className="text-sm font-bold text-blue-900 flex items-center gap-2">
-          <Pencil className="w-4 h-4" /> Edit Varian & Harga Warna
+          <Pencil className="w-4 h-4" /> Edit Varian (Simpan Mandiri)
         </div>
-        <Badge className="bg-blue-50 text-blue-600 border-blue-100">
-          {previewCode}
-        </Badge>
+        <div className="flex items-center gap-2">
+          {saveState === "saved" && (
+            <Badge className="bg-emerald-50 text-emerald-700 border-emerald-100">
+              Tersimpan
+            </Badge>
+          )}
+          <Badge className="bg-blue-50 text-blue-600 border-blue-100">
+            {previewCode}
+          </Badge>
+        </div>
       </div>
 
       <div className="flex flex-col gap-5">
@@ -1037,7 +1168,7 @@ function EditVariantForm({
             <div className="space-y-1.5">
               <Label>Kode</Label>
               <Input
-                {...register("colorCode")}
+                {...register("colorCode", { setValueAs: (v) => v?.toUpperCase() || null })}
                 maxLength={5}
                 className="uppercase h-9"
               />
@@ -1054,7 +1185,9 @@ function EditVariantForm({
                   <Input
                     type="text"
                     value={field.value ? formatNumber(field.value) : ""}
-                    onChange={(e) => field.onChange(parseNumber(e.target.value))}
+                    onChange={(e) =>
+                      field.onChange(parseNumber(e.target.value))
+                    }
                     placeholder="Rp"
                     className="h-9 bg-stone-50"
                   />
@@ -1070,7 +1203,9 @@ function EditVariantForm({
                   <Input
                     type="text"
                     value={field.value ? formatNumber(field.value) : ""}
-                    onChange={(e) => field.onChange(parseNumber(e.target.value))}
+                    onChange={(e) =>
+                      field.onChange(parseNumber(e.target.value))
+                    }
                     placeholder="Rp"
                     className="h-9 border-green-200 bg-green-50/30"
                   />
@@ -1094,7 +1229,20 @@ function EditVariantForm({
           bigsizeSizes={bigsizeSizes}
           onChange={handleStockChange}
           onToggleBigsize={handleToggleBigsize}
+          onDelete={handleDeleteSku}
+          deletingSize={deletingSize}
         />
+
+        {/* Form Tambah Ukuran (Hanya di mode Edit) */}
+        <div className="mt-4 pt-4 border-t border-stone-50">
+          <AddSkuForm
+            variantId={variant.id}
+            basePrice={variant.basePrice}
+            productId={productId}
+            sizeTemplates={sizeTemplates}
+            existingSizes={variant.skus.map((s) => s.size)}
+          />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-2">
@@ -1126,11 +1274,13 @@ function EditVariantForm({
                   onCheckedChange={field.onChange}
                   className="data-[state=checked]:bg-blue-600"
                 />
-                <Label 
-                  htmlFor="variant-active-switch" 
+                <Label
+                  htmlFor="variant-active-switch"
                   className="text-sm font-bold text-stone-700 cursor-pointer"
                 >
-                  {field.value ? "Varian Aktif (Tampil)" : "Varian Disembunyikan"}
+                  {field.value
+                    ? "Varian Aktif (Tampil)"
+                    : "Varian Disembunyikan"}
                 </Label>
               </>
             )}
@@ -1146,19 +1296,35 @@ function EditVariantForm({
             Batal
           </Button>
           <Button
-            type="submit"
+            type="button"
             disabled={updateVariant.isPending}
             className="h-10 bg-blue-600 hover:bg-blue-700 text-white px-8 font-bold shadow-lg shadow-blue-100"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleSubmit(onSubmit)(e);
+            }}
           >
             {updateVariant.isPending ? (
               <Loader2 className="w-4 h-4 animate-spin mr-2" />
             ) : (
-              "Simpan Perubahan"
+              "Simpan Varian"
             )}
           </Button>
         </div>
       </div>
-    </form>
+
+      <ConfirmDialog
+        open={!!skuToDelete}
+        onOpenChange={(open) => {
+          if (!open) setSkuToDelete(null);
+        }}
+        onConfirm={onConfirmDeleteSku}
+        isLoading={deleteSku.isPending}
+        title="Hapus Ukuran?"
+        description={`Apakah Anda yakin ingin menghapus ukuran ${skuToDelete?.size}? Tindakan ini permanen.`}
+      />
+    </div>
   );
 }
 
@@ -1167,7 +1333,7 @@ function EditVariantForm({
 interface VariantManagerProps {
   productId: string;
   productCode?: string; // Untuk generate preview variantCode di form
-  /** Ukuran dari SizeTemplate yang dipilih — untuk quick-fill form tambah SKU */
+  /** Ukuran dari SizeTemplate yang dipilih - untuk quick-fill form tambah SKU */
   sizeTemplates?: string[];
 }
 
@@ -1196,7 +1362,7 @@ export function VariantManager({
               variant="secondary"
               className="bg-stone-50 text-stone-400 text-[10px] ml-2"
             >
-              Auto Save
+              Save per Varian
             </Badge>
           </div>
           {!isLoading && (

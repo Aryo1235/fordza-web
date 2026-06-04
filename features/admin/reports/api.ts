@@ -14,13 +14,17 @@ export async function getSalesReportSummary(
     minQuantity?: number;
   },
 ) {
-  const res = await api.get("/api/admin/reports", {
-    params: {
-      from,
-      to,
-    },
-  });
-  return res.data.data;
+  try {
+    const res = await api.get("/api/admin/reports", {
+      params: {
+        from,
+        to,
+      },
+    });
+    return res.data.data;
+  } catch (error: any) {
+    throw new Error(error?.response?.data?.message || "Gagal mengambil ringkasan laporan");
+  }
 }
 
 export async function getSalesReportItems(
@@ -34,18 +38,22 @@ export async function getSalesReportItems(
     limit?: number;
   },
 ) {
-  const res = await api.get("/api/admin/reports/items", {
-    params: {
-      from,
-      to,
-      search: filters?.search,
-      sortBy: filters?.sortBy,
-      minQuantity: filters?.minQuantity,
-      page: filters?.page,
-      limit: filters?.limit,
-    },
-  });
-  return res.data.data;
+  try {
+    const res = await api.get("/api/admin/reports/items", {
+      params: {
+        from,
+        to,
+        search: filters?.search,
+        sortBy: filters?.sortBy,
+        minQuantity: filters?.minQuantity,
+        page: filters?.page,
+        limit: filters?.limit,
+      },
+    });
+    return res.data.data;
+  } catch (error: any) {
+    throw new Error(error?.response?.data?.message || "Gagal mengambil detail item laporan");
+  }
 }
 
 export const getSalesReport = getSalesReportSummary;

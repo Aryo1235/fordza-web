@@ -2,10 +2,29 @@
 
 ## 📋 Overview
 
-Fordza-Web menggunakan **PostgreSQL** sebagai database dengan **Prisma ORM** untuk data access layer.
+Fordza-Web menggunakan **PostgreSQL** sebagai database dengan **Prisma ORM 7.2.0** untuk data access layer.
 
 **Total Models:** 19 models  
-**Database Type:** Relational (PostgreSQL)
+**Database Type:** Relational (PostgreSQL)  
+**ORM Version:** Prisma 7.2.0 with Neon adapter (@prisma/adapter-pg)
+
+### **Prisma Configuration**
+
+**Generator:**
+```prisma
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+```
+
+**Custom Output Path:** Generated client berada di `app/generated/prisma` untuk better organization.
+
+**Neon Serverless Support:** Menggunakan `@prisma/adapter-pg` untuk connection pooling yang optimal dengan Neon database.
 
 ---
 
@@ -461,7 +480,7 @@ Item dalam transaksi (snapshot data saat dijual).
 |-------|------|----------|-------------|
 | id | String (CUID) | No | Primary key |
 | quantity | Int | No | Qty |
-| priceAtSale | Decimal(12,2) | No | Harga saat dijual |
+| basePriceAtSale | Decimal(12,2) | No | Harga saat dijual |
 | productName | String | No | Nama produk (snapshot) |
 | productCode | String | Yes | Kode produk (snapshot) |
 | discountAmount | Decimal(12,2) | No | Diskon nominal |
@@ -469,7 +488,7 @@ Item dalam transaksi (snapshot data saat dijual).
 | variantColor | String | Yes | Warna (snapshot) |
 | skuId | String | Yes | Foreign key → ProductSku |
 | skuSize | String | Yes | Ukuran (snapshot) |
-| comparisonPriceAtSale | Decimal(12,2) | Yes | Harga coret (snapshot) |
+| gimmickPriceAtSale | Decimal(12,2) | Yes | Harga coret (snapshot) |
 | promoName | String | Yes | Nama promo (snapshot) |
 | transactionId | String | No | Foreign key → Transaction |
 | productId | String | No | Foreign key → Product |

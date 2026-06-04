@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
+import { handleError } from "@/lib/error-handler";
 import { testimonialSchema } from "@/lib/zod-schemas";
 import { TestimonialService } from "@/backend/services/testimonial.service";
+import { prisma } from "@/lib/prisma";
+import { headers } from "next/headers";
 
 // GET /api/admin/testimonials — Admin: semua testimoni
 export async function GET(req: Request) {
@@ -19,10 +22,7 @@ export async function GET(req: Request) {
       meta: result.meta,
     });
   } catch (error: any) {
-    return NextResponse.json(
-      { success: false, error: error.message },
-      { status: 500 },
-    );
+    return await handleError(error);
   }
 }
 
@@ -31,11 +31,27 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    const validation = testimonialSchema.safeParse(body);
-    if (!validation.success) {
+    const validation = { data: testimonialSchema.parse(body) };
+
+    // Validasi Relasional Manual (sama seperti Products)
+    const productExists = await prisma.product.findUnique({
+      where: { id: validation.data.productId },
+      select: { id: true },
+    });
+
+    if (!productExists) {
+      const headerList = await headers();
+      const traceId = headerList.get("x-request-id") || "unknown";
+      
       return NextResponse.json(
-        { success: false, errors: validation.error.flatten().fieldErrors },
-        { status: 400 },
+        {
+          success: false,
+          message: "Data referensi tidak valid atau tidak ditemukan",
+          code: "INVALID_REFERENCE",
+          field: "productId",
+          traceId,
+        },
+        { status: 400 }
       );
     }
 
@@ -54,15 +70,6 @@ export async function POST(req: Request) {
       { status: 201 },
     );
   } catch (error: any) {
-    if (error.message.includes("Product ID tidak valid")) {
-      return NextResponse.json(
-        { success: false, error: error.message },
-        { status: 404 },
-      );
-    }
-    return NextResponse.json(
-      { success: false, error: error.message },
-      { status: 500 },
-    );
+    return await handleError(error);
   }
 }

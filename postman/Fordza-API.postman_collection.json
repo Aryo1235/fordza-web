@@ -49,8 +49,15 @@
             },
             "url": {
               "raw": "{{base_url}}/api/admin/auth/login",
-              "host": ["{{base_url}}"],
-              "path": ["api", "admin", "auth", "login"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "auth",
+                "login"
+              ]
             }
           }
         },
@@ -70,8 +77,15 @@
             },
             "url": {
               "raw": "{{base_url}}/api/admin/auth/refresh",
-              "host": ["{{base_url}}"],
-              "path": ["api", "admin", "auth", "refresh"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "auth",
+                "refresh"
+              ]
             }
           }
         },
@@ -82,8 +96,15 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/api/admin/auth/me",
-              "host": ["{{base_url}}"],
-              "path": ["api", "admin", "auth", "me"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "auth",
+                "me"
+              ]
             }
           }
         },
@@ -94,8 +115,15 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/api/admin/auth/logout",
-              "host": ["{{base_url}}"],
-              "path": ["api", "admin", "auth", "logout"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "auth",
+                "logout"
+              ]
             }
           }
         }
@@ -114,8 +142,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/api/health",
-              "host": ["{{base_url}}"],
-              "path": ["api", "health"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "health"
+              ]
             }
           }
         }
@@ -131,14 +164,38 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/api/admin/products?page=1&limit=10",
-              "host": ["{{base_url}}"],
-              "path": ["api", "admin", "products"],
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "products"
+              ],
               "query": [
-                {"key": "page", "value": "1"},
-                {"key": "limit", "value": "10"},
-                {"key": "search", "value": "", "disabled": true},
-                {"key": "gender", "value": "", "disabled": true},
-                {"key": "categoryId", "value": "", "disabled": true}
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "gender",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "categoryId",
+                  "value": "",
+                  "disabled": true
+                }
               ]
             }
           }
@@ -150,9 +207,21 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/api/admin/products/:id",
-              "host": ["{{base_url}}"],
-              "path": ["api", "admin", "products", ":id"],
-              "variable": [{"key": "id", "value": ""}]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "products",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
             }
           }
         },
@@ -164,12 +233,22 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"productCode\": \"SHOE-001\",\n  \"name\": \"Oxford Classic\",\n  \"shortDescription\": \"Sepatu formal klasik\",\n  \"productType\": \"Shoes\",\n  \"gender\": \"Man\",\n  \"isActive\": true,\n  \"categoryIds\": [],\n  \"detail\": {\n    \"description\": \"<p>Sepatu formal berkualitas tinggi</p>\",\n    \"material\": \"Kulit Asli\",\n    \"sizeTemplateId\": \"\"\n  }\n}",
-              "options": {"raw": {"language": "json"}}
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{base_url}}/api/admin/products",
-              "host": ["{{base_url}}"],
-              "path": ["api", "admin", "products"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "products"
+              ]
             }
           }
         },
@@ -181,13 +260,29 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"name\": \"Oxford Classic Updated\",\n  \"isActive\": true\n}",
-              "options": {"raw": {"language": "json"}}
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{base_url}}/api/admin/products/:id",
-              "host": ["{{base_url}}"],
-              "path": ["api", "admin", "products", ":id"],
-              "variable": [{"key": "id", "value": ""}]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "products",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
             }
           }
         },
@@ -198,9 +293,21 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/api/admin/products/:id",
-              "host": ["{{base_url}}"],
-              "path": ["api", "admin", "products", ":id"],
-              "variable": [{"key": "id", "value": ""}]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "products",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
             }
           }
         }
@@ -216,8 +323,14 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/api/admin/categories",
-              "host": ["{{base_url}}"],
-              "path": ["api", "admin", "categories"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "categories"
+              ]
             }
           }
         },
@@ -229,12 +342,22 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"name\": \"Formal\",\n  \"shortDescription\": \"Sepatu formal\",\n  \"imageUrl\": \"https://example.com/image.jpg\",\n  \"imageKey\": \"categories/image.jpg\",\n  \"isActive\": true,\n  \"order\": 1\n}",
-              "options": {"raw": {"language": "json"}}
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{base_url}}/api/admin/categories",
-              "host": ["{{base_url}}"],
-              "path": ["api", "admin", "categories"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "categories"
+              ]
             }
           }
         }
@@ -250,8 +373,14 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/api/admin/banners",
-              "host": ["{{base_url}}"],
-              "path": ["api", "admin", "banners"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "banners"
+              ]
             }
           }
         },
@@ -263,12 +392,22 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"title\": \"Summer Sale\",\n  \"imageUrl\": \"https://example.com/banner.jpg\",\n  \"imageKey\": \"banners/banner.jpg\",\n  \"linkUrl\": \"https://example.com/sale\",\n  \"isActive\": true\n}",
-              "options": {"raw": {"language": "json"}}
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{base_url}}/api/admin/banners",
-              "host": ["{{base_url}}"],
-              "path": ["api", "admin", "banners"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "banners"
+              ]
             }
           }
         }
@@ -284,13 +423,24 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"startingCash\": 1000000\n}",
-              "options": {"raw": {"language": "json"}}
+              "raw": "{\n  \"startingCash\": 500000,\n  \"notes\": \"Modal awal dari brankas\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{base_url}}/api/admin/shifts/open",
-              "host": ["{{base_url}}"],
-              "path": ["api", "admin", "shifts", "open"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "shifts",
+                "open"
+              ]
             }
           }
         },
@@ -301,8 +451,15 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/api/admin/shifts/current",
-              "host": ["{{base_url}}"],
-              "path": ["api", "admin", "shifts", "current"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "shifts",
+                "current"
+              ]
             }
           }
         },
@@ -313,9 +470,20 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/api/kasir/products?search=",
-              "host": ["{{base_url}}"],
-              "path": ["api", "kasir", "products"],
-              "query": [{"key": "search", "value": ""}]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "kasir",
+                "products"
+              ],
+              "query": [
+                {
+                  "key": "search",
+                  "value": ""
+                }
+              ]
             }
           }
         },
@@ -326,13 +494,23 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"items\": [\n    {\n      \"productId\": \"\",\n      \"variantId\": \"\",\n      \"skuId\": \"\",\n      \"quantity\": 1,\n      \"priceAtSale\": 850000\n    }\n  ],\n  \"totalPrice\": 850000,\n  \"amountPaid\": 1000000,\n  \"change\": 150000,\n  \"customerName\": \"John Doe\",\n  \"customerPhone\": \"08123456789\"\n}",
-              "options": {"raw": {"language": "json"}}
+              "raw": "{\n  \"items\": [\n    {\n      \"productId\": \"{{product_id}}\",\n      \"variantId\": \"{{variant_id}}\",\n      \"skuId\": \"{{sku_id}}\",\n      \"quantity\": 1\n    }\n  ],\n  \"amountPaid\": 1000000,\n  \"customerName\": \"Budi Santoso\",\n  \"customerPhone\": \"081234567890\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{base_url}}/api/kasir/transactions",
-              "host": ["{{base_url}}"],
-              "path": ["api", "kasir", "transactions"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "kasir",
+                "transactions"
+              ]
             }
           }
         },
@@ -344,12 +522,23 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"pin\": \"1234\"\n}",
-              "options": {"raw": {"language": "json"}}
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{base_url}}/api/kasir/auth/verify-pin",
-              "host": ["{{base_url}}"],
-              "path": ["api", "kasir", "auth", "verify-pin"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "kasir",
+                "auth",
+                "verify-pin"
+              ]
             }
           }
         },
@@ -361,12 +550,23 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"actualEndingCash\": 2000000,\n  \"notes\": \"Shift selesai\"\n}",
-              "options": {"raw": {"language": "json"}}
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{base_url}}/api/admin/shifts/close",
-              "host": ["{{base_url}}"],
-              "path": ["api", "admin", "shifts", "close"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "shifts",
+                "close"
+              ]
             }
           }
         }
@@ -378,16 +578,30 @@
         {
           "name": "List Products (Public)",
           "request": {
-            "auth": {"type": "noauth"},
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
             "header": [],
             "url": {
               "raw": "{{base_url}}/api/public/products?page=1&limit=12",
-              "host": ["{{base_url}}"],
-              "path": ["api", "public", "products"],
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "public",
+                "products"
+              ],
               "query": [
-                {"key": "page", "value": "1"},
-                {"key": "limit", "value": "12"}
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "12"
+                }
               ]
             }
           }
@@ -395,27 +609,49 @@
         {
           "name": "Get Product by ID (Public)",
           "request": {
-            "auth": {"type": "noauth"},
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
             "header": [],
             "url": {
               "raw": "{{base_url}}/api/public/products/:id",
-              "host": ["{{base_url}}"],
-              "path": ["api", "public", "products", ":id"],
-              "variable": [{"key": "id", "value": ""}]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "public",
+                "products",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
             }
           }
         },
         {
           "name": "List Categories (Public)",
           "request": {
-            "auth": {"type": "noauth"},
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
             "header": [],
             "url": {
               "raw": "{{base_url}}/api/public/categories",
-              "host": ["{{base_url}}"],
-              "path": ["api", "public", "categories"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "public",
+                "categories"
+              ]
             }
           }
         }

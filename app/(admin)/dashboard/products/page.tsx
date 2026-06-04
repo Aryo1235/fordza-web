@@ -99,7 +99,7 @@ export default function ProductsPage() {
     {
       header: "Varian & Stok",
       cell: (item: any) => {
-        const variantCount = item.variants?.length || 0;
+        const variantCount = item.variantCount ?? (item.variants?.length || 0);
         return (
           <div className="flex flex-col gap-1">
             <span className="text-xs font-semibold text-[#3C3025]">

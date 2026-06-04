@@ -48,7 +48,7 @@ export default function POSPage() {
   const [invoiceData, setInvoiceData] = useState<any>(null);
   const [showCartDrawer, setShowCartDrawer] = useState(false);
   const [showPinModal, setShowPinModal] = useState(false);
-  const [isCartVisible, setIsCartVisible] = useState(true); 
+  const [isCartVisible, setIsCartVisible] = useState(true);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const amountPaidInputRef = useRef<HTMLInputElement>(null);
 
@@ -67,6 +67,16 @@ export default function POSPage() {
   const products = useMemo(() => {
     return productsData?.pages.flatMap((page: any) => page.data || []).filter(Boolean) || [];
   }, [productsData]);
+
+  // Dynamic grid layout class based on sidebar collapse and cart visibility
+  const gridClass = cn(
+    "grid gap-2 md:gap-2.5 lg:gap-3 transition-all duration-300",
+    isSidebarCollapsed && !isCartVisible
+      ? "grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4" // Both closed
+      : isSidebarCollapsed || !isCartVisible
+        ? "grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3" // One closed
+        : "grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2" // Both open
+  );
 
   // Cart helpers - Mendukung pengecekan kuantitas per SKU atau per Produk
   const getQuantity = (productId: string, skuId?: string) => {
@@ -91,22 +101,32 @@ export default function POSPage() {
     // Tambahkan data promo
     promoName: string | null = null,
     additionalDiscount: number = 0,
-    comparisonPrice: number | null = null
+    comparisonPrice: number | null = null,
+    promoMinPurchase: number | null = null, // ✅ Tambah parameter
+    promoDiscountPercent: number | null = null // ✅ Tambah parameter persentase
   ) => {
+    console.log('🛒 [addToCart] Called with:', {
+      productName: product.name,
+      promoName,
+      additionalDiscount,
+      promoMinPurchase,
+      promoDiscountPercent,
+      hasPromoMinPurchase: promoMinPurchase !== null && promoMinPurchase !== undefined,
+    });
     // Kunci unik: productId + skuId (jika ada varian)
     const cartKey = skuId ? `${product.id}__${skuId}` : product.id;
     setJustAddedProductId(cartKey);
 
     const effectivePrice = priceAtSku ?? product.price;
     const effectiveStock = stockAtSku ?? product.stock;
-    
+
     // Nama yang ditampilkan di keranjang (detail)
-    const displayName = skuSize 
-      ? `${product.name} - ${variantColor} / ${skuSize}` 
+    const displayName = skuSize
+      ? `${product.name} - ${variantColor} / ${skuSize}`
       : product.name;
 
     setCart((prev: CartItem[]) => {
-      const existingIndex = prev.findIndex((c) => 
+      const existingIndex = prev.findIndex((c) =>
         skuId ? c.skuId === skuId : (c.id === product.id && !c.skuId)
       );
 
@@ -132,7 +152,9 @@ export default function POSPage() {
         quantity: 1,
         discountAmount: additionalDiscount, // Otomatis dari Admin
         promoName: promoName,               // Nama Promo Admin
-        comparisonPriceAtSale: comparisonPrice, // Harga Gimmick (Coretan asli)
+        promoMinPurchase: promoMinPurchase, // ✅ Min purchase promo
+        promoDiscountPercent: promoDiscountPercent, // ✅ Simpan persentase
+        gimmickPriceAtSale: comparisonPrice, // Harga Gimmick (Coretan asli)
         variantId,
         variantColor,
         skuId,
@@ -145,7 +167,7 @@ export default function POSPage() {
 
   const removeFromCart = (productId: string, skuId?: string) => {
     setCart((prev) => {
-      const existingIndex = prev.findIndex((c) => 
+      const existingIndex = prev.findIndex((c) =>
         skuId ? c.skuId === skuId : (c.id === productId && !c.skuId)
       );
       if (existingIndex === -1) return prev;
@@ -162,7 +184,7 @@ export default function POSPage() {
   };
 
   const deleteFromCart = (productId: string, skuId?: string) => {
-    setCart((prev) => prev.filter((c) => 
+    setCart((prev) => prev.filter((c) =>
       skuId ? c.skuId !== skuId : (c.id !== productId || !!c.skuId)
     ));
   };
@@ -178,14 +200,90 @@ export default function POSPage() {
     return () => window.clearTimeout(timeoutId);
   }, [justAddedProductId]);
 
-  const totalPrice = cart.reduce(
-    (s: number, c: CartItem) => s + (c.price * c.quantity - c.discountAmount),
-    0,
-  );
-  const totalDiscount = cart.reduce(
-    (s: number, c: CartItem) => s + c.discountAmount,
-    0,
-  );
+  // ✅ Hitung subtotal seluruh keranjang sebelum diskon dengan konversi tipe yang aman
+  const cartSubtotal = useMemo(() => {
+    return cart.reduce((sum: number, c: CartItem) => sum + Number(c.price ?? 0) * c.quantity, 0);
+  }, [cart]);
+
+  // ✅ Hitung detail item keranjang dengan diskon yang sudah disaring minPurchase
+  const processedCart = useMemo(() => {
+    return cart.map((c: CartItem) => {
+      const itemPrice = Number(c.price ?? 0);
+      const discountAmt = Number(c.discountAmount ?? 0);
+      const minP = Number(c.promoMinPurchase ?? 0);
+
+      let activeDiscount = discountAmt;
+      if (activeDiscount > 0 && minP > 0) {
+        if (cartSubtotal < minP) {
+          activeDiscount = 0;
+        }
+      }
+
+      // Hitung lineDiscount (total diskon untuk item ini):
+      // Jika PERCENTAGE promo, atau non-conditional FIXED promo -> dikali quantity.
+      // Jika conditional FIXED promo (minP > 0 dan promoDiscountPercent tidak ada/0) -> flat (tidak dikali quantity).
+      const isPercentage = Number(c.promoDiscountPercent ?? 0) > 0;
+      const isConditionalFixed = minP > 0 && !isPercentage;
+
+      let lineDiscount = 0;
+      let lineDiscountAmt = 0;
+
+      if (discountAmt > 0) {
+        if (isConditionalFixed) {
+          lineDiscountAmt = discountAmt;
+          lineDiscount = activeDiscount;
+        } else {
+          lineDiscountAmt = discountAmt * c.quantity;
+          lineDiscount = activeDiscount * c.quantity;
+        }
+      }
+
+      return {
+        ...c,
+        itemPrice,
+        discountAmt,
+        minP,
+        activeDiscount,
+        lineDiscount,
+        lineDiscountAmt,
+        isConditionalFixed,
+        isPercentage,
+      };
+    });
+  }, [cart, cartSubtotal]);
+
+  // ✅ Hitung diskon item langsung (non-conditional fixed + percentage)
+  const itemDiscountTotal = useMemo(() => {
+    return processedCart.reduce(
+      (s: number, c) => s + (c.isConditionalFixed ? 0 : c.lineDiscount),
+      0,
+    );
+  }, [processedCart]);
+
+  // ✅ Hitung diskon promo bersyarat (conditional fixed)
+  const promoDiscountTotal = useMemo(() => {
+    return processedCart.reduce(
+      (s: number, c) => s + (c.isConditionalFixed ? c.lineDiscount : 0),
+      0,
+    );
+  }, [processedCart]);
+
+  // ✅ Hitung total harga final (subtotal - lineDiscount)
+  const totalPrice = useMemo(() => {
+    return processedCart.reduce(
+      (s: number, c) => s + (c.itemPrice * c.quantity - c.lineDiscount),
+      0,
+    );
+  }, [processedCart]);
+
+  // ✅ Hitung total diskon yang aktif
+  const totalDiscount = useMemo(() => {
+    return processedCart.reduce(
+      (s: number, c) => s + c.lineDiscount,
+      0,
+    );
+  }, [processedCart]);
+
   const totalItems = cart.reduce((s: number, c: CartItem) => s + c.quantity, 0);
   const change = amountPaid - totalPrice;
   const remainingPayment = Math.max(totalPrice - amountPaid, 0);
@@ -257,12 +355,12 @@ export default function POSPage() {
     setIsSubmitting(true);
     checkoutMutation.mutate(
       {
-        items: cart.map((c: CartItem) => ({
+        items: processedCart.map((c) => ({
           productId: c.id,
           quantity: c.quantity,
-          discountAmount: c.discountAmount,
-          promoName: c.promoName,
-          comparisonPriceAtSale: c.comparisonPriceAtSale,
+          discountAmount: c.lineDiscount,
+          promoName: c.lineDiscount > 0 ? c.promoName : null,
+          gimmickPriceAtSale: c.gimmickPriceAtSale,
           variantId: c.variantId ?? undefined,
           skuId: c.skuId ?? undefined,
         })),
@@ -338,7 +436,7 @@ export default function POSPage() {
           )}
         >
           {loading ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5 md:gap-3">
+            <div className={gridClass}>
               {Array.from({ length: 8 }).map((_, i) => (
                 <div
                   key={i}
@@ -353,20 +451,7 @@ export default function POSPage() {
             </div>
           ) : (
             <>
-              <div
-                className={cn(
-                  "grid gap-2 md:gap-2.5 lg:gap-3 transition-all duration-300",
-                  "grid-cols-2",
-                  isSidebarCollapsed ? "md:grid-cols-4" : "md:grid-cols-3",
-                  !isCartVisible
-                    ? isSidebarCollapsed
-                      ? "lg:grid-cols-5 xl:grid-cols-6"
-                      : "lg:grid-cols-4 xl:grid-cols-5"
-                    : isSidebarCollapsed
-                      ? "lg:grid-cols-4 xl:grid-cols-5"
-                      : "lg:grid-cols-3 xl:grid-cols-4",
-                )}
-              >
+              <div className={gridClass}>
                 {products.map((product: Product) => (
                   <ProductCard
                     key={product.id}
@@ -435,92 +520,117 @@ export default function POSPage() {
               </div>
             ) : (
               <div className="space-y-2">
-                {cart.map((item) => {
-                   const itemKey = item.skuId ? `${item.id}__${item.skuId}` : item.id;
-                   return (
-                   <div
-                    key={itemKey}
-                    className={cn(
-                      "bg-stone-50 rounded-lg p-3 border border-stone-100 space-y-1.5 shadow-sm transition-colors",
-                      justAddedProductId === itemKey && "bg-amber-50/80 border-amber-200",
-                    )}
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[11px] font-bold text-stone-800 leading-tight truncate" title={item.name}>
-                          {item.name}
-                        </p>
-                        {item.variantCode && (
-                          <div className="flex items-center gap-1 mt-0.5 font-mono">
-                            <span className="text-[8px] bg-white px-1 border border-stone-200 rounded text-stone-500 font-bold uppercase">{item.variantCode}</span>
-                            <span className="text-[9px] text-stone-400 uppercase font-medium">{item.variantColor} / {item.skuSize}</span>
-                          </div>
-                        )}
-                      </div>
-                      <button
-                        onClick={() => deleteFromCart(item.id, item.skuId || undefined)}
-                        className="text-stone-300 hover:text-red-500 transition-colors p-1"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-
-                    <div className="flex items-center justify-between gap-2 pt-1">
-                      <div className="flex items-center gap-1.5">
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => removeFromCart(item.id, item.skuId || undefined)}
-                          className="h-8 w-8 bg-white border-stone-200"
-                        >
-                          <Minus className="w-3.5 h-3.5 text-stone-600" />
-                        </Button>
-                        <span className="text-xs font-black w-5 text-center text-stone-700">
-                          {item.quantity}
-                        </span>
-                        <Button
-                          size="icon"
-                          onClick={() =>
-                            addToCart(
-                              { ...item, hasVariants: !!item.skuId, variants: [] },
-                              item.variantId,
-                              item.variantColor,
-                              item.skuId,
-                              item.skuSize,
-                              item.price,
-                              item.stock,
-                              item.variantCode
-                            )
-                          }
-                          disabled={item.quantity >= item.stock}
-                          className="h-8 w-8 bg-[#3C3025] hover:bg-[#5a4a38] text-white"
-                        >
-                          <Plus className="w-3.5 h-3.5" />
-                        </Button>
-                      </div>
-
-                      <div className="text-right">
-                        <p className="text-[11px] font-black text-[#3C3025]">
-                          Rp {(item.price * item.quantity).toLocaleString("id-ID")}
-                        </p>
-                        {item.discountAmount > 0 && (
-                          <p className="text-[10px] text-red-500 font-bold">
-                            - Rp {item.discountAmount.toLocaleString("id-ID")}
+                {processedCart.map((item) => {
+                  const itemKey = item.skuId ? `${item.id}__${item.skuId}` : item.id;
+                  return (
+                    <div
+                      key={itemKey}
+                      className={cn(
+                        "bg-stone-50 rounded-lg p-3 border border-stone-100 space-y-1.5 shadow-sm transition-colors",
+                        justAddedProductId === itemKey && "bg-amber-50/80 border-amber-200",
+                      )}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[11px] font-bold text-stone-800 leading-tight truncate" title={item.name}>
+                            {item.name}
                           </p>
-                        )}
+                          {item.variantCode && (
+                            <div className="flex items-center gap-1 mt-0.5 font-mono">
+                              <span className="text-[8px] bg-white px-1 border border-stone-200 rounded text-stone-500 font-bold uppercase">{item.variantCode}</span>
+                              <span className="text-[9px] text-stone-400 uppercase font-medium">{item.variantColor} / {item.skuSize}</span>
+                            </div>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => deleteFromCart(item.id, item.skuId || undefined)}
+                          className="text-stone-300 hover:text-red-500 transition-colors p-1"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
                       </div>
-                    </div>
 
-                    {item.discountAmount > 0 && (
-                      <div className="flex items-center gap-2 pt-2 border-t border-stone-200/60 mt-1">
-                        <Tag className="h-3 w-3 text-red-500" />
-                        <span className="text-[10px] font-bold text-red-500 uppercase tracking-tight">
-                          {item.promoName || "Diskon Admin"} (-Rp {item.discountAmount.toLocaleString("id-ID")})
-                        </span>
+                      <div className="flex items-center justify-between gap-2 pt-1">
+                        <div className="flex items-center gap-1.5">
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => removeFromCart(item.id, item.skuId || undefined)}
+                            className="h-8 w-8 bg-white border-stone-200"
+                          >
+                            <Minus className="w-3.5 h-3.5 text-stone-600" />
+                          </Button>
+                          <span className="text-xs font-black w-5 text-center text-stone-700">
+                            {item.quantity}
+                          </span>
+                          <Button
+                            size="icon"
+                            onClick={() =>
+                              addToCart(
+                                { ...item, hasVariants: !!item.skuId, variants: [] },
+                                item.variantId,
+                                item.variantColor,
+                                item.skuId,
+                                item.skuSize,
+                                item.price,
+                                item.stock,
+                                item.variantCode,
+                                item.promoName,
+                                item.discountAmount,
+                                item.gimmickPriceAtSale,
+                                item.promoMinPurchase,
+                                item.promoDiscountPercent
+                              )
+                            }
+                            disabled={item.quantity >= item.stock}
+                            className="h-8 w-8 bg-[#3C3025] hover:bg-[#5a4a38] text-white"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
+
+                        <div className="text-right">
+                          <p className="text-[11px] font-black text-[#3C3025]">
+                            Rp {(item.itemPrice * item.quantity).toLocaleString("id-ID")}
+                          </p>
+                          {!item.isConditionalFixed && item.lineDiscount > 0 ? (
+                            <p className="text-[10px] text-red-500 font-bold">
+                              - Rp {item.lineDiscount.toLocaleString("id-ID")}
+                            </p>
+                          ) : !item.isConditionalFixed && item.lineDiscountAmt > 0 ? (
+                            <p className="text-[10px] text-stone-400 line-through font-medium">
+                              - Rp {item.lineDiscountAmt.toLocaleString("id-ID")}
+                            </p>
+                          ) : null}
+                        </div>
                       </div>
-                    )}
-                  </div>
-                )})}
+
+                      {item.discountAmt > 0 && (
+                        <div className="flex items-center gap-2 pt-2 border-t border-stone-200/60 mt-1">
+                          <Tag className={`h-3 w-3 ${item.lineDiscount > 0 ? "text-red-500" : "text-stone-400"}`} />
+                          <span className={`text-[10px] font-bold uppercase tracking-tight ${item.lineDiscount > 0 ? "text-red-500" : "text-stone-400"
+                            }`}>
+                            {item.promoName || "Diskon Admin"}{" - "}
+                            {item.isPercentage
+                              ? `Diskon ${Math.round(Number(item.promoDiscountPercent ?? 0))}% `
+                              : item.isConditionalFixed
+                                ? `Potongan Flat Rp ${item.discountAmt.toLocaleString("id-ID")} `
+                                : `Potongan Rp ${item.discountAmt.toLocaleString("id-ID")} `
+                            }
+                            {item.isConditionalFixed
+                              ? item.lineDiscount > 0
+                                ? `(Aktif di Total)`
+                                : `(Min. Rp ${item.minP.toLocaleString("id-ID")} - Belum Terpenuhi)`
+                              : item.lineDiscount > 0
+                                ? `(-Rp ${item.lineDiscount.toLocaleString("id-ID")})`
+                                : `(Min. Rp ${item.minP.toLocaleString("id-ID")} - Belum Terpenuhi)`
+                            }
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
               </div>
             )}
           </div>
@@ -553,6 +663,25 @@ export default function POSPage() {
                     />
                   </div>
                 </div>
+              </div>
+
+              <div className="space-y-1.5 pt-2 border-t border-stone-200 text-xs">
+                <div className="flex justify-between text-stone-500 font-medium">
+                  <span>Subtotal</span>
+                  <span>Rp {cartSubtotal.toLocaleString("id-ID")}</span>
+                </div>
+                {itemDiscountTotal > 0 && (
+                  <div className="flex justify-between text-stone-400 font-medium">
+                    <span>Diskon Produk</span>
+                    <span>- Rp {itemDiscountTotal.toLocaleString("id-ID")}</span>
+                  </div>
+                )}
+                {promoDiscountTotal > 0 && (
+                  <div className="flex justify-between text-red-500 font-semibold bg-red-50/50 px-1.5 py-1 rounded">
+                    <span>Promo Bersyarat</span>
+                    <span>- Rp {promoDiscountTotal.toLocaleString("id-ID")}</span>
+                  </div>
+                )}
               </div>
 
               <div className="flex justify-between font-bold text-sm pt-2 border-t border-stone-200">
@@ -636,28 +765,39 @@ export default function POSPage() {
           onAdd={(id, skuId) => {
             const p = products.find((x: Product) => x.id === id);
             if (!p) return;
-            
+
             if (skuId) {
               const variant = p.variants.find((v: ProductVariantForKasir) => v.skus.some((s: any) => s.id === skuId));
               const sku = variant?.skus.find((s: any) => s.id === skuId);
               if (variant && sku) {
-                // LOGIKA CERDAS: Gunakan finalPrice dan kalkulasi ulang diskon
+                // LOGIKA CERDAS: Gunakan diskon potensial dari promo
                 const originalPrice = sku.priceOverride ?? variant.basePrice;
-                const finalPrice = (sku as any).finalPrice ?? originalPrice;
-                const discountAmount = originalPrice - finalPrice;
+                const promoPercent = variant.promoDiscountPercent ?? 0;
+                const discountAmount = promoPercent > 0
+                  ? (originalPrice * promoPercent) / 100
+                  : (variant.additionalDiscount ?? 0);
+
+                console.log('🔍 [POS] Before addToCart:', {
+                  variantColor: variant.color,
+                  promoName: variant.promoName,
+                  promoMinPurchase: variant.promoMinPurchase,
+                  hasPromoMinPurchase: 'promoMinPurchase' in variant,
+                });
 
                 addToCart(
-                  p, 
-                  variant.id, 
-                  variant.color, 
-                  sku.id, 
-                  sku.size, 
+                  p,
+                  variant.id,
+                  variant.color,
+                  sku.id,
+                  sku.size,
                   originalPrice, // Pakai harga asli agar diskon terbaca
-                  sku.stock, 
+                  sku.stock,
                   variant.variantCode,
                   variant.promoName,
                   discountAmount,
-                  variant.comparisonPrice || originalPrice
+                  variant.comparisonPrice || originalPrice,
+                  variant.promoMinPurchase || null, // ✅ Pass promoMinPurchase
+                  variant.promoDiscountPercent || null // ✅ Pass promoDiscountPercent
                 );
               }
             } else {

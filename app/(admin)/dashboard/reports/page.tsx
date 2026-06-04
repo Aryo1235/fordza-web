@@ -464,8 +464,8 @@ export default function ReportsPage() {
                   <TableHead>Varian</TableHead>
                   <TableHead className="text-right">Qty Terjual</TableHead>
                   <TableHead className="text-right">Harga Satuan</TableHead>
+                  <TableHead className="text-right">Total Diskon</TableHead>
                   <TableHead className="text-right">Revenue</TableHead>
-                  <TableHead className="text-right">Kontribusi</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody className="h-30 overflow-y-auto">
@@ -489,14 +489,6 @@ export default function ReportsPage() {
                   </TableRow>
                 ) : (
                   paginatedSoldProducts.map((product: any, index: number) => {
-                    const totalRevenue = Number(
-                      summaryData?.summary.totalRevenue || 0,
-                    );
-                    const contribution =
-                      totalRevenue > 0
-                        ? (Number(product.revenue || 0) / totalRevenue) * 100
-                        : 0;
-
                     return (
                       <TableRow key={`${product.code}-${index}`}>
                         <TableCell className="font-semibold text-stone-500">
@@ -519,16 +511,16 @@ export default function ReportsPage() {
                         </TableCell>
                         <TableCell className="text-right text-stone-600">
                           Rp{" "}
-                          {Number(product.priceAtSale || 0).toLocaleString(
+                          {Number(product.basePriceAtSale || 0).toLocaleString(
                             "id-ID",
                           )}
+                        </TableCell>
+                        <TableCell className="text-right text-red-600 font-medium">
+                          {Number(product.discount || 0) > 0 ? `-Rp ${Number(product.discount).toLocaleString("id-ID")}` : "-"}
                         </TableCell>
                         <TableCell className="text-right font-bold text-stone-900">
                           Rp{" "}
                           {Number(product.revenue || 0).toLocaleString("id-ID")}
-                        </TableCell>
-                        <TableCell className="text-right text-stone-500">
-                          {contribution.toFixed(1)}%
                         </TableCell>
                       </TableRow>
                     );

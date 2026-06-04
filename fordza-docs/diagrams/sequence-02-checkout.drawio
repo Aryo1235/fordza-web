@@ -1,0 +1,209 @@
+<mxfile host="app.diagrams.net" agent="5.0">
+  <diagram name="Sequence Diagram - Checkout" id="seq-checkout">
+    <mxGraphModel dx="405" dy="211" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="1000" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1" value="Sequence Diagram - Proses Transaksi/Checkout (Kasir)" vertex="1">
+          <mxGeometry height="30" width="500" x="300" y="20" as="geometry" />
+        </mxCell>
+        <mxCell id="actor" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="Kasir" vertex="1">
+          <mxGeometry height="80" width="40" x="60" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="ui" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="POS Page" vertex="1">
+          <mxGeometry height="60" width="100" x="200" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="api" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" value="API Route" vertex="1">
+          <mxGeometry height="60" width="100" x="400" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="service" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="Transaction&#xa;Service" vertex="1">
+          <mxGeometry height="60" width="100" x="600" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="db" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#f8cecc;strokeColor=#b85450;" value="Database" vertex="1">
+          <mxGeometry height="80" width="80" x="800" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="s3" parent="1" style="ellipse;shape=cloud;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" value="AWS S3" vertex="1">
+          <mxGeometry height="60" width="100" x="980" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="lifeline1" edge="1" parent="1" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="80" y="180" as="sourcePoint" />
+            <mxPoint x="80" y="920" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="lifeline2" edge="1" parent="1" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="250" y="150" as="sourcePoint" />
+            <mxPoint x="250" y="920" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="lifeline3" edge="1" parent="1" source="api" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="450" y="180" as="sourcePoint" />
+            <mxPoint x="450" y="920" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="lifeline4" edge="1" parent="1" source="service" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="650" y="180" as="sourcePoint" />
+            <mxPoint x="650" y="920" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="lifeline5" edge="1" parent="1" source="db" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;exitX=0.5;exitY=1;exitDx=0;exitDy=0;exitPerimeter=0;" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="840" y="180" as="sourcePoint" />
+            <mxPoint x="840" y="920" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="lifeline6" edge="1" parent="1" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="1030" y="180" as="sourcePoint" />
+            <mxPoint x="1030" y="920" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="msg1" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;" value="1: Pilih produk, varian, ukuran">
+          <mxGeometry relative="1" x="-0.0588" y="10" as="geometry">
+            <mxPoint as="offset" />
+            <mxPoint x="80" y="200" as="sourcePoint" />
+            <mxPoint x="250" y="200" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="msg2" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;" value="2: Tambah ke cart">
+          <mxGeometry relative="1" x="-0.2" y="10" as="geometry">
+            <mxPoint as="offset" />
+            <mxPoint x="80" y="240" as="sourcePoint" />
+            <mxPoint x="250" y="240" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="msg3" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;" value="3: Update cart state">
+          <mxGeometry relative="1" x="-0.2" y="10" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="320" y="280" />
+              <mxPoint x="320" y="300" />
+            </Array>
+            <mxPoint x="250" y="280" as="sourcePoint" />
+            <mxPoint x="250" y="300" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="msg4" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;" value="4: Input data customer (optional)">
+          <mxGeometry relative="1" x="-0.0588" y="10" as="geometry">
+            <mxPoint as="offset" />
+            <mxPoint x="80" y="340" as="sourcePoint" />
+            <mxPoint x="250" y="340" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="msg5" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;" value="5: Input uang diterima">
+          <mxGeometry relative="1" x="-0.2" y="10" as="geometry">
+            <mxPoint as="offset" />
+            <mxPoint x="80" y="380" as="sourcePoint" />
+            <mxPoint x="250" y="380" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="msg6" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;" value="6: Klik Checkout">
+          <mxGeometry relative="1" x="-0.2" y="10" as="geometry">
+            <mxPoint as="offset" />
+            <mxPoint x="80" y="420" as="sourcePoint" />
+            <mxPoint x="250" y="420" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="msg7" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;" value="7: POST /api/kasir/transactions">
+          <mxGeometry relative="1" x="-0.1" y="10" as="geometry">
+            <mxPoint as="offset" />
+            <mxPoint x="250" y="460" as="sourcePoint" />
+            <mxPoint x="450" y="460" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="msg8" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;" value="8: Validate input">
+          <mxGeometry relative="1" x="-0.2" y="10" as="geometry">
+            <mxPoint as="offset" />
+            <mxPoint x="450" y="500" as="sourcePoint" />
+            <mxPoint x="650" y="500" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="msg9" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;" value="9: Begin transaction">
+          <mxGeometry relative="1" x="-0.2" y="10" as="geometry">
+            <mxPoint as="offset" />
+            <mxPoint x="650" y="540" as="sourcePoint" />
+            <mxPoint x="840" y="540" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="msg10" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;" value="10: Create transaction record">
+          <mxGeometry relative="1" x="-0.2" y="10" as="geometry">
+            <mxPoint as="offset" />
+            <mxPoint x="650" y="580" as="sourcePoint" />
+            <mxPoint x="840" y="580" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="msg11" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;" value="11: Create transaction items">
+          <mxGeometry relative="1" x="-0.2" y="10" as="geometry">
+            <mxPoint as="offset" />
+            <mxPoint x="650" y="620" as="sourcePoint" />
+            <mxPoint x="840" y="620" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="msg12" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;" value="12: Decrement SKU stock">
+          <mxGeometry relative="1" x="-0.2" y="10" as="geometry">
+            <mxPoint as="offset" />
+            <mxPoint x="650" y="660" as="sourcePoint" />
+            <mxPoint x="840" y="660" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="msg13" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;" value="13: Create stock logs">
+          <mxGeometry relative="1" x="-0.2" y="10" as="geometry">
+            <mxPoint as="offset" />
+            <mxPoint x="650" y="700" as="sourcePoint" />
+            <mxPoint x="840" y="700" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="msg14" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;" value="14: Update sales summary">
+          <mxGeometry relative="1" x="-0.2" y="10" as="geometry">
+            <mxPoint as="offset" />
+            <mxPoint x="650" y="740" as="sourcePoint" />
+            <mxPoint x="840" y="740" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="msg15" edge="1" parent="1" style="endArrow=open;endFill=0;html=1;dashed=1;" value="15: Commit transaction">
+          <mxGeometry relative="1" x="-0.2" y="10" as="geometry">
+            <mxPoint as="offset" />
+            <mxPoint x="840" y="780" as="sourcePoint" />
+            <mxPoint x="650" y="780" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="msg16" edge="1" parent="1" style="endArrow=open;endFill=0;html=1;dashed=1;" value="16: Return transaction data">
+          <mxGeometry relative="1" x="-0.2" y="10" as="geometry">
+            <mxPoint as="offset" />
+            <mxPoint x="650" y="820" as="sourcePoint" />
+            <mxPoint x="450" y="820" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="msg17" edge="1" parent="1" style="endArrow=open;endFill=0;html=1;dashed=1;" value="17: Show invoice modal">
+          <mxGeometry relative="1" x="-0.2" y="10" as="geometry">
+            <mxPoint as="offset" />
+            <mxPoint x="450" y="860" as="sourcePoint" />
+            <mxPoint x="250" y="860" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="msg18" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;" value="18: Print invoice">
+          <mxGeometry relative="1" x="-0.2" y="10" as="geometry">
+            <mxPoint as="offset" />
+            <mxPoint x="80" y="900" as="sourcePoint" />
+            <mxPoint x="250" y="900" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="act1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="" vertex="1">
+          <mxGeometry height="720" width="10" x="245" y="190" as="geometry" />
+        </mxCell>
+        <mxCell id="act2" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" value="" vertex="1">
+          <mxGeometry height="420" width="10" x="445" y="450" as="geometry" />
+        </mxCell>
+        <mxCell id="act3" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="" vertex="1">
+          <mxGeometry height="340" width="10" x="645" y="490" as="geometry" />
+        </mxCell>
+        <mxCell id="note1" parent="1" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;fillColor=#fff2cc;strokeColor=#d6b656;size=15;" value="Note: Semua operasi DB&#xa;dalam 1 transaction&#xa;(atomic operation)" vertex="1">
+          <mxGeometry height="80" width="150" x="900" y="540" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

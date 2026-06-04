@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { CategoryService } from "@/backend/services/category.service";
+import { handleError } from "@/lib/error-handler";
 
 // GET /api/public/categories — Customer: lihat kategori aktif
 export async function GET(req: Request) {
@@ -15,9 +16,6 @@ export async function GET(req: Request) {
       { status: 200 },
     );
   } catch (error: any) {
-    return NextResponse.json(
-      { success: false, message: error.message },
-      { status: 500 },
-    );
+    return await handleError(error);
   }
 }

@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { AppError } from "@/lib/error-handler";
 
 export const CategoryRepository = {
   async getAll(page: number = 1, limit: number = 20) {
@@ -41,14 +42,14 @@ export const CategoryRepository = {
     const orderNum = parseInt(data.order) || 0;
 
     if (orderNum <= 0) {
-      throw new Error("Urutan kategori harus lebih besar dari 0");
+      throw new AppError("Urutan kategori harus lebih besar dari 0", 400, "VALIDATION_ERROR", { field: "order" });
     }
 
     const existingOrder = await prisma.category.findFirst({
       where: { order: orderNum, isActive: true, deletedAt: null },
     });
     if (existingOrder) {
-      throw new Error(`Urutan ${orderNum} sudah digunakan oleh kategori '${existingOrder.name}'. Silakan pilih urutan lain.`);
+      throw new AppError(`Urutan ${orderNum} sudah digunakan oleh kategori '${existingOrder.name}'. Silakan pilih urutan lain.`, 409, "DUPLICATE_ENTRY", { field: "order" });
     }
 
     return await prisma.category.create({
@@ -58,6 +59,8 @@ export const CategoryRepository = {
         imageUrl: data.imageUrl,
         imageKey: data.imageKey,
         order: parseInt(data.order) || 0,
+        createdById: data.createdById,
+        updatedById: data.updatedById,
       },
     });
   },
@@ -113,12 +116,13 @@ export const CategoryRepository = {
     if (data.imageUrl !== undefined) updateData.imageUrl = data.imageUrl;
     if (data.imageKey !== undefined) updateData.imageKey = data.imageKey;
     if (data.isActive !== undefined) updateData.isActive = data.isActive;
+    if (data.updatedById !== undefined) updateData.updatedById = data.updatedById;
 
     if (data.order !== undefined) {
       const orderNum = parseInt(data.order) || 0;
       
       if (orderNum <= 0) {
-        throw new Error("Urutan kategori harus lebih besar dari 0");
+        throw new AppError("Urutan kategori harus lebih besar dari 0", 400, "VALIDATION_ERROR", { field: "order" });
       }
 
       const existingOrder = await prisma.category.findFirst({
@@ -130,7 +134,7 @@ export const CategoryRepository = {
         },
       });
       if (existingOrder) {
-        throw new Error(`Urutan ${orderNum} sudah digunakan oleh kategori '${existingOrder.name}'. Silakan pilih urutan lain.`);
+        throw new AppError(`Urutan ${orderNum} sudah digunakan oleh kategori '${existingOrder.name}'. Silakan pilih urutan lain.`, 409, "DUPLICATE_ENTRY", { field: "order" });
       }
       updateData.order = orderNum;
     }
@@ -142,6 +146,21 @@ export const CategoryRepository = {
   },
 
   async delete(id: string) {
+    // 1. Cek apakah ada produk yang masih terhubung dengan kategori ini
+    const productCount = await prisma.productCategory.count({
+      where: { categoryId: id },
+    });
+
+    // 2. Jika masih ada, tolak penghapusan (Pagar Betis Integritas Data)
+    if (productCount > 0) {
+      throw new AppError(
+        `Kategori tidak bisa dihapus karena masih digunakan oleh ${productCount} produk. Harap lepas atau pindahkan produk tersebut terlebih dahulu.`,
+        400,
+        "RELATION_EXISTS"
+      );
+    }
+
+    // 3. Jika aman, lakukan Soft Delete
     return await prisma.category.update({
       where: { id },
       data: { isActive: false, deletedAt: new Date() },

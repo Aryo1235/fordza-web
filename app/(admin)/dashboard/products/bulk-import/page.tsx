@@ -11,7 +11,7 @@ import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import * as XLSX from "xlsx";
-import { useAllCategoriesAdmin } from "@/features/categories";
+import { useCategoriesForPromo } from "@/features/categories";
 import { useSizeTemplatesAdmin } from "@/features/admin/size-templates";
 import {
   Select,
@@ -30,7 +30,7 @@ export default function BulkImportPage() {
   const [importErrors, setImportErrors] = useState<Record<string, string>>({}); // productCode -> error message
   const importMutation = useBulkImportProducts();
 
-  const { data: categoriesData } = useAllCategoriesAdmin();
+  const { data: categoriesData } = useCategoriesForPromo();
   const { data: templatesData } = useSizeTemplatesAdmin();
 
   const categories = useMemo(() => categoriesData?.data || [], [categoriesData]);

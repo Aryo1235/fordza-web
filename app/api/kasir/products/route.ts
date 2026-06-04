@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { ProductRepository } from "@/backend/repositories/products.repo";
+import { handleError } from "@/lib/error-handler";
 
 /**
  * Kasir Products Route
@@ -25,10 +26,6 @@ export async function GET(req: Request) {
       meta: result.meta,
     });
   } catch (error: any) {
-    console.error("GET /api/kasir/products error:", error.message);
-    return NextResponse.json(
-      { success: false, message: "Gagal mengambil produk" },
-      { status: 500 }
-    );
+    return await handleError(error);
   }
 }

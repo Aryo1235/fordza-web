@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { useProductsAdmin } from "@/features/products";
-import { useBulkUpdateStock } from "@/features/admin/stock";
+import { useState } from "react";
+import { useStockOpnameProducts, useBulkUpdateStock } from "@/features/admin/stock";
 import { PageHeader } from "@/components/layout/admin/PageHeader";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -37,7 +36,7 @@ export default function StockOpnamePage() {
   // State untuk menyimpan perubahan stok lokal sebelum di-save (key: skuId)
   const [stockChanges, setStockChanges] = useState<Record<string, number>>({});
 
-  const { data, isLoading } = useProductsAdmin({ page, limit, search });
+  const { data, isLoading } = useStockOpnameProducts({ page, limit, search });
   const bulkUpdateMutation = useBulkUpdateStock();
 
   const products = data?.data || [];
@@ -115,7 +114,7 @@ export default function StockOpnamePage() {
             variant="outline"
             size="sm"
             className="h-9 border-stone-200 text-stone-600 hover:bg-stone-50 font-bold text-[10px] uppercase tracking-wider"
-            onClick={() => downloadFile("/api/admin/products/export", "Stok_Opname.xlsx", { search, format: "xlsx" })}
+            onClick={() => downloadFile("/api/admin/stock/opname/export", "Stok_Opname.xlsx", { search, format: "xlsx" })}
           >
             <FileSpreadsheet className="w-3.5 h-3.5 mr-2 text-green-600" />
             Export Excel
@@ -124,7 +123,7 @@ export default function StockOpnamePage() {
             variant="outline"
             size="sm"
             className="h-9 border-stone-200 text-stone-600 hover:bg-stone-50 font-bold text-[10px] uppercase tracking-wider"
-            onClick={() => downloadFile("/api/admin/products/export", "Stok_Opname.pdf", { search, format: "pdf" })}
+            onClick={() => downloadFile("/api/admin/stock/opname/export", "Stok_Opname.pdf", { search, format: "pdf" })}
           >
             <FileText className="w-3.5 h-3.5 mr-2 text-red-600" />
             Export PDF
@@ -178,8 +177,8 @@ export default function StockOpnamePage() {
                 const isExpanded = expandedId === product.id;
                 
                 // Hitung berapa banyak SKU produk ini yang sudah di-input perubahannya
-                const modifiedSkuCount = product.variants.reduce((total: number, variant: any) => {
-                  return total + variant.skus.filter((sku: any) => stockChanges[sku.id] !== undefined).length;
+                const modifiedSkuCount = (product.variants || []).reduce((total: number, variant: any) => {
+                  return total + (variant.skus || []).filter((sku: any) => stockChanges[sku.id] !== undefined).length;
                 }, 0);
                 
                 return (
@@ -225,7 +224,7 @@ export default function StockOpnamePage() {
                           </div>
                         )}
                         <Button variant="ghost" size="sm" className="h-8 text-[10px] font-black uppercase text-stone-400 hover:text-[#3C3025] hover:bg-white border-transparent hover:border-stone-200 border">
-                          {isExpanded ? "Fokus Selesai" : `Cek ${product.variants.reduce((acc: number, v: any) => acc + v.skus.length, 0)} Ukuran`}
+                          {isExpanded ? "Fokus Selesai" : `Cek ${(product.variants || []).reduce((acc: number, v: any) => acc + (v.skus || []).length, 0)} Ukuran`}
                         </Button>
                       </div>
                     </div>
@@ -233,7 +232,7 @@ export default function StockOpnamePage() {
                     {/* Expandable Section (Grouped by Variant) */}
                     {isExpanded && (
                       <div className="bg-stone-50 px-6 py-5 border-t border-stone-100/50 space-y-6">
-                        {product.variants.map((variant: any) => (
+                        {(product.variants || []).map((variant: any) => (
                           <div key={variant.id} className="space-y-3">
                             <div className="flex items-center gap-3">
                               <Badge className="bg-[#3C3025] text-white hover:bg-[#3C3025] px-3">
@@ -245,7 +244,7 @@ export default function StockOpnamePage() {
                             </div>
                             
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                              {variant.skus.map((sku: any) => {
+                              {(variant.skus || []).map((sku: any) => {
                                 const hasChange = stockChanges[sku.id] !== undefined;
                                 
                                 return (

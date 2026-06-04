@@ -20,7 +20,9 @@ interface ProductCardProps {
     variantCode?: string,
     promoName?: string | null,
     additionalDiscount?: number,
-    comparisonPrice?: number | null
+    comparisonPrice?: number | null,
+    promoMinPurchase?: number | null, // ✅ Tambah parameter
+    promoDiscountPercent?: number | null // ✅ Tambah parameter persentase
   ) => void;
   onRemove: (productId: string, skuId?: string) => void;
   isJustAdded?: boolean;
@@ -35,9 +37,9 @@ export default function ProductCard({
 }: ProductCardProps) {
   const [selectedVariantIdx, setSelectedVariantIdx] = useState(0);
   const currentVariant = product.variants?.[selectedVariantIdx];
-  
+
   // Jika tidak punya varian, pakai stok produk induk
-  const displayStock = product.hasVariants 
+  const displayStock = product.hasVariants
     ? (currentVariant?.skus?.reduce((sum, s) => sum + s.stock, 0) || 0)
     : product.stock;
 
@@ -91,16 +93,16 @@ export default function ProductCard({
               {product.productCode || "NO-CODE"}
             </p>
             {product.hasVariants && currentVariant && (
-               <p className="text-[9px] md:text-[10px] font-mono font-bold text-amber-600 uppercase bg-amber-50 px-1 rounded">
+              <p className="text-[9px] md:text-[10px] font-mono font-bold text-amber-600 uppercase bg-amber-50 px-1 rounded">
                 {currentVariant.variantCode}
-               </p>
+              </p>
             )}
           </div>
-          
+
           <p className="text-[11px] md:text-sm font-semibold text-stone-800 leading-tight line-clamp-1 mb-1">
             {product.name}
           </p>
-          
+
           <div className="flex flex-col gap-0.5 mt-1">
             <div className="flex items-baseline gap-1.5">
               <p className="text-xs md:text-sm font-black text-stone-900 leading-none">
@@ -112,140 +114,137 @@ export default function ProductCard({
                 </span>
               )}
             </div>
-            
+
             {/* Badge Transparan untuk Kasir */}
             <div className="flex flex-wrap gap-1 mt-0.5">
-                {(currentVariant as any)?.finalPrice < (currentVariant?.basePrice || product.price) && (
-                    <span className="text-[8px] font-black bg-emerald-50 text-emerald-700 px-1 py-0.5 rounded border border-emerald-100">
-                        PROMO
-                    </span>
-                )}
-                {(currentVariant as any)?.promoName && (
-                    <span className="text-[8px] font-bold bg-amber-50 text-amber-600 px-1 py-0.5 rounded border border-amber-100 truncate max-w-[80px]">
-                        🏷️ {(currentVariant as any).promoName}
-                    </span>
-                )}
+
+              {(currentVariant as any)?.promoName && (
+                <span className="text-[8px] font-bold bg-amber-50 text-amber-600 px-1 py-0.5 rounded border border-amber-100 truncate max-w-[80px]">
+                  🏷️ {(currentVariant as any).promoName}
+                </span>
+              )}
             </div>
           </div>
         </div>
-        
-        {/* Variant/Size Picker Section */}
-        <div className="mt-auto space-y-2">
-          {product.hasVariants ? (
-            <>
-              {/* Variant Name Pickers (Ganti dari lingkaran ke Tulisan) */}
-              <div className="flex flex-wrap gap-1.5 mb-2.5 max-h-16 overflow-y-auto pr-1 custom-scrollbar">
-                {product.variants.map((v, i) => (
-                  <button
-                    key={v.id}
-                    onClick={() => setSelectedVariantIdx(i)}
-                    className={cn(
-                      "px-3 py-1 text-[9px] font-black uppercase rounded-md border-2 transition-all duration-200",
-                      selectedVariantIdx === i
-                        ? "bg-[#3C3025] text-white border-[#3C3025] shadow-md scale-105"
-                        : "bg-white text-stone-500 border-stone-100 hover:border-stone-300"
-                    )}
-                  >
-                    {v.color}
-                  </button>
-                ))}
-              </div>
 
-              {/* SKU Selection Grid (Size) */}
-              <div className="flex flex-wrap gap-1.5 overflow-y-auto pr-1 max-h-24 custom-scrollbar">
-                {currentVariant.skus.map((sku) => {
-                  const qty = quantityInCart(sku.id);
-                  const isLow = sku.stock > 0 && sku.stock <= 3;
-                  
-                  // LOGIKA CERDAS: Ambil Harga Asli vs Harga Final
-                  const originalPrice = sku.priceOverride ?? currentVariant.basePrice;
-                  const finalPrice = (sku as any).finalPrice ?? originalPrice;
-                  const calculatedDiscount = originalPrice - finalPrice;
-
-                  return (
-                    <button
-                      key={sku.id}
-                      disabled={sku.stock === 0}
-                      onClick={() => onAdd(
-                        product, 
-                        currentVariant.id, 
-                        currentVariant.color, 
-                        sku.id, 
-                        sku.size, 
-                        originalPrice, // Pakai harga asli (250k) agar diskon terbaca
-                        sku.stock, 
-                        currentVariant.variantCode,
-                        currentVariant.promoName,
-                        calculatedDiscount, // Potongan yang benar (25k)
-                        currentVariant.comparisonPrice 
-                      )}
-                      className={cn(
-                        "relative min-w-[40px] flex flex-col items-center justify-center py-1.5 px-2 rounded border text-[10px] md:text-xs font-bold transition-all",
-                        sku.stock === 0 
-                          ? "bg-stone-50 text-stone-300 border-stone-100 cursor-not-allowed" 
-                          : qty > 0
-                            ? "bg-amber-50 text-amber-700 border-amber-200"
-                            : "bg-white text-stone-600 border-stone-200 hover:border-[#3C3025] hover:text-[#3C3025]"
-                      )}
-                    >
-                      {sku.size}
-                      <span className={cn(
-                        "text-[7px] md:text-[8px] mt-0.5 font-normal",
-                        isLow ? "text-red-500 font-bold" : "text-stone-400"
-                      )}>
-                        {sku.stock}
-                      </span>
-                      {qty > 0 && (
-                        <div className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-amber-500 text-white rounded-full flex items-center justify-center text-[8px] border border-white shadow-sm">
-                          {qty}
-                        </div>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            </>
-          ) : (
-            /* Simple Product Button */
-            <div className="pt-1">
-              {quantityInCart() === 0 ? (
-                <Button
-                  onClick={() => onAdd(product)}
-                  disabled={outOfStock}
+        {product.hasVariants ? (
+          <div className="flex flex-col gap-2 mt-2">
+            {/* Variant Name Pickers (Ganti dari lingkaran ke Tulisan) */}
+            <div className="flex flex-wrap gap-1.5 max-h-16 overflow-y-auto pr-1 custom-scrollbar">
+              {product.variants.map((v, i) => (
+                <button
+                  key={v.id}
+                  onClick={() => setSelectedVariantIdx(i)}
                   className={cn(
-                    "w-full h-8 md:h-9 rounded-md font-bold text-[10px] md:text-xs",
-                    outOfStock ? "bg-stone-100 text-stone-400" : "bg-[#3C3025] hover:bg-[#4a3d30]"
+                    "px-3 py-1 text-[8px] font-black uppercase rounded-md border-2 transition-all duration-200",
+                    selectedVariantIdx === i
+                      ? "bg-[#3C3025] text-white border-[#3C3025] shadow-md"
+                      : "bg-white text-stone-500 border-stone-100 hover:border-stone-300"
                   )}
                 >
-                  Tambah Ke Keranjang
-                </Button>
-              ) : (
-                <div className="flex items-center justify-between p-1 bg-stone-50 rounded-md border border-stone-100">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => onRemove(product.id)}
-                    className="w-7 h-7 md:w-8 md:h-8 hover:text-red-500"
-                  >
-                    <Minus className="w-3 h-3 md:w-4 md:h-4" />
-                  </Button>
-                  <span className="text-xs md:text-sm font-bold text-[#3C3025]">
-                    {quantityInCart()}
-                  </span>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => onAdd(product)}
-                    disabled={quantityInCart() >= product.stock}
-                    className="w-7 h-7 md:w-8 md:h-8 hover:text-amber-600"
-                  >
-                    <Plus className="w-3 h-3 md:w-4 md:h-4" />
-                  </Button>
-                </div>
-              )}
+                  {v.color}
+                </button>
+              ))}
             </div>
-          )}
-        </div>
+
+            {/* SKU Selection Grid (Size) */}
+            <div className="flex flex-wrap gap-1.5 overflow-y-auto pr-1 max-h-24 custom-scrollbar">
+              {currentVariant.skus.map((sku) => {
+                const qty = quantityInCart(sku.id);
+                const isLow = sku.stock > 0 && sku.stock <= 3;
+
+                // LOGIKA CERDAS: Ambil Harga Asli & Hitung Diskon Potensial
+                const originalPrice = sku.priceOverride ?? currentVariant.basePrice;
+                const promoPercent = currentVariant.promoDiscountPercent ?? 0;
+                const calculatedDiscount = promoPercent > 0
+                  ? (originalPrice * promoPercent) / 100
+                  : (currentVariant.additionalDiscount ?? 0);
+
+                return (
+                  <button
+                    key={sku.id}
+                    disabled={sku.stock === 0}
+                    onClick={() => onAdd(
+                      product,
+                      currentVariant.id,
+                      currentVariant.color,
+                      sku.id,
+                      sku.size,
+                      originalPrice, // Pakai harga asli (250k) agar diskon terbaca
+                      sku.stock,
+                      currentVariant.variantCode,
+                      currentVariant.promoName,
+                      calculatedDiscount, // Potongan potensial yang benar
+                      currentVariant.comparisonPrice,
+                      currentVariant.promoMinPurchase, // ✅ Pass promoMinPurchase
+                      currentVariant.promoDiscountPercent // ✅ Pass promoDiscountPercent
+                    )}
+                    className={cn(
+                      "relative min-w-[40px] flex flex-col items-center justify-center py-1.5 px-2 rounded border text-[10px] md:text-xs font-bold transition-all",
+                      sku.stock === 0
+                        ? "bg-stone-50 text-stone-300 border-stone-100 cursor-not-allowed"
+                        : qty > 0
+                          ? "bg-amber-50 text-amber-700 border-amber-200"
+                          : "bg-white text-stone-600 border-stone-200 hover:border-[#3C3025] hover:text-[#3C3025]"
+                    )}
+                  >
+                    {sku.size}
+                    <span className={cn(
+                      "text-[7px] md:text-[8px] mt-0.5 font-normal",
+                      isLow ? "text-red-500 font-bold" : "text-stone-400"
+                    )}>
+                      {sku.stock}
+                    </span>
+                    {qty > 0 && (
+                      <div className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-amber-500 text-white rounded-full flex items-center justify-center text-[8px] border border-white shadow-sm">
+                        {qty}
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ) : (
+          /* Simple Product Button */
+          <div className="mt-auto pt-1">
+            {quantityInCart() === 0 ? (
+              <Button
+                onClick={() => onAdd(product)}
+                disabled={outOfStock}
+                className={cn(
+                  "w-full h-8 md:h-9 rounded-md font-bold text-[10px] md:text-xs",
+                  outOfStock ? "bg-stone-100 text-stone-400" : "bg-[#3C3025] hover:bg-[#4a3d30]"
+                )}
+              >
+                Tambah Ke Keranjang
+              </Button>
+            ) : (
+              <div className="flex items-center justify-between p-1 bg-stone-50 rounded-md border border-stone-100">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => onRemove(product.id)}
+                  className="w-7 h-7 md:w-8 md:h-8 hover:text-red-500"
+                >
+                  <Minus className="w-3 h-3 md:w-4 md:h-4" />
+                </Button>
+                <span className="text-xs md:text-sm font-bold text-[#3C3025]">
+                  {quantityInCart()}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => onAdd(product)}
+                  disabled={quantityInCart() >= product.stock}
+                  className="w-7 h-7 md:w-8 md:h-8 hover:text-amber-600"
+                >
+                  <Plus className="w-3 h-3 md:w-4 md:h-4" />
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

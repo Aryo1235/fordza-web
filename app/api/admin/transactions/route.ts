@@ -9,6 +9,7 @@ export async function GET(req: Request) {
     const search = searchParams.get("search") || undefined;
     const dateFrom = searchParams.get("from") || undefined;
     const dateTo = searchParams.get("to") || undefined;
+    const kasirId = searchParams.get("kasirId") || undefined;
 
     const data = await TransactionService.getAll({
       page,
@@ -16,6 +17,7 @@ export async function GET(req: Request) {
       search,
       dateFrom,
       dateTo,
+      kasirId,
     });
 
     return NextResponse.json({

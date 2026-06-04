@@ -9,7 +9,7 @@ export const CreateAdminSchema = z.object({
   password: z.string().min(6, "Password minimal 6 karakter"),
   name: z.string().min(1, "Nama wajib diisi").max(255).optional(),
   role: z.enum(["ADMIN", "KASIR"], {
-    errorMap: () => ({ message: "Role harus ADMIN atau KASIR" }),
+    message: "Role harus ADMIN atau KASIR"
   }),
   pin: z
     .string()

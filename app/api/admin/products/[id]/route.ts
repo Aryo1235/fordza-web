@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { ProductService } from "@/backend/services/products.service";
 import { uploadFileToS3, deleteFileFromS3 } from "@/actions/upload";
+import { handleError, AppError } from "@/lib/error-handler";
+import { logger } from "@/lib/logger";
+import { headers } from "next/headers";
+import { prisma } from "@/lib/prisma";
 
 // GET /api/admin/products/[id] — Admin: detail produk
 export async function GET(
@@ -12,18 +16,12 @@ export async function GET(
     const product = await ProductService.getById(id);
 
     if (!product) {
-      return NextResponse.json(
-        { success: false, message: "Produk tidak ditemukan" },
-        { status: 404 },
-      );
+      throw new AppError("Produk tidak ditemukan", 404, "NOT_FOUND");
     }
 
     return NextResponse.json({ success: true, data: product });
   } catch (error: any) {
-    return NextResponse.json(
-      { success: false, error: error.message },
-      { status: 500 },
-    );
+    return await handleError(error);
   }
 }
 
@@ -40,10 +38,7 @@ export async function PUT(
     // Cek produk ada
     const existing = await ProductService.getById(id);
     if (!existing) {
-      return NextResponse.json(
-        { success: false, message: "Produk tidak ditemukan" },
-        { status: 404 },
-      );
+      throw new AppError("Produk tidak ditemukan", 404, "NOT_FOUND");
     }
 
     const formData = await req.formData();
@@ -66,10 +61,23 @@ export async function PUT(
 
     for (const field of fields) {
       const value = formData.get(field);
-      if (value !== null) updateData[field] = value;
+      if (value !== null) {
+        // Basic validation
+        if (field === "productCode" && typeof value === "string" && value.trim().length === 0) {
+          throw new AppError("Kode produk tidak boleh kosong", 400, "VALIDATION_ERROR");
+        }
+        if (field === "name" && typeof value === "string" && value.trim().length === 0) {
+          throw new AppError("Nama produk tidak boleh kosong", 400, "VALIDATION_ERROR");
+        }
+        if (field === "gender" && !["Man", "Woman", "Unisex"].includes(value as string)) {
+          throw new AppError("Gender tidak valid. Harus 'Man', 'Woman', atau 'Unisex'", 400, "VALIDATION_ERROR", { field: "gender" });
+        }
+        if (field === "productType" && !["shoes", "apparel", "accessories"].includes(value as string)) {
+          throw new AppError("Tipe produk tidak valid. Harus 'shoes', 'apparel', atau 'accessories'", 400, "VALIDATION_ERROR", { field: "productType" });
+        }
+        updateData[field] = value;
+      }
     }
-
-    // price & stock tidak diparse dari form induk — dikelola via varian
 
     // Flags
     if (formData.get("isPopular") !== null) updateData.isPopular = formData.get("isPopular") === "true";
@@ -96,7 +104,50 @@ export async function PUT(
     }
 
     const operatorId = req.headers.get("x-user-id") || undefined;
+    const headerList = await headers();
+    const traceId = headerList.get("x-request-id") || "unknown";
+
+    // Validasi Relasional Manual (sama seperti CREATE)
+    if (updateData.sizeTemplateId) {
+      const templateExists = await prisma.sizeTemplate.findUnique({
+        where: { id: updateData.sizeTemplateId },
+        select: { id: true },
+      });
+      if (!templateExists) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "Data referensi tidak valid atau tidak ditemukan",
+            code: "INVALID_REFERENCE",
+            field: "sizeTemplateId",
+            traceId,
+          },
+          { status: 400 }
+        );
+      }
+    }
+
+    if (updateData.categoryIds && updateData.categoryIds.length > 0) {
+      const validCategoriesCount = await prisma.category.count({
+        where: { id: { in: updateData.categoryIds } },
+      });
+      if (validCategoriesCount !== updateData.categoryIds.length) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "Data referensi tidak valid atau tidak ditemukan",
+            code: "INVALID_REFERENCE",
+            field: "categoryIds",
+            traceId,
+          },
+          { status: 400 }
+        );
+      }
+    }
+    
     const product = await ProductService.update(id, updateData, operatorId);
+
+    logger.info({ traceId, productId: id, operatorId }, "Product updated successfully");
 
     return NextResponse.json(
       { success: true, message: "Produk berhasil diupdate", data: product },
@@ -107,10 +158,7 @@ export async function PUT(
       await Promise.all(uploadedImages.map((img) => deleteFileFromS3(img.key)));
     }
 
-    return NextResponse.json(
-      { success: false, message: "Gagal mengupdate produk", error: error.message },
-      { status: 500 },
-    );
+    return await handleError(error);
   }
 }
 
@@ -124,22 +172,22 @@ export async function DELETE(
 
     const existing = await ProductService.getById(id);
     if (!existing) {
-      return NextResponse.json(
-        { success: false, message: "Produk tidak ditemukan" },
-        { status: 404 },
-      );
+      throw new AppError("Produk tidak ditemukan", 404, "NOT_FOUND");
     }
 
-    await ProductService.delete(id);
+    const operatorId = req.headers.get("x-user-id") || undefined;
+    const headerList = await headers();
+    const traceId = headerList.get("x-request-id") || "unknown";
+
+    await ProductService.delete(id, operatorId);
+
+    logger.info({ traceId, productId: id, operatorId }, "Product soft-deleted successfully");
 
     return NextResponse.json(
       { success: true, message: "Produk berhasil dihapus (soft delete)" },
       { status: 200 },
     );
   } catch (error: any) {
-    return NextResponse.json(
-      { success: false, error: error.message },
-      { status: 500 },
-    );
+    return await handleError(error);
   }
 }

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { VariantRepository } from "@/backend/repositories/variants.repo";
+import { handleError } from "@/lib/error-handler";
 
 export async function GET(req: Request) {
   try {
@@ -14,9 +15,6 @@ export async function GET(req: Request) {
       data: variants,
     });
   } catch (error: any) {
-    return NextResponse.json(
-      { success: false, message: "Gagal mengambil daftar varian", error: error.message },
-      { status: 500 }
-    );
+    return await handleError(error);
   }
 }

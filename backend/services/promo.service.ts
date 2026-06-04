@@ -90,5 +90,13 @@ export const PromoService = {
       value: Number(promo.value),
       minPurchase: Number(promo.minPurchase || 0)
     };
+  },
+
+  async getProductsForPromoSelection(search?: string) {
+    return await PromoRepository.getProductsForPromoSelection(search);
+  },
+
+  async getCategoriesForPromoSelection() {
+    return await PromoRepository.getCategoriesForPromoSelection();
   }
 };

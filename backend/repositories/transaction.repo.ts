@@ -99,7 +99,7 @@ export const TransactionRepository = {
       productId: string;
       productCode: string;
       quantity: number;
-      priceAtSale: number;
+      basePriceAtSale: number;
       productName: string;
       discountAmount: number;
       // Varian & SKU (null jika produk tanpa varian)
@@ -108,7 +108,7 @@ export const TransactionRepository = {
       skuId?: string | null;
       skuSize?: string | null;
       promoName?: string | null;
-      comparisonPriceAtSale?: number | null;
+      gimmickPriceAtSale?: number | null;
     }[];
   }) {
     return await prisma.$transaction(async (tx) => {
@@ -129,11 +129,11 @@ export const TransactionRepository = {
               productId: i.productId,
               productCode: i.productCode,
               quantity: i.quantity,
-              priceAtSale: i.priceAtSale,
+              basePriceAtSale: i.basePriceAtSale,
               productName: i.productName,
               discountAmount: i.discountAmount,
               promoName: i.promoName ?? null,
-              comparisonPriceAtSale: i.comparisonPriceAtSale ?? null,
+              gimmickPriceAtSale: i.gimmickPriceAtSale ?? null,
               variantId: i.variantId ?? null,
               variantColor: i.variantColor ?? null,
               skuId: i.skuId ?? null,
@@ -169,7 +169,8 @@ export const TransactionRepository = {
               },
               update: {
                 totalQty: { increment: i.quantity },
-                totalRevenue: { increment: (Number(i.priceAtSale) * i.quantity) - Number(i.discountAmount ?? 0) },
+                totalRevenue: { increment: (Number(i.basePriceAtSale) * i.quantity) - Number(i.discountAmount ?? 0) },
+                totalDiscount: { increment: Number(i.discountAmount ?? 0) },
                 totalOrders: { increment: 1 },
               },
               create: {
@@ -181,7 +182,8 @@ export const TransactionRepository = {
                 variantColor: i.variantColor || "-",
                 skuSize: i.skuSize || "-",
                 totalQty: i.quantity,
-                totalRevenue: (Number(i.priceAtSale) * i.quantity) - Number(i.discountAmount ?? 0),
+                totalRevenue: (Number(i.basePriceAtSale) * i.quantity) - Number(i.discountAmount ?? 0),
+                totalDiscount: Number(i.discountAmount ?? 0),
                 totalOrders: 1,
               },
             });
@@ -322,8 +324,9 @@ export const TransactionRepository = {
             productName: true,
             productCode: true,
             quantity: true,
-            priceAtSale: true,
+            basePriceAtSale: true,
             discountAmount: true,
+            promoName: true,
             // SKU snapshot
             variantColor: true,
             skuSize: true,
@@ -376,7 +379,8 @@ export const TransactionRepository = {
       await Promise.all(
         items.map(async (i) => {
           const originalItem = transaction.items.find(item => item.productId === i.productId && (i.skuId ? item.skuId === i.skuId : true));
-          const priceAtSale = originalItem?.priceAtSale || 0;
+          const basePriceAtSale = originalItem?.basePriceAtSale || 0;
+          const discountAmount = originalItem?.discountAmount || 0;
 
           if (i.skuId) {
             // Produk DENGAN varian: kembalikan stok ke SKU
@@ -395,7 +399,8 @@ export const TransactionRepository = {
               },
               data: {
                 totalQty: { decrement: i.quantity },
-                totalRevenue: { decrement: Number(priceAtSale) * i.quantity },
+                totalRevenue: { decrement: (Number(basePriceAtSale) * i.quantity) - Number(discountAmount) },
+                totalDiscount: { decrement: Number(discountAmount) },
                 totalOrders: { decrement: 1 },
               },
             });
@@ -462,7 +467,8 @@ export const TransactionRepository = {
               },
               data: {
                 totalQty: { decrement: i.quantity },
-                totalRevenue: { decrement: Number(priceAtSale) * i.quantity },
+                totalRevenue: { decrement: (Number(basePriceAtSale) * i.quantity) - Number(discountAmount) },
+                totalDiscount: { decrement: Number(discountAmount) },
                 totalOrders: { decrement: 1 },
               },
             });
@@ -531,10 +537,12 @@ export const TransactionRepository = {
           size: s.skuSize || "-",
           quantity: 0,
           revenue: 0,
+          discount: 0,
         };
       }
       productAggregation[key].quantity += s.totalQty;
       productAggregation[key].revenue += Number(s.totalRevenue);
+      productAggregation[key].discount += Number(s.totalDiscount || 0);
 
       // Agregasi Harian (untuk grafik)
       const dateStr = s.date.toISOString();
@@ -544,7 +552,7 @@ export const TransactionRepository = {
     const aggregatedProducts = Object.values(productAggregation)
       .map(p => ({
         ...p,
-        priceAtSale: p.quantity > 0 ? p.revenue / p.quantity : 0
+        basePriceAtSale: p.quantity > 0 ? (p.revenue + p.discount) / p.quantity : 0
       }))
       .filter(p => p.quantity > 0) // Sembunyikan produk yang sudah di-VOID habis
       .sort((a, b) => b.quantity - a.quantity);

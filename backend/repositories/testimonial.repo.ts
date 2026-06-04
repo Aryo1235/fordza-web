@@ -172,4 +172,22 @@ export const TestimonialRepository = {
       distribution: distMap,
     };
   },
+
+  async getProductsForTestimonialSelection(search?: string) {
+    const where: any = {
+      isActive: true,
+      deletedAt: null,
+    };
+    if (search) {
+      where.name = { contains: search, mode: "insensitive" };
+    }
+    return await prisma.product.findMany({
+      where,
+      select: {
+        id: true,
+        name: true,
+      },
+      orderBy: { createdAt: "desc" },
+    });
+  },
 };

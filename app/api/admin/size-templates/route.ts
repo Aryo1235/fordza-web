@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { sizeTemplateSchema } from "@/lib/zod-schemas";
 import { SizeTemplateService } from "@/backend/services/size-template.service";
+import { handleError } from "@/lib/error-handler";
+import { logger } from "@/lib/logger";
+import { headers } from "next/headers";
 
 // GET /api/admin/size-templates — Admin: semua template ukuran
 export async function GET() {
@@ -13,10 +16,7 @@ export async function GET() {
       data,
     });
   } catch (error: any) {
-    return NextResponse.json(
-      { success: false, message: error.message },
-      { status: 500 },
-    );
+    return await handleError(error);
   }
 }
 
@@ -24,25 +24,21 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const validation = sizeTemplateSchema.safeParse(body);
+    const validation = { data: sizeTemplateSchema.parse(body) };
 
-    if (!validation.success) {
-      return NextResponse.json(
-        { success: false, errors: validation.error.flatten().fieldErrors },
-        { status: 400 },
-      );
-    }
 
     const data = await SizeTemplateService.create(validation.data);
+
+    const headerList = await headers();
+    const traceId = headerList.get("x-request-id") || "unknown";
+
+    logger.info({ traceId, templateId: data.id, name: data.name }, "Size template created successfully");
 
     return NextResponse.json(
       { success: true, message: "Template berhasil dibuat", data },
       { status: 201 },
     );
   } catch (error: any) {
-    return NextResponse.json(
-      { success: false, message: error.message },
-      { status: 500 },
-    );
+    return await handleError(error);
   }
 }

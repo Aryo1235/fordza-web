@@ -1,0 +1,96 @@
+<mxfile host="app.diagrams.net" agent="5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/24.4.0 Electron/30.0.9 Chrome/124.0.6367.243 Electron/30.0.9 Safari/537.36">
+  <diagram id="pos_p2" name="Riwayat &amp; Void Transaksi">
+    <mxGraphModel dx="1042" dy="544" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="1600" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="100" parent="1" style="swimlane;html=1;startSize=30;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;align=center;verticalAlign=top;fontSize=12;" value="Kasir &amp; Admin" vertex="1">
+          <mxGeometry height="1200" width="280" x="60" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_start" parent="100" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;" value="" vertex="1">
+          <mxGeometry height="40" width="40" x="120" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_history" parent="100" style="rounded=1;whiteSpace=wrap;html=1;arcSize=20;fillColor=#ffffff;strokeColor=#333333;fontSize=11;" value="Buka Riwayat Transaksi" vertex="1">
+          <mxGeometry height="50" width="180" x="50" y="160" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_select" parent="100" style="rounded=1;whiteSpace=wrap;html=1;arcSize=20;fillColor=#ffffff;strokeColor=#333333;fontSize=11;" value="Pilih Transaksi" vertex="1">
+          <mxGeometry height="50" width="180" x="50" y="260" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_action" parent="100" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;fontStyle=1;" value="Pilihan Aksi?" vertex="1">
+          <mxGeometry height="60" width="90" x="95" y="360" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_void_req" parent="100" style="rounded=1;whiteSpace=wrap;html=1;arcSize=20;fillColor=#ffffff;strokeColor=#333333;fontSize=11;" value="Ajukan Void Transaksi" vertex="1">
+          <mxGeometry height="50" width="180" x="20" y="560" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_pin" parent="100" style="rounded=1;whiteSpace=wrap;html=1;arcSize=20;fillColor=#ffffff;strokeColor=#333333;fontSize=11;" value="Admin Mengisi PIN 4-Digit" vertex="1">
+          <mxGeometry height="50" width="180" x="20" y="660" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_end" parent="100" style="ellipse;html=1;shape=endState;fillColor=#f8cecc;strokeColor=#b85450;" value="" vertex="1">
+          <mxGeometry height="40" width="40" x="120" y="1060" as="geometry" />
+        </mxCell>
+        <mxCell id="101" parent="1" style="swimlane;html=1;startSize=30;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;align=center;verticalAlign=top;fontSize=12;" value="Sistem POS" vertex="1">
+          <mxGeometry height="1200" width="280" x="340" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_check_pin" parent="101" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;fontStyle=1;" value="PIN Admin Benar?" vertex="1">
+          <mxGeometry height="60" width="90" x="80" y="760" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_notify" parent="101" style="rounded=1;whiteSpace=wrap;html=1;arcSize=20;fillColor=#ffffff;strokeColor=#333333;fontSize=11;" value="Notifikasi Void Sukses" vertex="1">
+          <mxGeometry height="50" width="180" x="50" y="960" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_reprint" parent="101" style="rounded=1;whiteSpace=wrap;html=1;arcSize=20;fillColor=#ffffff;strokeColor=#333333;fontSize=11;" value="Reprint Struk" vertex="1">
+          <mxGeometry height="50" width="180" x="-120" y="480" as="geometry" />
+        </mxCell>
+        <mxCell id="e2_9_no" edge="1" parent="101" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=10;exitX=1;exitY=0.5;" value="Tidak">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="80.00000000000023" y="792" as="sourcePoint" />
+            <mxPoint x="-190" y="690" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="102" parent="1" style="swimlane;html=1;startSize=30;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;align=center;verticalAlign=top;fontSize=12;" value="Database POS" vertex="1">
+          <mxGeometry height="1200" width="280" x="620" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_tx_void" parent="102" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;" value="Prisma $transaction: Void &amp; Kembalikan Stok" vertex="1">
+          <mxGeometry height="60" width="120" x="80" y="860" as="geometry" />
+        </mxCell>
+        <mxCell id="e2_1" edge="1" parent="1" source="p2_start" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=10;" target="p2_history" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2_2" edge="1" parent="1" source="p2_history" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=10;" target="p2_select" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2_3" edge="1" parent="1" source="p2_select" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=10;" target="p2_action" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2_4" edge="1" parent="1" source="p2_action" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=10;" target="p2_reprint" value="Reprint">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2_5" edge="1" parent="1" source="p2_action" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=10;" target="p2_void_req" value="Void">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2_6" edge="1" parent="1" source="p2_reprint" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=10;entryX=0.5;entryY=0;exitX=0.5;exitY=1;" target="p2_end" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="310" y="1050" />
+              <mxPoint x="200" y="1050" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e2_7" edge="1" parent="1" source="p2_void_req" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=10;" target="p2_pin" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2_8" edge="1" parent="1" source="p2_pin" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=10;" target="p2_check_pin" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2_9" edge="1" parent="1" source="p2_check_pin" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=10;" target="p2_tx_void" value="Ya">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2_10" edge="1" parent="1" source="p2_tx_void" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=10;" target="p2_notify" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2_11" edge="1" parent="1" source="p2_notify" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=10;" target="p2_end" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

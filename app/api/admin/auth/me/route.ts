@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { AdminService } from "@/backend/services/admin.service";
 import { verifyToken, ACCESS_COOKIE_NAME } from "@/lib/auth";
 import { cookies } from "next/headers";
+import { handleError } from "@/lib/error-handler";
+import { logger } from "@/lib/logger";
 
 export async function GET(req: Request) {
   try {
@@ -51,10 +53,6 @@ export async function GET(req: Request) {
       data: admin,
     });
   } catch (error: any) {
-    console.error("Auth Me Error:", error.message);
-    return NextResponse.json(
-      { success: false, message: "Terjadi kesalahan server" },
-      { status: 500 },
-    );
+    return handleError(error);
   }
 }

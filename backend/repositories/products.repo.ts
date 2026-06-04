@@ -1,5 +1,23 @@
 import { prisma } from "@/lib/prisma";
 import { PromoRepository } from "./promo.repo";
+import { AppError } from "@/lib/error-handler";
+
+/**
+ * Pilih varian representatif untuk ditampilkan di kartu katalog.
+ * Logika: ambil finalPrice terendah. Jika ada beberapa varian dengan
+ * finalPrice yang sama, prioritaskan yang punya highestPrice (comparisonPrice) tertinggi
+ * agar harga coret yang paling relevan yang tampil di catalog card.
+ */
+function pickRepresentativeVariant(variants: any[]): any | null {
+  if (!variants || variants.length === 0) return null;
+  const minFinalPrice = Math.min(...variants.map((v) => v.finalPrice));
+  const cheapestCandidates = variants.filter((v) => v.finalPrice === minFinalPrice);
+  // Dari kandidat termurah, pilih yang punya highestPrice tertinggi
+  // (berarti ada comparisonPrice yang lebih besar)
+  return cheapestCandidates.reduce((best, v) =>
+    v.highestPrice > best.highestPrice ? v : best
+  );
+}
 
 export const ProductRepository = {
   async getAll(filters: any) {
@@ -18,7 +36,22 @@ export const ProductRepository = {
     } = filters;
 
     const skip = (page - 1) * limit;
-    const where: any = { isActive: true, deletedAt: null };
+    const where: any = {
+      isActive: true,
+      deletedAt: null,
+      variants: {
+        some: {
+          isActive: true,
+          deletedAt: null,
+          skus: {
+            some: {
+              isActive: true,
+              deletedAt: null
+            }
+          }
+        }
+      }
+    };
 
     if (search) {
       where.name = { contains: search, mode: "insensitive" };
@@ -64,15 +97,15 @@ export const ProductRepository = {
           createdAt: true,
           variants: {
             where: { isActive: true, deletedAt: null },
-            select: { 
-              id: true, 
-              basePrice: true, 
-              comparisonPrice: true, 
+            select: {
+              id: true,
+              basePrice: true,
+              comparisonPrice: true,
               discountPercent: true,
               skus: {
                 where: { isActive: true, deletedAt: null },
-                select: { id: true, priceOverride: true }
-              }
+                select: { id: true, priceOverride: true },
+              },
             },
           },
           images: { take: 1, select: { id: true, url: true } },
@@ -100,46 +133,97 @@ export const ProductRepository = {
       products: products.map((p: any) => {
         const variants = p.variants.map((v: any) => {
           const basePrice = Number(v.basePrice);
-          const gimmickPrice = v.comparisonPrice ? Number(v.comparisonPrice) : null;
-          const highestPrice = gimmickPrice && gimmickPrice > basePrice ? gimmickPrice : basePrice;
+          const gimmickPrice = v.comparisonPrice
+            ? Number(v.comparisonPrice)
+            : null;
+          const highestPrice =
+            gimmickPrice && gimmickPrice > basePrice ? gimmickPrice : basePrice;
 
-          let bestPromo: any = activePromos.find(promo => promo.targetType === "VARIANT" && promo.targetIds.includes(v.id));
+          let bestPromo: any = activePromos.find(
+            (promo) =>
+              promo.targetType === "VARIANT" && promo.targetIds.includes(v.id),
+          );
           if (!bestPromo) {
-            bestPromo = activePromos.find(promo => promo.targetType === "PRODUCT" && promo.targetIds.includes(p.id));
+            bestPromo = activePromos.find(
+              (promo) =>
+                promo.targetType === "PRODUCT" &&
+                promo.targetIds.includes(p.id),
+            );
           }
           if (!bestPromo) {
             const pCategoryIds = p.categories.map((c: any) => c.categoryId);
-            bestPromo = activePromos.find(promo => promo.targetType === "CATEGORY" && promo.targetIds.some(id => pCategoryIds.includes(id)));
+            bestPromo = activePromos.find(
+              (promo) =>
+                promo.targetType === "CATEGORY" &&
+                promo.targetIds.some((id) => pCategoryIds.includes(id)),
+            );
           }
-          if (!bestPromo) bestPromo = activePromos.find(promo => promo.targetType === "GLOBAL");
+          if (!bestPromo)
+            bestPromo = activePromos.find(
+              (promo) => promo.targetType === "GLOBAL",
+            );
 
           let additionalDiscount = 0;
           let isConditional = false;
 
           if (bestPromo) {
+            console.log(`🎁 [ProductRepo] Variant "${v.color}":`, {
+              promoName: bestPromo.name,
+              minPurchase: bestPromo.minPurchase,
+              type: bestPromo.type,
+              value: bestPromo.value,
+            });
+
             if (Number(bestPromo.minPurchase || 0) > 0) {
+              // ✅ FIX: Promo conditional, jangan apply discount di product list
               isConditional = true;
+              console.log(`✅ [ProductRepo] Promo CONDITIONAL - discount TIDAK apply di product list`);
+              // additionalDiscount tetap 0, akan di-apply saat checkout
             } else {
-              if (bestPromo.type === "PERCENTAGE") additionalDiscount = (basePrice * Number(bestPromo.value)) / 100;
+              // Promo non-conditional, langsung apply
+              if (bestPromo.type === "PERCENTAGE")
+                additionalDiscount =
+                  (basePrice * Number(bestPromo.value)) / 100;
               else additionalDiscount = Number(bestPromo.value);
+              console.log(`✅ [ProductRepo] Promo NON-CONDITIONAL - discount apply: ${additionalDiscount}`);
             }
           }
 
-          const finalPrice = basePrice - Math.min(additionalDiscount, basePrice);
+          // ✅ FIX: finalPrice hanya apply discount jika non-conditional
+          const finalPrice = isConditional
+            ? basePrice
+            : basePrice - Math.min(additionalDiscount, basePrice);
+
+          console.log(`💰 [ProductRepo] Variant "${v.color}":`, {
+            basePrice,
+            isConditional,
+            additionalDiscount,
+            finalPrice,
+          });
+
           let totalDiscountPercent = 0;
-          
+
           let minFinalPrice = finalPrice;
 
           // Cek SKU untuk mencari harga termurah sesungguhnya
           if (v.skus && v.skus.length > 0) {
             v.skus.forEach((sku: any) => {
-              const skuBasePrice = sku.priceOverride ? Number(sku.priceOverride) : basePrice;
-              let skuDiscount = additionalDiscount;
-              // recalculate discount if percentage based and basePrice shifted
-              if (bestPromo && bestPromo.type === "PERCENTAGE") {
-                skuDiscount = (skuBasePrice * Number(bestPromo.value)) / 100;
+              const skuBasePrice = sku.priceOverride
+                ? Number(sku.priceOverride)
+                : basePrice;
+              let skuDiscount = 0;
+
+              // ✅ FIX: Hanya hitung discount jika promo non-conditional
+              if (!isConditional && bestPromo) {
+                if (bestPromo.type === "PERCENTAGE") {
+                  skuDiscount = (skuBasePrice * Number(bestPromo.value)) / 100;
+                } else {
+                  skuDiscount = Number(bestPromo.value);
+                }
               }
-              const skuFinalPrice = skuBasePrice - Math.min(skuDiscount, skuBasePrice);
+
+              const skuFinalPrice =
+                skuBasePrice - Math.min(skuDiscount, skuBasePrice);
               if (skuFinalPrice < minFinalPrice) {
                 minFinalPrice = skuFinalPrice;
               }
@@ -147,7 +231,9 @@ export const ProductRepository = {
           }
 
           if (highestPrice > minFinalPrice) {
-            totalDiscountPercent = Math.floor(((highestPrice - minFinalPrice) / highestPrice) * 100);
+            totalDiscountPercent = Math.floor(
+              ((highestPrice - minFinalPrice) / highestPrice) * 100,
+            );
           }
 
           return {
@@ -158,28 +244,37 @@ export const ProductRepository = {
             finalPrice: minFinalPrice,
             totalDiscountPercent,
             promoName: bestPromo?.name || null,
-            promoMinPurchase: bestPromo?.minPurchase ? Number(bestPromo.minPurchase) : 0,
+            promoMinPurchase: bestPromo?.minPurchase
+              ? Number(bestPromo.minPurchase)
+              : null, // ✅ FIX: Return null instead of 0
             isPromoConditional: isConditional,
             skus: v.skus.map((sku: any) => ({
               ...sku,
-              priceOverride: sku.priceOverride ? Number(sku.priceOverride) : null
-            }))
+              priceOverride: sku.priceOverride
+                ? Number(sku.priceOverride)
+                : null,
+            })),
           };
         });
 
-        // Cari varian termurah untuk dijadikan harga display di katalog
-        const cheapestVariant = variants.length > 0 
-           ? [...variants].sort((a, b) => a.finalPrice - b.finalPrice)[0]
-           : null;
+        // Cari varian representatif: finalPrice terendah, lalu prioritaskan
+        // yang punya highestPrice (comparisonPrice) terbesar jika ada seri harga yang sama
+        const cheapestVariant = pickRepresentativeVariant(variants);
 
         return {
           ...p,
           price: p.price ? Number(p.price) : null,
           variants,
-          finalPrice: cheapestVariant ? cheapestVariant.finalPrice : Number(p.price),
-          highestPrice: cheapestVariant ? cheapestVariant.highestPrice : Number(p.price),
-          totalDiscountPercent: cheapestVariant ? cheapestVariant.totalDiscountPercent : 0,
-          promoName: cheapestVariant?.promoName || null
+          finalPrice: cheapestVariant
+            ? cheapestVariant.finalPrice
+            : Number(p.price),
+          highestPrice: cheapestVariant
+            ? cheapestVariant.highestPrice
+            : Number(p.price),
+          totalDiscountPercent: cheapestVariant
+            ? cheapestVariant.totalDiscountPercent
+            : 0,
+          promoName: cheapestVariant?.promoName || null,
         };
       }),
       meta: {
@@ -211,16 +306,28 @@ export const ProductRepository = {
           totalStock += variantStock;
 
           const basePrice = Number(v.basePrice) || 0;
-          const comparisonPrice = v.comparisonPrice ? Number(v.comparisonPrice) : null;
+          const comparisonPrice = v.comparisonPrice
+            ? Number(v.comparisonPrice)
+            : null;
           let discountPercent = 0;
           if (comparisonPrice && comparisonPrice > basePrice) {
-            discountPercent = ((comparisonPrice - basePrice) / comparisonPrice) * 100;
+            discountPercent =
+              ((comparisonPrice - basePrice) / comparisonPrice) * 100;
           }
 
           if (minPrice === null || basePrice < minPrice) minPrice = basePrice;
 
-          const safeColor = typeof v.color === "string" && v.color.trim() !== "" ? v.color : "DEFAULT";
-          const suffix = v.colorCode ? v.colorCode.toUpperCase().slice(0, 5) : safeColor.toUpperCase().replace(/\s+/g, "").replace(/[^A-Z0-9]/g, "").slice(0, 3);
+          const safeColor =
+            typeof v.color === "string" && v.color.trim() !== ""
+              ? v.color
+              : "DEFAULT";
+          const suffix = v.colorCode
+            ? v.colorCode.toUpperCase().slice(0, 5)
+            : safeColor
+              .toUpperCase()
+              .replace(/\s+/g, "")
+              .replace(/[^A-Z0-9]/g, "")
+              .slice(0, 3);
           const variantCode = `${data.productCode}-${suffix}`;
 
           return {
@@ -232,10 +339,12 @@ export const ProductRepository = {
             isActive: true,
             skus: { create: skusData },
             images: {
-              create: (v.images || []).map((img: { url: string; key: string }) => ({
-                url: img.url,
-                key: img.key,
-              })),
+              create: (v.images || []).map(
+                (img: { url: string; key: string }) => ({
+                  url: img.url,
+                  key: img.key,
+                }),
+              ),
             },
           };
         });
@@ -254,6 +363,8 @@ export const ProductRepository = {
             isBestseller: data.isBestseller,
             isNew: data.isNew,
             isActive: data.isActive ?? true,
+            createdById: data.operatorId,
+            updatedById: data.operatorId,
             detail: {
               create: {
                 description: data.description || "",
@@ -267,17 +378,25 @@ export const ProductRepository = {
               },
             },
             categories: {
-              create: (data.categoryIds || []).map((id: string) => ({ category: { connect: { id } } })),
-            },
-            images: { 
-              create: (data.images || []).map((img: { url: string; key: string }) => ({
-                url: img.url,
-                key: img.key,
+              create: (data.categoryIds || []).map((id: string) => ({
+                category: { connect: { id } },
               })),
+            },
+            images: {
+              create: (data.images || []).map(
+                (img: { url: string; key: string }) => ({
+                  url: img.url,
+                  key: img.key,
+                }),
+              ),
             },
             variants: { create: variantsData },
           },
-          include: { images: true, categories: { include: { category: true } }, detail: true },
+          include: {
+            images: true,
+            categories: { include: { category: true } },
+            detail: true,
+          },
         });
 
         let effectiveOperatorId = data.operatorId;
@@ -321,7 +440,7 @@ export const ProductRepository = {
         return product;
       });
     } catch (error: any) {
-      throw new Error(`Gagal menyimpan produk: ${error.message}`);
+      throw error;
     }
   },
 
@@ -345,19 +464,25 @@ export const ProductRepository = {
         totalReviews: true,
         createdAt: true,
         images: { select: { id: true, url: true, key: true } },
-        categories: { select: { category: { select: { id: true, name: true, imageUrl: true } } } },
+        categories: {
+          select: {
+            category: { select: { id: true, name: true, imageUrl: true } },
+          },
+        },
         detail: {
-            select: {
-                description: true,
-                notes: true,
-                material: true,
-                outsole: true,
-                insole: true,
-                closureType: true,
-                origin: true,
-                sizeTemplateId: true,
-                sizeTemplate: { select: { id: true, name: true, type: true, sizes: true } },
+          select: {
+            description: true,
+            notes: true,
+            material: true,
+            outsole: true,
+            insole: true,
+            closureType: true,
+            origin: true,
+            sizeTemplateId: true,
+            sizeTemplate: {
+              select: { id: true, name: true, type: true, sizes: true },
             },
+          },
         },
         variants: {
           where: { isActive: true, deletedAt: null },
@@ -374,7 +499,14 @@ export const ProductRepository = {
             skus: {
               where: { isActive: true, deletedAt: null },
               orderBy: { size: "asc" },
-              select: { id: true, size: true, stock: true, priceOverride: true, isActive: true, variantId: true },
+              select: {
+                id: true,
+                size: true,
+                stock: true,
+                priceOverride: true,
+                isActive: true,
+                variantId: true,
+              },
             },
           },
         },
@@ -387,86 +519,109 @@ export const ProductRepository = {
 
     // Map variant dengan logika promo agregasi
     const variants = product.variants.map((v: any) => {
-        const basePrice = Number(v.basePrice);
-        const gimmickPrice = v.comparisonPrice ? Number(v.comparisonPrice) : null;
-        const highestPrice = gimmickPrice && gimmickPrice > basePrice ? gimmickPrice : basePrice;
+      const basePrice = Number(v.basePrice);
+      const gimmickPrice = v.comparisonPrice ? Number(v.comparisonPrice) : null;
+      const highestPrice =
+        gimmickPrice && gimmickPrice > basePrice ? gimmickPrice : basePrice;
 
-        let bestPromo: any = activePromos.find(promo => promo.targetType === "VARIANT" && promo.targetIds.includes(v.id));
-        if (!bestPromo) {
-            bestPromo = activePromos.find(promo => promo.targetType === "PRODUCT" && promo.targetIds.includes(product.id));
+      let bestPromo: any = activePromos.find(
+        (promo) =>
+          promo.targetType === "VARIANT" && promo.targetIds.includes(v.id),
+      );
+      if (!bestPromo) {
+        bestPromo = activePromos.find(
+          (promo) =>
+            promo.targetType === "PRODUCT" &&
+            promo.targetIds.includes(product.id),
+        );
+      }
+      if (!bestPromo) {
+        const pCategoryIds = product.categories.map((c: any) => c.category.id);
+        bestPromo = activePromos.find(
+          (promo) =>
+            promo.targetType === "CATEGORY" &&
+            promo.targetIds.some((id) => pCategoryIds.includes(id)),
+        );
+      }
+      if (!bestPromo)
+        bestPromo = activePromos.find((promo) => promo.targetType === "GLOBAL");
+
+      let additionalDiscount = 0;
+      let isConditional = false;
+      let promoDiscountPercent = 0; // Simpan persentase diskon promo murni
+
+      if (bestPromo) {
+        if (Number(bestPromo.minPurchase || 0) > 0) {
+          isConditional = true;
+        } else {
+          if (bestPromo.type === "PERCENTAGE") {
+            promoDiscountPercent = Number(bestPromo.value);
+            additionalDiscount = (basePrice * promoDiscountPercent) / 100;
+          } else {
+            additionalDiscount = Number(bestPromo.value);
+            // Hitung ekuivalen persentase untuk promo nominal (opsional tapi berguna)
+            promoDiscountPercent = (additionalDiscount / basePrice) * 100;
+          }
         }
-        if (!bestPromo) {
-            const pCategoryIds = product.categories.map((c: any) => c.category.id);
-            bestPromo = activePromos.find(promo => promo.targetType === "CATEGORY" && promo.targetIds.some(id => pCategoryIds.includes(id)));
-        }
-        if (!bestPromo) bestPromo = activePromos.find(promo => promo.targetType === "GLOBAL");
+      }
 
-        let additionalDiscount = 0;
-        let isConditional = false;
-        let promoDiscountPercent = 0; // Simpan persentase diskon promo murni
+      const finalPrice = basePrice - Math.min(additionalDiscount, basePrice);
 
-        if (bestPromo) {
-            if (Number(bestPromo.minPurchase || 0) > 0) {
-                isConditional = true;
-            } else {
-                if (bestPromo.type === "PERCENTAGE") {
-                   promoDiscountPercent = Number(bestPromo.value);
-                   additionalDiscount = (basePrice * promoDiscountPercent) / 100;
-                } else {
-                   additionalDiscount = Number(bestPromo.value);
-                   // Hitung ekuivalen persentase untuk promo nominal (opsional tapi berguna)
-                   promoDiscountPercent = (additionalDiscount / basePrice) * 100;
-                }
-            }
-        }
-
-        const finalPrice = basePrice - Math.min(additionalDiscount, basePrice);
-        
-        // --- LOGIKA BARU: Terapkan promo ke setiap SKU (Bigsize) ---
-        const skus = v.skus.map((sku: any) => {
-            const skuBasePrice = sku.priceOverride ? Number(sku.priceOverride) : basePrice;
-            // Jika ada promo, potong harga SKU (Bigsize) dengan persentase promo varian
-            const skuFinalPrice = skuBasePrice * (1 - (promoDiscountPercent / 100));
-            return {
-                ...sku,
-                priceOverride: sku.priceOverride ? Number(sku.priceOverride) : null,
-                finalPrice: Math.round(skuFinalPrice)
-            };
-        });
-
-        let totalDiscountPercent = 0;
-        if (highestPrice > finalPrice) {
-            totalDiscountPercent = Math.floor(((highestPrice - finalPrice) / highestPrice) * 100);
-        }
-
+      // --- LOGIKA BARU: Terapkan promo ke setiap SKU (Bigsize) ---
+      const skus = v.skus.map((sku: any) => {
+        const skuBasePrice = sku.priceOverride
+          ? Number(sku.priceOverride)
+          : basePrice;
+        // Jika ada promo, potong harga SKU (Bigsize) dengan persentase promo varian
+        const skuFinalPrice = skuBasePrice * (1 - promoDiscountPercent / 100);
         return {
-            ...v,
-            basePrice,
-            comparisonPrice: gimmickPrice,
-            highestPrice,
-            finalPrice,
-            totalDiscountPercent,
-            promoDiscountPercent, // Kirim persentase promo murni ke frontend
-            promoName: bestPromo?.name || null,
-            promoMinPurchase: bestPromo?.minPurchase ? Number(bestPromo.minPurchase) : 0,
-            isPromoConditional: isConditional,
-            skus
+          ...sku,
+          priceOverride: sku.priceOverride ? Number(sku.priceOverride) : null,
+          finalPrice: Math.round(skuFinalPrice),
         };
+      });
+
+      let totalDiscountPercent = 0;
+      if (highestPrice > finalPrice) {
+        totalDiscountPercent = Math.floor(
+          ((highestPrice - finalPrice) / highestPrice) * 100,
+        );
+      }
+
+      return {
+        ...v,
+        basePrice,
+        comparisonPrice: gimmickPrice,
+        highestPrice,
+        finalPrice,
+        totalDiscountPercent,
+        promoDiscountPercent, // Kirim persentase promo murni ke frontend
+        promoName: bestPromo?.name || null,
+        promoMinPurchase: bestPromo?.minPurchase
+          ? Number(bestPromo.minPurchase)
+          : 0,
+        isPromoConditional: isConditional,
+        skus,
+      };
     });
 
-        // Tentukan info harga utama produk (berdasarkan varian termurah)
-        const cheapestVariant = variants.length > 0 
-           ? [...variants].sort((a, b) => a.finalPrice - b.finalPrice)[0]
-           : null;
+    // Tentukan info harga utama produk (berdasarkan varian representatif)
+    const cheapestVariant = pickRepresentativeVariant(variants);
 
-        return {
-            ...product,
-            variants,
-            finalPrice: cheapestVariant ? cheapestVariant.finalPrice : Number(product.price),
-            highestPrice: cheapestVariant ? cheapestVariant.highestPrice : Number(product.price),
-            totalDiscountPercent: cheapestVariant ? cheapestVariant.totalDiscountPercent : 0,
-            promoName: cheapestVariant?.promoName || null
-        };
+    return {
+      ...product,
+      variants,
+      finalPrice: cheapestVariant
+        ? cheapestVariant.finalPrice
+        : Number(product.price),
+      highestPrice: cheapestVariant
+        ? cheapestVariant.highestPrice
+        : Number(product.price),
+      totalDiscountPercent: cheapestVariant
+        ? cheapestVariant.totalDiscountPercent
+        : 0,
+      promoName: cheapestVariant?.promoName || null,
+    };
   },
 
   async getRelated(productId: string, limit: number = 4) {
@@ -492,7 +647,12 @@ export const ProductRepository = {
       const needed = limit - primaryRelated.length;
       const excludedIds = [productId, ...primaryRelated.map((p) => p.id)];
       const fallbackProducts = await prisma.product.findMany({
-        where: { id: { notIn: excludedIds }, isActive: true, gender: currentProduct.gender, deletedAt: null },
+        where: {
+          id: { notIn: excludedIds },
+          isActive: true,
+          gender: currentProduct.gender,
+          deletedAt: null,
+        },
         include: { images: true, categories: { include: { category: true } } },
         orderBy: [{ isBestseller: "desc" }, { createdAt: "desc" }],
         take: needed,
@@ -523,16 +683,17 @@ export const ProductRepository = {
           price: true,
           stock: true,
           productType: true,
-          gender: true,
+
           isPopular: true,
           isBestseller: true,
           isNew: true,
           isActive: true,
-          avgRating: true,
-          totalReviews: true,
+
           createdAt: true,
           updatedAt: true,
-          categories: { select: { category: { select: { id: true, name: true } } } },
+          categories: {
+            select: { category: { select: { id: true, name: true } } },
+          },
           detail: { select: { material: true, outsole: true, insole: true } },
           variants: {
             where: { isActive: true, deletedAt: null },
@@ -543,10 +704,15 @@ export const ProductRepository = {
               basePrice: true,
               comparisonPrice: true,
               discountPercent: true,
-              skus: { 
-                where: { isActive: true, deletedAt: null }, 
-                select: { id: true, size: true, stock: true, priceOverride: true }, 
-                orderBy: { size: "asc" } 
+              skus: {
+                where: { isActive: true, deletedAt: null },
+                select: {
+                  id: true,
+                  size: true,
+                  stock: true,
+                  priceOverride: true,
+                },
+                orderBy: { size: "asc" },
               },
             },
           },
@@ -563,18 +729,35 @@ export const ProductRepository = {
       products: products.map((p: any) => {
         const variants = p.variants.map((v: any) => {
           const basePrice = Number(v.basePrice);
-          const gimmickPrice = v.comparisonPrice ? Number(v.comparisonPrice) : null;
-          const highestPrice = gimmickPrice && gimmickPrice > basePrice ? gimmickPrice : basePrice;
+          const gimmickPrice = v.comparisonPrice
+            ? Number(v.comparisonPrice)
+            : null;
+          const highestPrice =
+            gimmickPrice && gimmickPrice > basePrice ? gimmickPrice : basePrice;
 
-          let bestPromo: any = activePromos.find(promo => promo.targetType === "VARIANT" && promo.targetIds.includes(v.id));
+          let bestPromo: any = activePromos.find(
+            (promo) =>
+              promo.targetType === "VARIANT" && promo.targetIds.includes(v.id),
+          );
           if (!bestPromo) {
-            bestPromo = activePromos.find(promo => promo.targetType === "PRODUCT" && promo.targetIds.includes(p.id));
+            bestPromo = activePromos.find(
+              (promo) =>
+                promo.targetType === "PRODUCT" &&
+                promo.targetIds.includes(p.id),
+            );
           }
           if (!bestPromo) {
             const pCategoryIds = p.categories.map((c: any) => c.categoryId);
-            bestPromo = activePromos.find(promo => promo.targetType === "CATEGORY" && promo.targetIds.some(id => pCategoryIds.includes(id)));
+            bestPromo = activePromos.find(
+              (promo) =>
+                promo.targetType === "CATEGORY" &&
+                promo.targetIds.some((id) => pCategoryIds.includes(id)),
+            );
           }
-          if (!bestPromo) bestPromo = activePromos.find(promo => promo.targetType === "GLOBAL");
+          if (!bestPromo)
+            bestPromo = activePromos.find(
+              (promo) => promo.targetType === "GLOBAL",
+            );
 
           let additionalDiscount = 0;
           let isConditional = false;
@@ -594,21 +777,27 @@ export const ProductRepository = {
             }
           }
 
-          const finalPrice = basePrice - Math.min(additionalDiscount, basePrice);
+          const finalPrice =
+            basePrice - Math.min(additionalDiscount, basePrice);
 
           // --- LOGIKA BARU UNTUK KASIR: Terapkan promo ke SKU (Bigsize) ---
           const skus = v.skus.map((sku: any) => {
-              const skuBasePrice = sku.priceOverride ? Number(sku.priceOverride) : basePrice;
-              const skuFinalPrice = skuBasePrice * (1 - (promoDiscountPercent / 100));
-              return {
-                  ...sku,
-                  finalPrice: Math.round(skuFinalPrice)
-              };
+            const skuBasePrice = sku.priceOverride
+              ? Number(sku.priceOverride)
+              : basePrice;
+            const skuFinalPrice =
+              skuBasePrice * (1 - promoDiscountPercent / 100);
+            return {
+              ...sku,
+              finalPrice: Math.round(skuFinalPrice),
+            };
           });
 
           let totalDiscountPercent = 0;
           if (highestPrice > finalPrice) {
-            totalDiscountPercent = Math.floor(((highestPrice - finalPrice) / highestPrice) * 100);
+            totalDiscountPercent = Math.floor(
+              ((highestPrice - finalPrice) / highestPrice) * 100,
+            );
           }
 
           return {
@@ -623,28 +812,58 @@ export const ProductRepository = {
             isPromoConditional: isConditional,
             skus: v.skus.map((sku: any) => ({
               ...sku,
-              priceOverride: sku.priceOverride ? Number(sku.priceOverride) : null,
-              finalPrice: Math.round((sku.priceOverride ? Number(sku.priceOverride) : basePrice) * (1 - (promoDiscountPercent / 100)))
-            }))
+              priceOverride: sku.priceOverride
+                ? Number(sku.priceOverride)
+                : null,
+              finalPrice: Math.round(
+                (sku.priceOverride ? Number(sku.priceOverride) : basePrice) *
+                (1 - promoDiscountPercent / 100),
+              ),
+            })),
           };
         });
 
         // Tentukan info harga terendah produk untuk di tabel
-        const cheapestVariant = variants.length > 0 
-           ? [...variants].sort((a, b) => a.finalPrice - b.finalPrice)[0]
-           : null;
+        const cheapestVariant =
+          variants.length > 0
+            ? [...variants].sort((a, b) => a.finalPrice - b.finalPrice)[0]
+            : null;
 
         return {
-          ...p,
+          id: p.id,
+          productCode: p.productCode,
+          name: p.name,
+          categories: p.categories,
+          detail: p.detail,
+          stock: p.stock,
+          isActive: p.isActive,
           price: p.price ? Number(p.price) : null,
-          variants,
-          finalPrice: cheapestVariant ? cheapestVariant.finalPrice : Number(p.price),
-          highestPrice: cheapestVariant ? cheapestVariant.highestPrice : Number(p.price),
-          totalDiscountPercent: cheapestVariant ? cheapestVariant.totalDiscountPercent : 0,
-          promoName: cheapestVariant?.promoName || null
+          variantCount: variants.length,
+          finalPrice: cheapestVariant
+            ? cheapestVariant.finalPrice
+            : Number(p.price),
+          promoName: cheapestVariant?.promoName || null,
+          // Sertakan variants+skus untuk kebutuhan halaman Stock Opname
+          variants: variants.map((v: any) => ({
+            id: v.id,
+            color: v.color,
+            variantCode: v.variantCode,
+            basePrice: v.basePrice,
+            skus: (v.skus || []).map((sku: any) => ({
+              id: sku.id,
+              size: sku.size,
+              stock: sku.stock,
+              priceOverride: sku.priceOverride ?? null,
+            })),
+          })),
         };
       }),
-      meta: { totalItems, totalPage: Math.ceil(totalItems / limit), currentPage: page, limit },
+      meta: {
+        totalItems,
+        totalPage: Math.ceil(totalItems / limit),
+        currentPage: page,
+        limit,
+      },
     };
   },
 
@@ -676,13 +895,18 @@ export const ProductRepository = {
         totalReviews: true,
         createdAt: true,
         updatedAt: true,
-        categories: { select: { category: { select: { id: true, name: true } } } },
+        categories: {
+          select: { category: { select: { id: true, name: true } } },
+        },
         variants: {
           select: {
             id: true,
             color: true,
             variantCode: true,
-            skus: { select: { id: true, size: true, stock: true }, orderBy: { size: "asc" } },
+            skus: {
+              select: { id: true, size: true, stock: true },
+              orderBy: { size: "asc" },
+            },
           },
         },
       },
@@ -695,22 +919,62 @@ export const ProductRepository = {
       const existing = await tx.product.findUnique({ where: { id } });
       if (!existing) throw new Error("Produk tidak ditemukan");
 
-      // --- 1. UPDATE FIELD LEVEL PRODUK (termasuk gender) ---
+      // --- 1. UPDATE FIELD LEVEL PRODUK ---
       const updateData: any = {};
       const topLevelFields = [
-        "productCode", "name", "shortDescription", "productType",
-        "gender",  // ← PENTING: gender harus ada di sini
-        "isPopular", "isBestseller", "isNew", "isActive",
+        "productCode",
+        "name",
+        "shortDescription",
+        "productType",
+        "gender",
+        "isPopular",
+        "isBestseller",
+        "isNew",
+        "isActive",
       ];
-      for (const f of topLevelFields) if (data[f] !== undefined) updateData[f] = data[f];
+      for (const f of topLevelFields)
+        if (data[f] !== undefined) updateData[f] = data[f];
+
+      // LOGIKA BARU: Jika menonaktifkan produk, matikan juga semua varian & SKU di bawahnya (Eksplisit)
+      const isDeactivating = data.isActive === false && existing.isActive === true;
+      const isReactivating = data.isActive === true && existing.isActive === false;
+
+      if (operatorId) {
+        updateData.updatedById = operatorId;
+      }
+
       await tx.product.update({ where: { id }, data: updateData });
 
+      if (isDeactivating) {
+        // Matikan semua varian & SKU
+        await tx.productVariant.updateMany({
+          where: { productId: id, deletedAt: null },
+          data: { isActive: false },
+        });
+        await tx.productSku.updateMany({
+          where: { variant: { productId: id }, deletedAt: null },
+          data: { isActive: false },
+        });
+      }
+
       // --- 2. UPDATE DETAIL PRODUK ---
-      const detailFields = ["description", "material", "outsole", "insole", "closureType", "origin", "notes", "sizeTemplateId"];
+      const detailFields = [
+        "description",
+        "material",
+        "outsole",
+        "insole",
+        "closureType",
+        "origin",
+        "notes",
+        "sizeTemplateId",
+      ];
       const hasDetailChange = detailFields.some((f) => data[f] !== undefined);
       if (hasDetailChange) {
         const detailUpdate: any = {};
-        const detailCreate: any = { productId: id, description: data.description || "" };
+        const detailCreate: any = {
+          productId: id,
+          description: data.description || "",
+        };
         for (const f of detailFields) {
           if (data[f] !== undefined) {
             const val = f === "sizeTemplateId" ? data[f] || null : data[f];
@@ -718,42 +982,70 @@ export const ProductRepository = {
             detailCreate[f] = val;
           }
         }
-        await tx.productDetail.upsert({ where: { productId: id }, update: detailUpdate, create: detailCreate });
+        await tx.productDetail.upsert({
+          where: { productId: id },
+          update: detailUpdate,
+          create: detailCreate,
+        });
       }
 
       // --- 3. UPDATE KATEGORI ---
       if (data.categoryIds && data.categoryIds.length > 0) {
         await tx.productCategory.deleteMany({ where: { productId: id } });
-        await tx.productCategory.createMany({ data: data.categoryIds.map((categoryId: string) => ({ productId: id, categoryId })) });
+        await tx.productCategory.createMany({
+          data: data.categoryIds.map((categoryId: string) => ({
+            productId: id,
+            categoryId,
+          })),
+        });
       }
 
       // --- 4. TAMBAH GAMBAR PRODUK BARU ---
       if (data.images && data.images.length > 0) {
         await tx.productImage.createMany({
-          data: data.images.map((img: { url: string; key: string }) => ({ productId: id, url: img.url, key: img.key })),
+          data: data.images.map((img: { url: string; key: string }) => ({
+            productId: id,
+            url: img.url,
+            key: img.key,
+          })),
         });
       }
 
-      // --- 5. SINKRONISASI STOK & HARGA (BAGIAN BARU) ---
-      // Ambil semua SKU aktif setelah semua perubahan di atas selesai
-      const allActiveSkus = await tx.productSku.findMany({
-        where: { variant: { productId: id }, isActive: true },
-        include: { variant: { select: { color: true } } },
-      });
+      // --- 5. SINKRONISASI STOK & HARGA (LOGIKA SELLABLE) ---
+      // Ambil status isActive terbaru (dari input atau existing)
+      const currentIsActive = data.isActive !== undefined ? data.isActive : existing.isActive;
 
-      const newTotalStock = allActiveSkus.reduce((sum, sku) => sum + sku.stock, 0);
+      let newTotalStock = 0;
+      let allActiveSkus: any[] = [];
+
+      // Stok hanya dihitung jika produk AKTIF
+      if (currentIsActive) {
+        allActiveSkus = await tx.productSku.findMany({
+          where: {
+            isActive: true,
+            deletedAt: null,
+            variant: {
+              productId: id,
+              isActive: true,
+              deletedAt: null,
+            },
+          },
+          include: { variant: { select: { color: true } } },
+        });
+        newTotalStock = allActiveSkus.reduce((sum, sku) => sum + sku.stock, 0);
+      }
+
       const previousTotalStock = existing.stock ?? 0;
       const stockDelta = newTotalStock - previousTotalStock;
 
-      // Ambil harga terendah dari semua varian aktif untuk update kolom `price` di Product
+      // Harga terendah (hanya dari varian aktif)
       const allActiveVariants = await tx.productVariant.findMany({
-        where: { productId: id, isActive: true },
+        where: { productId: id, isActive: true, deletedAt: null },
         select: { basePrice: true },
         orderBy: { basePrice: "asc" },
       });
       const newMinPrice = allActiveVariants.length > 0 ? Number(allActiveVariants[0].basePrice) : null;
 
-      // Update Product.stock dan Product.price (cached fields) sekaligus
       await tx.product.update({
         where: { id },
         data: {
@@ -762,34 +1054,57 @@ export const ProductRepository = {
         },
       });
 
-      // --- 6. BUAT LOG STOK JIKA ADA PERUBAHAN (Auto-Log untuk History) ---
-      // operatorId berasal dari parameter fungsi (dikirim via header x-user-id di API route)
-      if (stockDelta !== 0) {
-        // Ambil operator pertama jika tidak diisi (fallback)
-        let effectiveOperatorId: string | null = operatorId ?? null;
-        if (!effectiveOperatorId) {
-          const firstAdmin = await tx.admin.findFirst({ select: { id: true } });
-          effectiveOperatorId = firstAdmin?.id ?? null;
-        }
+      // --- 6. LOGGING AUDIT (CATATAN KHUSUS) ---
+      let effectiveOperatorId: string | null = operatorId ?? null;
+      if (!effectiveOperatorId) {
+        const firstAdmin = await tx.admin.findFirst({ select: { id: true } });
+        effectiveOperatorId = firstAdmin?.id ?? null;
+      }
 
-        // Buat SkuStockLog untuk setiap SKU yang stoknya berubah
-        // Karena update produk (bukan opname), kita catat ADJUSTMENT sebagai sinyal
-        // bahwa ada varian/SKU baru yang ditambahkan atau harga berubah.
-        // NOTE: Stok per-SKU tidak berubah saat edit produk biasa, hanya struktur.
-        // Log ini berfungsi sebagai "marker" bahwa produk diperbarui.
+      if (isDeactivating) {
+        // Log penonaktifan massal untuk semua SKU yang sebelumnya aktif
+        const skusToLog = await tx.productSku.findMany({
+          where: { variant: { productId: id }, deletedAt: null },
+          include: { variant: { select: { color: true } } },
+        });
+
+        const skuLogs = skusToLog.map((sku) => ({
+          skuId: sku.id,
+          delta: -sku.stock,
+          currentStock: 0,
+          size: sku.size,
+          color: sku.variant.color,
+          type: "ADJUSTMENT" as const,
+          notes: "Produk Dinonaktifkan (Cascading)",
+          operatorId: effectiveOperatorId,
+        })).filter(l => l.delta !== 0);
+
+        if (skuLogs.length > 0) await tx.skuStockLog.createMany({ data: skuLogs });
+
+        await tx.stockLog.create({
+          data: {
+            productId: id,
+            delta: -previousTotalStock,
+            currentStock: 0,
+            type: "ADJUSTMENT",
+            notes: "Produk Dinonaktifkan oleh Admin",
+            operatorId: effectiveOperatorId,
+          },
+        });
+      } else if (stockDelta !== 0) {
+        // Log perubahan stok biasa (adjustment/restock)
         await tx.stockLog.create({
           data: {
             productId: id,
             delta: stockDelta,
             currentStock: newTotalStock,
-            type: "ADJUSTMENT",
-            notes: `Rekap Stok setelah Update Produk oleh Admin (delta: ${stockDelta > 0 ? "+" : ""}${stockDelta})`,
+            type: stockDelta > 0 ? "RESTOCK" : "ADJUSTMENT",
+            notes: `Rekap Stok setelah Update Produk (delta: ${stockDelta > 0 ? "+" : ""}${stockDelta})`,
             operatorId: effectiveOperatorId,
           },
         });
       }
 
-      // Kembalikan produk terbaru dengan semua relasi
       return await tx.product.findUnique({
         where: { id },
         include: {
@@ -802,37 +1117,82 @@ export const ProductRepository = {
     });
   },
 
-
-  async delete(id: string) {
+  async delete(id: string, operatorId?: string) {
     const now = new Date();
     return await prisma.$transaction(async (tx) => {
+      // 0. Ambil info stok lama untuk log
+      const existing = await tx.product.findUnique({ where: { id }, select: { stock: true } });
+      const previousStock = existing?.stock ?? 0;
+
       // 1. Ambil semua ID varian untuk produk ini
-      const variants = await tx.productVariant.findMany({ where: { productId: id }, select: { id: true } });
-      const variantIds = variants.map(v => v.id);
+      const variants = await tx.productVariant.findMany({
+        where: { productId: id },
+        select: { id: true, color: true },
+      });
+      const variantIds = variants.map((v) => v.id);
 
       if (variantIds.length > 0) {
-        // 2. Soft delete semua SKU milik varian-varian tersebut
+        // 2. Ambil SKU aktif untuk log sebelum dimatikan
+        const skusToLog = await tx.productSku.findMany({
+          where: { variantId: { in: variantIds }, isActive: true, deletedAt: null },
+        });
+
+        let effectiveOperatorId = operatorId || null;
+        if (!effectiveOperatorId) {
+          const firstAdmin = await tx.admin.findFirst({ select: { id: true } });
+          effectiveOperatorId = firstAdmin?.id ?? null;
+        }
+
+        const skuLogs = skusToLog.map(sku => ({
+          skuId: sku.id,
+          delta: -sku.stock,
+          currentStock: 0,
+          size: sku.size,
+          color: variants.find(v => v.id === sku.variantId)?.color || "Unknown",
+          type: "ADJUSTMENT" as const,
+          notes: "Produk Dihapus (Soft Delete)",
+          operatorId: effectiveOperatorId,
+        }));
+
+        if (skuLogs.length > 0) await tx.skuStockLog.createMany({ data: skuLogs });
+
+        // 3. Soft delete semua SKU & Varian
         await tx.productSku.updateMany({
           where: { variantId: { in: variantIds } },
-          data: { isActive: false, deletedAt: now }
+          data: { isActive: false, deletedAt: now },
         });
 
-        // 3. Soft delete semua varian produk ini
         await tx.productVariant.updateMany({
           where: { productId: id },
-          data: { isActive: false, deletedAt: now }
+          data: { isActive: false, deletedAt: now },
         });
+
+        if (previousStock > 0) {
+          await tx.stockLog.create({
+            data: {
+              productId: id,
+              delta: -previousStock,
+              currentStock: 0,
+              type: "ADJUSTMENT",
+              notes: "Produk Dihapus (Soft Delete)",
+              operatorId: effectiveOperatorId,
+            },
+          });
+        }
       }
 
-      // 4. Soft delete produk utama
+      // 4. Soft delete produk utama + Reset sellable stock ke 0
       return await tx.product.update({
         where: { id },
-        data: { isActive: false, deletedAt: now }
+        data: { isActive: false, deletedAt: now, stock: 0 },
       });
     });
   },
 
-  async updateRating(id: string, data: { avgRating: number; totalReviews: number }) {
+  async updateRating(
+    id: string,
+    data: { avgRating: number; totalReviews: number },
+  ) {
     return await prisma.product.update({ where: { id }, data });
   },
 
@@ -842,25 +1202,43 @@ export const ProductRepository = {
 
     const activePromos = await PromoRepository.getActive();
 
-    const calculatePromo = (product: any, variantId: string, basePrice: number) => {
+    const calculatePromo = (
+      product: any,
+      variantId: string,
+      basePrice: number,
+    ) => {
       let bestPromo: any = null;
       // 1. VARIANT (Prioritas Tertinggi)
-      bestPromo = activePromos.find(p => p.targetType === "VARIANT" && p.targetIds.includes(variantId));
+      bestPromo = activePromos.find(
+        (p) => p.targetType === "VARIANT" && p.targetIds.includes(variantId),
+      );
 
       // 2. PRODUCT
       if (!bestPromo) {
-        bestPromo = activePromos.find(p => p.targetType === "PRODUCT" && p.targetIds.includes(product.id));
+        bestPromo = activePromos.find(
+          (p) => p.targetType === "PRODUCT" && p.targetIds.includes(product.id),
+        );
       }
 
       // 3. CATEGORY
       if (!bestPromo) {
         const pCategoryIds = product.categories.map((c: any) => c.categoryId);
-        bestPromo = activePromos.find(p => p.targetType === "CATEGORY" && p.targetIds.some(id => pCategoryIds.includes(id)));
+        bestPromo = activePromos.find(
+          (p) =>
+            p.targetType === "CATEGORY" &&
+            p.targetIds.some((id) => pCategoryIds.includes(id)),
+        );
       }
 
       // 4. GLOBAL
-      if (!bestPromo) bestPromo = activePromos.find(p => p.targetType === "GLOBAL");
-      if (!bestPromo) return { amount: 0, percent: 0, name: null };
+      if (!bestPromo)
+        bestPromo = activePromos.find((p) => p.targetType === "GLOBAL");
+
+      if (!bestPromo) return { amount: 0, percent: 0, name: null, minPurchase: null, isConditional: false };
+
+      // Cek apakah promo conditional (minPurchase > 0)
+      const minPurchase = Number(bestPromo.minPurchase || 0);
+      const isConditional = minPurchase > 0;
 
       let amount = 0;
       let percent = 0;
@@ -872,32 +1250,78 @@ export const ProductRepository = {
         percent = (amount / basePrice) * 100;
       }
 
-      return { amount: Math.min(amount, basePrice), percent, name: bestPromo.name };
+      console.log(`🎁 [getForKasir] calculatePromo:`, {
+        promoName: bestPromo.name,
+        minPurchase,
+        isConditional,
+        basePrice,
+        amount,
+        percent,
+      });
+
+      return {
+        amount: Math.min(amount, basePrice),
+        percent,
+        name: bestPromo.name,
+        minPurchase: minPurchase > 0 ? minPurchase : null,
+        isConditional,
+      };
     };
 
     const where: any = {
       isActive: true,
       deletedAt: null,
-      OR: search ? [
-        { name: { contains: search, mode: "insensitive" } },
-        { productCode: { contains: search, mode: "insensitive" } },
-        { categories: { some: { category: { name: { contains: search, mode: "insensitive" } } } } },
-      ] : undefined,
+      OR: search
+        ? [
+          { name: { contains: search, mode: "insensitive" } },
+          { productCode: { contains: search, mode: "insensitive" } },
+          {
+            categories: {
+              some: {
+                category: { name: { contains: search, mode: "insensitive" } },
+              },
+            },
+          },
+        ]
+        : undefined,
     };
 
     const [products, total] = await Promise.all([
       prisma.product.findMany({
-        where, skip, take: limit,
+        where,
+        skip,
+        take: limit,
         select: {
-          id: true, productCode: true, name: true, price: true, stock: true, gender: true, productType: true,
+          id: true,
+          productCode: true,
+          name: true,
+          price: true,
+          stock: true,
+          gender: true,
+          productType: true,
           images: { select: { url: true }, take: 1 },
           categories: { select: { categoryId: true }, take: 10 },
           variants: {
-            where: { isActive: true, deletedAt: null }, orderBy: { createdAt: "asc" },
+            where: { isActive: true, deletedAt: null },
+            orderBy: { createdAt: "asc" },
             select: {
-              id: true, variantCode: true, color: true, basePrice: true, comparisonPrice: true, discountPercent: true,
+              id: true,
+              variantCode: true,
+              color: true,
+              basePrice: true,
+              comparisonPrice: true,
+              discountPercent: true,
               images: { select: { url: true }, take: 1 },
-              skus: { where: { isActive: true, deletedAt: null }, orderBy: { size: "asc" }, select: { id: true, size: true, stock: true, priceOverride: true } },
+              skus: {
+                where: { isActive: true, deletedAt: null },
+                orderBy: { size: "asc" },
+                select: {
+                  id: true,
+                  size: true,
+                  stock: true,
+                  priceOverride: true,
+                },
+              },
             },
           },
         },
@@ -910,33 +1334,59 @@ export const ProductRepository = {
       products: products.map((p) => {
         const hasVariants = p.variants.length > 0;
         return {
-          id: p.id, productCode: p.productCode, name: p.name,
-          price: hasVariants ? Math.min(...p.variants.map((v) => Number(v.basePrice))) : Number(p.price ?? 0),
-          stock: p.stock, gender: p.gender, productType: p.productType, imageUrl: p.images[0]?.url ?? null, hasVariants,
+          id: p.id,
+          productCode: p.productCode,
+          name: p.name,
+          price: hasVariants
+            ? Math.min(...p.variants.map((v) => Number(v.basePrice)))
+            : Number(p.price ?? 0),
+          stock: p.stock,
+          gender: p.gender,
+          productType: p.productType,
+          imageUrl: p.images[0]?.url ?? null,
+          hasVariants,
           variants: p.variants.map((v: any) => {
             const basePrice = Number(v.basePrice);
-            const { amount, percent, name } = calculatePromo(p, v.id, basePrice);
-            
+            const { amount, percent, name, minPurchase, isConditional } = calculatePromo(
+              p,
+              v.id,
+              basePrice,
+            );
+
             // --- LOGIKA CERDAS: Hitung finalPrice untuk tiap SKU ---
             const skus = v.skus.map((s: any) => {
-                const skuBasePrice = s.priceOverride ? Number(s.priceOverride) : basePrice;
-                const skuFinalPrice = skuBasePrice * (1 - (percent / 100));
-                return {
-                    ...s,
-                    finalPrice: Math.round(skuFinalPrice)
-                };
+              const skuBasePrice = s.priceOverride
+                ? Number(s.priceOverride)
+                : basePrice;
+              // Jika conditional, finalPrice di catalog = skuBasePrice (jangan dipotong)
+              const skuFinalPrice = isConditional
+                ? skuBasePrice
+                : skuBasePrice * (1 - percent / 100);
+              return {
+                ...s,
+                finalPrice: Math.round(skuFinalPrice),
+              };
             });
 
+            // Jika conditional, finalPrice di catalog = basePrice (jangan dipotong)
+            const finalPrice = isConditional ? basePrice : (basePrice - amount);
+
             return {
-              id: v.id, variantCode: v.variantCode, color: v.color, basePrice,
-              comparisonPrice: v.comparisonPrice ? Number(v.comparisonPrice) : null,
-              additionalDiscount: amount, 
-              promoName: name, 
+              id: v.id,
+              variantCode: v.variantCode,
+              color: v.color,
+              basePrice,
+              comparisonPrice: v.comparisonPrice
+                ? Number(v.comparisonPrice)
+                : null,
+              additionalDiscount: amount, // Selalu berisi nilai diskon potensial!
+              promoName: name,
+              promoMinPurchase: minPurchase, // ✅ Tambah minPurchase
               promoDiscountPercent: percent, // Tambahkan persentase untuk frontend
-              finalPrice: basePrice - amount,
-              discountPercent: v.discountPercent, 
+              finalPrice,
+              discountPercent: v.discountPercent,
               images: v.images,
-              skus
+              skus,
             };
           }),
         };
@@ -945,43 +1395,7 @@ export const ProductRepository = {
     };
   },
 
-  async bulkUpdateStock(items: { id: string; stock: number }[], operatorId?: string) {
-    return await prisma.$transaction(async (tx) => {
-      const results = [];
-      for (const item of items) {
-        const sku = await tx.productSku.findUnique({
-          where: { id: item.id },
-          include: { variant: { select: { productId: true, color: true } } },
-        });
-        if (sku) {
-          const delta = item.stock - sku.stock;
-          if (delta === 0) continue;
-          const updated = await tx.productSku.update({ where: { id: item.id }, data: { stock: item.stock } });
-          const totalStock = await tx.productSku.aggregate({ where: { variant: { productId: sku.variant.productId } }, _sum: { stock: true } });
-          const newTotal = totalStock._sum.stock ?? 0;
-          await tx.product.update({ where: { id: sku.variant.productId }, data: { stock: newTotal } });
-          await tx.skuStockLog.create({
-            data: { skuId: sku.id, delta, currentStock: item.stock, size: sku.size, color: sku.variant.color, type: "ADJUSTMENT", notes: "Stok Opname Massal", operatorId: operatorId || null },
-          });
-          await tx.stockLog.create({
-            data: { productId: sku.variant.productId, delta, currentStock: newTotal, type: "ADJUSTMENT", notes: `Opname SKU ${sku.variant.color} - Ukuran ${sku.size}`, operatorId: operatorId || null },
-          });
-          results.push(updated);
-        } else {
-          const product = await tx.product.findUnique({ where: { id: item.id } });
-          if (!product) continue;
-          const delta = item.stock - product.stock;
-          if (delta === 0) continue;
-          const updated = await tx.product.update({ where: { id: item.id }, data: { stock: item.stock } });
-          await tx.stockLog.create({
-            data: { productId: item.id, delta, currentStock: item.stock, type: "ADJUSTMENT", notes: "Stok Opname Massal (Produk Langsung)", operatorId: operatorId || null },
-          });
-          results.push(updated);
-        }
-      }
-      return results;
-    });
-  },
+
   async bulkImport(products: any[], operatorId?: string) {
     const results = {
       success: 0,
@@ -1003,12 +1417,14 @@ export const ProductRepository = {
           for (const inputId of productData.categoryIds) {
             const trimmed = inputId.trim();
             // Cek apakah ini ID yang valid
-            const exists = allCategories.find(c => c.id === trimmed);
+            const exists = allCategories.find((c) => c.id === trimmed);
             if (exists) {
               resolvedCategoryIds.push(exists.id);
             } else {
               // Jika bukan ID, cari berdasarkan nama (case-insensitive)
-              const byName = allCategories.find(c => c.name.toLowerCase() === trimmed.toLowerCase());
+              const byName = allCategories.find(
+                (c) => c.name.toLowerCase() === trimmed.toLowerCase(),
+              );
               if (byName) resolvedCategoryIds.push(byName.id);
             }
           }
@@ -1018,9 +1434,11 @@ export const ProductRepository = {
         let resolvedTemplateId = productData.sizeTemplateId;
         if (resolvedTemplateId) {
           const trimmed = resolvedTemplateId.trim();
-          const exists = allTemplates.find(t => t.id === trimmed);
+          const exists = allTemplates.find((t) => t.id === trimmed);
           if (!exists) {
-            const byName = allTemplates.find(t => t.name.toLowerCase() === trimmed.toLowerCase());
+            const byName = allTemplates.find(
+              (t) => t.name.toLowerCase() === trimmed.toLowerCase(),
+            );
             if (byName) resolvedTemplateId = byName.id;
           }
         }
@@ -1029,15 +1447,34 @@ export const ProductRepository = {
           ...productData,
           categoryIds: resolvedCategoryIds,
           sizeTemplateId: resolvedTemplateId,
-          isActive: false, 
+          isActive: false,
           operatorId,
         });
         results.success++;
       } catch (error: any) {
         results.failed++;
+
+        let friendlyMessage = "Gagal memproses data produk";
+
+        if (error.code === "P2002") {
+          friendlyMessage = "Kode Produk ini sudah ada di database (Duplicate)";
+        } else if (error.code === "P2003") {
+          // Check if it's template or category
+          if (error.message && error.message.includes("size_template")) {
+            friendlyMessage = "Size Template tidak ditemukan di sistem";
+          } else if (error.message && error.message.includes("category")) {
+            friendlyMessage = "Kategori tidak ditemukan di sistem";
+          } else {
+            friendlyMessage = "Data referensi tidak valid atau tidak ditemukan";
+          }
+        } else if (error.message) {
+          // Extract just the last part of Prisma error if possible, or give generic
+          friendlyMessage = "Data tidak valid atau terjadi kesalahan server";
+        }
+
         results.errors.push({
           productCode: productData.productCode,
-          message: error.message,
+          message: friendlyMessage,
         });
       }
     }

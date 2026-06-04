@@ -69,8 +69,14 @@ export async function proxy(request: NextRequest) {
     if (!isRefreshValid) {
       // Benar-benar tidak punya akses sama sekali -> Login
       if (isApiRoute) {
+        console.warn(`[MIDDLEWARE] Sesi habis/Token tidak valid. TraceID: ${requestId}`);
         return NextResponse.json(
-          { success: false, message: "Sesi habis. Silakan login kembali." },
+          { 
+            success: false, 
+            message: "Sesi habis. Silakan login kembali.",
+            code: "UNAUTHORIZED",
+            traceId: requestId
+          },
           { status: 401 },
         );
       }
@@ -101,8 +107,14 @@ export async function proxy(request: NextRequest) {
 
   const isKasirApi = pathname.startsWith("/api/kasir");
   if (isKasirApi && role !== "ADMIN" && role !== "KASIR") {
+    console.warn(`[MIDDLEWARE] Akses Ditolak (Kasir API). Role: ${role}. TraceID: ${requestId}`);
     return NextResponse.json(
-      { success: false, message: "Akses ditolak." },
+      { 
+        success: false, 
+        message: "Akses ditolak.",
+        code: "FORBIDDEN",
+        traceId: requestId
+      },
       { status: 403 },
     );
   }
@@ -123,18 +135,34 @@ export async function proxy(request: NextRequest) {
     isShiftEndpoint;
 
   if (isAdminApi && role !== "ADMIN" && !isKasirAllowedApi) {
+    console.warn(`[MIDDLEWARE] Akses Ditolak (Admin API). Role: ${role}. TraceID: ${requestId}`);
     return NextResponse.json(
-      { success: false, message: "Akses ditolak." },
+      { 
+        success: false, 
+        message: "Akses ditolak.",
+        code: "FORBIDDEN",
+        traceId: requestId
+      },
       { status: 403 },
     );
   }
 
-  // Inject info ke header downstream agar controller tahu siapa yang request
-  const response = NextResponse.next();
+  // Inject info ke header downstream (API) dan upstream (Browser)
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-request-id", requestId);
+  requestHeaders.set("x-user-id", authPayload.id as string);
+  requestHeaders.set("x-user-username", authPayload.username as string);
+  requestHeaders.set("x-user-role", role);
+
+  const response = NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
+
+  // Kirim balik ke browser agar frontend bisa menampilkan Trace ID jika error
   response.headers.set("x-request-id", requestId);
-  response.headers.set("x-user-id", authPayload.id as string);
-  response.headers.set("x-user-username", authPayload.username as string);
-  response.headers.set("x-user-role", role);
+
   return response;
 }
 

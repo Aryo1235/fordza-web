@@ -47,6 +47,8 @@ export default function TransactionDetailPage() {
     );
   }
 
+  const totalDiscount = transaction.items?.reduce((sum: number, item: any) => sum + Number(item.discountAmount || 0), 0) || 0;
+
   return (
     <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-6">
       {/* Header / Nav */}
@@ -169,22 +171,53 @@ export default function TransactionDetailPage() {
                             {item.productCode}
                           </span>
                         </div>
+                        {Number(item.discountAmount) > 0 && (
+                          <div className="mt-2 flex items-center gap-1.5">
+                            <span className="inline-flex px-1.5 py-0.5 rounded-sm bg-red-100 text-red-700 text-[9px] font-bold tracking-wider uppercase border border-red-200">
+                              {item.promoName || "Promo Diskon"}
+                            </span>
+                          </div>
+                        )}
                       </td>
                       <td className="px-4 py-3 text-center font-bold text-stone-700">
                         {item.quantity}
                       </td>
                       <td className="px-4 py-3 text-right text-stone-600">
-                        Rp {item.priceAtSale.toLocaleString("id-ID")}
+                        {Number(item.discountAmount) > 0 ? (
+                          <div className="flex flex-col items-end">
+                            <span className="text-[10px] line-through text-stone-400">
+                              Rp {Number(item.basePriceAtSale).toLocaleString("id-ID")}
+                            </span>
+                            <span className="font-bold text-stone-800">
+                              Rp {(Number(item.basePriceAtSale) - (Number(item.discountAmount) / item.quantity)).toLocaleString("id-ID")}
+                            </span>
+                          </div>
+                        ) : item.gimmickPriceAtSale && Number(item.gimmickPriceAtSale) > Number(item.basePriceAtSale) ? (
+                          <div className="flex flex-col items-end">
+                            <span className="text-[10px] line-through text-stone-400">Rp {Number(item.gimmickPriceAtSale).toLocaleString("id-ID")}</span>
+                            <span>Rp {Number(item.basePriceAtSale).toLocaleString("id-ID")}</span>
+                          </div>
+                        ) : (
+                          <span>Rp {Number(item.basePriceAtSale).toLocaleString("id-ID")}</span>
+                        )}
                       </td>
                       <td className="px-4 py-3 text-right font-bold text-stone-900">
-                        Rp {(item.quantity * item.priceAtSale).toLocaleString("id-ID")}
+                        Rp {((item.quantity * Number(item.basePriceAtSale)) - Number(item.discountAmount)).toLocaleString("id-ID")}
                       </td>
                     </tr>
                   ))}
                 </tbody>
                 <tfoot className="bg-stone-50/50 border-t border-stone-100">
+                  {totalDiscount > 0 && (
+                    <tr>
+                      <td colSpan={3} className="px-4 py-2 pt-4 text-right text-stone-500 font-bold text-[10px]">TOTAL PROMO DISKON</td>
+                      <td className="px-4 py-2 pt-4 text-right font-bold text-red-600 text-sm">
+                        - Rp {totalDiscount.toLocaleString("id-ID")}
+                      </td>
+                    </tr>
+                  )}
                   <tr>
-                    <td colSpan={3} className="px-4 py-4 text-right text-stone-500 font-bold uppercase text-[10px]">Total Akhir</td>
+                    <td colSpan={3} className={cn("px-4 text-right text-stone-500 font-bold uppercase text-[10px]", totalDiscount > 0 ? "py-2" : "py-4")}>Total Akhir</td>
                     <td className="px-4 py-4 text-right font-black text-stone-900 text-lg">
                       Rp {transaction.totalPrice.toLocaleString("id-ID")}
                     </td>

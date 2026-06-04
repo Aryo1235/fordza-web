@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { BannerService } from "@/backend/services/banner.service";
+import { handleError } from "@/lib/error-handler";
 
 // GET /api/public/banners — Customer: lihat banner aktif
 export async function GET(req: Request) {
@@ -18,9 +19,6 @@ export async function GET(req: Request) {
       { status: 200 },
     );
   } catch (error: any) {
-    return NextResponse.json(
-      { success: false, message: error.message },
-      { status: 500 },
-    );
+    return await handleError(error);
   }
 }

@@ -8,19 +8,27 @@ import {
   getRefreshCookieConfig,
 } from "@/lib/auth";
 import { loginLimiter } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
+import { headers } from "next/headers";
+import { handleError } from "@/lib/error-handler";
 
 export async function POST(req: Request) {
+  const headerList = await headers();
+  const traceId = headerList.get("x-request-id") || "unknown";
+
   try {
     // Rate limiting (5 attempts per minute per IP)
     const ip = req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "unknown";
     const rateLimitResult = loginLimiter.check(5, ip);
 
     if (!rateLimitResult.success) {
+      logger.warn({ traceId, ip }, "Login rate limit exceeded");
       return NextResponse.json(
         {
           success: false,
           message: "Terlalu banyak percobaan login. Silakan coba lagi nanti.",
           retryAfter: rateLimitResult.reset,
+          traceId,
         },
         {
           status: 429,
@@ -39,7 +47,7 @@ export async function POST(req: Request) {
     // 1. Validasi input
     if (!username || !password) {
       return NextResponse.json(
-        { success: false, message: "Username dan password wajib diisi" },
+        { success: false, message: "Username dan password wajib diisi", traceId },
         { status: 400 },
       );
     }
@@ -48,8 +56,9 @@ export async function POST(req: Request) {
     const admin = await AdminService.findByUsername(username);
 
     if (!admin) {
+      logger.warn({ traceId, username, ip }, "Failed login attempt: User not found");
       return NextResponse.json(
-        { success: false, message: "Username atau password salah" },
+        { success: false, message: "Username atau password salah", traceId },
         { status: 401 },
       );
     }
@@ -58,8 +67,9 @@ export async function POST(req: Request) {
     const isPasswordValid = await verifyPassword(password, admin.password);
 
     if (!isPasswordValid) {
+      logger.warn({ traceId, username, ip }, "Failed login attempt: Wrong password");
       return NextResponse.json(
-        { success: false, message: "Username atau password salah" },
+        { success: false, message: "Username atau password salah", traceId },
         { status: 401 },
       );
     }
@@ -82,6 +92,7 @@ export async function POST(req: Request) {
           accessToken,
           refreshToken,
         },
+        traceId,
       },
       { status: 200 },
     );
@@ -89,12 +100,10 @@ export async function POST(req: Request) {
     response.cookies.set(getAccessCookieConfig(accessToken));
     response.cookies.set(getRefreshCookieConfig(refreshToken));
 
+    logger.info({ traceId, username, role: admin.role, ip }, "Admin/Kasir login successful");
+
     return response;
   } catch (error: any) {
-    console.error("Login Error:", error.message);
-    return NextResponse.json(
-      { success: false, message: "Terjadi kesalahan server" },
-      { status: 500 },
-    );
+    return handleError(error);
   }
 }

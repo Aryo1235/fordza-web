@@ -3,15 +3,20 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
 import { Toaster } from "sonner";
+import { ErrorBoundary } from "react-error-boundary";
+import { ErrorFallback } from "./ErrorBoundary";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
-  // Kita pakai useState agar QueryClient cuma di-instantiate sekali (singleton) per lifecycle client
   const [queryClient] = useState(
     () =>
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 60 * 1000, // 1 menit
+            staleTime: 60 * 1000,
+            retry: 2,
+            refetchOnWindowFocus: false,
+          },
+          mutations: {
             retry: 1,
           },
         },
@@ -19,9 +24,11 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <QueryClientProvider client={queryClient}>
-      {children}
-      <Toaster position="top-right" richColors />
-    </QueryClientProvider>
+    <ErrorBoundary FallbackComponent={ErrorFallback}>
+      <QueryClientProvider client={queryClient}>
+        {children}
+        <Toaster position="top-right" richColors />
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }

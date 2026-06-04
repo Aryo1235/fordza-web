@@ -25,7 +25,7 @@ import {
   type PendingVariant,
   pendingVariantToSkus,
 } from "@/features/variants";
-import { useAllCategoriesAdmin } from "@/features/categories";
+import { useCategoriesForPromo } from "@/features/categories";
 import { useSizeTemplatesAdmin } from "@/features/admin/size-templates";
 import { useCreateProduct } from "@/features/products";
 import { useRouter } from "next/navigation";
@@ -45,11 +45,11 @@ export default function NewProductPage() {
   const [files, setFiles] = useState<File[]>([]);
   const [pendingVariants, setPendingVariants] = useState<PendingVariant[]>([]);
 
-  const { data: categoriesData } = useAllCategoriesAdmin();
+  const { data: categoriesData } = useCategoriesForPromo();
   const { data: templatesData } = useSizeTemplatesAdmin();
   const categories = categoriesData?.data || [];
   const templates = templatesData?.data || [];
-
+  console.log("files state: ", files, setFiles);
   const {
     register,
     handleSubmit,
@@ -110,7 +110,7 @@ export default function NewProductPage() {
       return;
     }
 
-    // 🛑 3. VALIDASI BARU: Cek apakah ada varian yang belum diupload gambarnya
+    //  3. VALIDASI BARU: Cek apakah ada varian yang belum diupload gambarnya
     const variantWithoutImage = pendingVariants.find((v) => !v.image);
     if (variantWithoutImage) {
       toast.error(
@@ -492,9 +492,15 @@ export default function NewProductPage() {
             <div className="flex-1 flex flex-col ">
               <ImageUpload
                 images={previewImages}
-                onUpload={async (f) => setFiles((p) => [...p, f])}
-                onRemove={async (id) =>
-                  setFiles((p) => p.filter((f, i) => `${f.name}-${i}` !== id))
+                onUpload={async (newFile) =>
+                  setFiles((existingFiles) => [...existingFiles, newFile])
+                }
+                onRemove={async (targetId) =>
+                  setFiles((currentFiles) =>
+                    currentFiles.filter(
+                      (file, index) => `${file.name}-${index}` !== targetId,
+                    ),
+                  )
                 }
                 maxFiles={4}
                 className="flex-1"

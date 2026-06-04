@@ -52,4 +52,40 @@ export const PromoRepository = {
       where: { id },
     });
   },
+
+  async getProductsForPromoSelection(search?: string) {
+    const where: any = {
+      isActive: true,
+      deletedAt: null,
+    };
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: "insensitive" } },
+        { productCode: { contains: search, mode: "insensitive" } },
+      ];
+    }
+    return await prisma.product.findMany({
+      where,
+      select: {
+        id: true,
+        name: true,
+        productCode: true,
+      },
+      orderBy: { createdAt: "desc" },
+    });
+  },
+
+  async getCategoriesForPromoSelection() {
+    return await prisma.category.findMany({
+      where: {
+        isActive: true,
+        deletedAt: null,
+      },
+      select: {
+        id: true,
+        name: true,
+      },
+      orderBy: [{ order: "asc" }, { name: "asc" }],
+    });
+  },
 };

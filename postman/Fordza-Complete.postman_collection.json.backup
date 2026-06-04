@@ -1,0 +1,420 @@
+{
+  "info": {
+    "name": "Fordza API - Complete Collection",
+    "description": "Complete API collection for Fordza-Web E-Commerce & POS System\n\nIncludes:\n- All endpoints (Auth, Products, Categories, Banners, POS, Public, etc.)\n- Error scenarios (401, 400, 404, 429, 403)\n- Auto-save tokens\n- Test scripts\n\nVersion: 1.0.0\nLast Updated: 2026-05-20",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{access_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "🔐 Auth",
+      "item": [
+        {
+          "name": "✅ Login (Success)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has success true', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.success).to.be.true;",
+                  "});",
+                  "",
+                  "pm.test('Response contains tokens', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.data).to.have.property('accessToken');",
+                  "    pm.expect(response.data).to.have.property('refreshToken');",
+                  "});",
+                  "",
+                  "// Auto-save tokens to environment",
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.environment.set('access_token', response.data.accessToken);",
+                  "    pm.environment.set('refresh_token', response.data.refreshToken);",
+                  "    pm.environment.set('user_id', response.data.id);",
+                  "    pm.environment.set('user_role', response.data.role);",
+                  "    console.log('✅ Tokens saved to environment');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{admin_username}}\",\n  \"password\": \"{{admin_password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "auth", "login"]
+            },
+            "description": "Login dengan credentials admin default.\n\n**Success Response (200):**\n```json\n{\n  \"success\": true,\n  \"data\": {\n    \"id\": \"...\",\n    \"username\": \"admin\",\n    \"role\": \"ADMIN\",\n    \"accessToken\": \"...\",\n    \"refreshToken\": \"...\"\n  }\n}\n```"
+          }
+        },
+        {
+          "name": "❌ Login (Invalid Credentials)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 401', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "pm.test('Response has success false', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.success).to.be.false;",
+                  "});",
+                  "",
+                  "pm.test('Response contains error message', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('message');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"wrongpassword\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "auth", "login"]
+            },
+            "description": "Test error scenario: Invalid credentials\n\n**Error Response (401):**\n```json\n{\n  \"success\": false,\n  \"message\": \"Username atau password salah\"\n}\n```"
+          }
+        },
+        {
+          "name": "❌ Login (Rate Limit Exceeded)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 429', function () {",
+                  "    pm.response.to.have.status(429);",
+                  "});",
+                  "",
+                  "pm.test('Response contains rate limit message', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.message).to.include('Terlalu banyak');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"wrongpassword\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "auth", "login"]
+            },
+            "description": "Test error scenario: Rate limit exceeded (5 attempts per minute)\n\n**How to test:**\n1. Send this request 6 times rapidly\n2. 6th request will return 429\n\n**Error Response (429):**\n```json\n{\n  \"success\": false,\n  \"message\": \"Terlalu banyak percobaan login. Coba lagi dalam 1 menit.\"\n}\n```"
+          }
+        },
+        {
+          "name": "❌ Login (Validation Error)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('Response contains validation errors', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('error');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"\",\n  \"password\": \"\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "auth", "login"]
+            },
+            "description": "Test error scenario: Empty fields\n\n**Error Response (400):**\n```json\n{\n  \"success\": false,\n  \"message\": \"Validasi gagal\",\n  \"error\": \"Username dan password wajib diisi\"\n}\n```"
+          }
+        },
+        {
+          "name": "✅ Refresh Token (Success)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response contains new access token', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.data).to.have.property('accessToken');",
+                  "});",
+                  "",
+                  "// Auto-save new access token",
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.environment.set('access_token', response.data.accessToken);",
+                  "    console.log('✅ New access token saved');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refresh_token}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin/auth/refresh",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "auth", "refresh"]
+            },
+            "description": "Refresh access token menggunakan refresh token.\n\n**When to use:**\n- Access token expired (after 15 minutes)\n- Got 401 error on protected endpoints"
+          }
+        },
+        {
+          "name": "❌ Refresh Token (Invalid Token)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 401', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"invalid-token-here\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin/auth/refresh",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "auth", "refresh"]
+            },
+            "description": "Test error scenario: Invalid refresh token"
+          }
+        },
+        {
+          "name": "✅ Get Me (Success)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response contains user data', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.data).to.have.property('id');",
+                  "    pm.expect(response.data).to.have.property('username');",
+                  "    pm.expect(response.data).to.have.property('role');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/admin/auth/me",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "auth", "me"]
+            },
+            "description": "Get current user session info"
+          }
+        },
+        {
+          "name": "❌ Get Me (Unauthorized)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 401', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/admin/auth/me",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "auth", "me"]
+            },
+            "description": "Test error scenario: No access token provided"
+          }
+        },
+        {
+          "name": "✅ Logout (Success)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "// Clear tokens from environment",
+                  "if (pm.response.code === 200) {",
+                  "    pm.environment.set('access_token', '');",
+                  "    pm.environment.set('refresh_token', '');",
+                  "    console.log('✅ Tokens cleared from environment');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/admin/auth/logout",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "auth", "logout"]
+            },
+            "description": "Logout dan hapus semua tokens"
+          }
+        }
+      ],
+      "description": "Authentication endpoints dengan error scenarios"
+    },
+    {
+      "name": "🏥 Health",
+      "item": [
+        {
+          "name": "✅ Health Check",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Application is healthy', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.status).to.eql('healthy');",
+                  "    pm.expect(response.database).to.eql('connected');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/health",
+              "host": ["{{base_url}}"],
+              "path": ["api", "health"]
+            },
+            "description": "Health check endpoint untuk monitoring.\n\n**Use cases:**\n- Uptime monitoring\n- Load balancer health checks\n- CI/CD deployment verification"
+          }
+        }
+      ],
+      "description": "Health check endpoint (no auth required)"
+    }
+  ]
+}

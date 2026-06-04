@@ -1,7 +1,11 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from "next/server"; // trigger recompilation
 import { productSchema } from "@/features/products/schemas";
 import { ProductService } from "@/backend/services/products.service";
 import { uploadFileToS3, deleteFileFromS3 } from "@/actions/upload";
+import { handleError } from "@/lib/error-handler";
+import { logger } from "@/lib/logger";
+import { headers } from "next/headers";
+import { prisma } from "@/lib/prisma";
 
 // GET /api/admin/products — Admin: list semua produk (termasuk inactive)
 export async function GET(req: Request) {
@@ -26,15 +30,15 @@ export async function GET(req: Request) {
       { status: 200 },
     );
   } catch (error: any) {
-    return NextResponse.json(
-      { success: false, message: "Gagal mengambil data produk", error: error.message },
-      { status: 500 },
-    );
+    return await handleError(error);
   }
 }
 
 // POST /api/admin/products — Admin: buat produk baru
 export async function POST(req: Request) {
+  const headerList = await headers();
+  const traceId = headerList.get("x-request-id") || "unknown";
+
   const uploadedImages: { url: string; key: string }[] = [];
   const allUploadedKeys: string[] = [];
   let productId = "";
@@ -84,21 +88,64 @@ export async function POST(req: Request) {
     // Validasi Wajib Minimal 1 Varian
     if (!rawData.variants || rawData.variants.length === 0) {
       return NextResponse.json(
-        { success: false, message: "Minimal 1 varian warna wajib ditambahkan." },
-        { status: 400 },
+        {
+          success: false,
+          message: "Minimal 1 varian warna wajib ditambahkan",
+          code: "VALIDATION_ERROR",
+        },
+        { status: 400 }
       );
     }
 
     // 3. Validasi Zod
     const validation = productSchema.safeParse(rawData);
     if (!validation.success) {
+      logger.warn({ traceId, errors: validation.error.issues }, "Product validation failed");
       return NextResponse.json(
-        { success: false, message: "Validasi Gagal", errors: validation.error.flatten().fieldErrors },
-        { status: 400 },
+        {
+          success: false,
+          message: "Data produk tidak valid",
+          code: "VALIDATION_ERROR",
+          errors: validation.error.flatten().fieldErrors,
+          traceId,
+        },
+        { status: 400 }
       );
     }
 
     const validatedData = validation.data;
+    
+    // 3.1 Validasi Relasi ke Database Secara Manual (Dioptimasi dengan Promise.all)
+    const [templateExists, existingCategories] = await Promise.all([
+      validatedData.sizeTemplateId 
+        ? prisma.sizeTemplate.findUnique({ where: { id: validatedData.sizeTemplateId }, select: { id: true } })
+        : Promise.resolve(null),
+      
+      (validatedData.categoryIds && validatedData.categoryIds.length > 0)
+        ? prisma.category.count({ where: { id: { in: validatedData.categoryIds } } })
+        : Promise.resolve(0)
+    ]);
+
+    if (validatedData.sizeTemplateId && !templateExists) {
+      return NextResponse.json({
+        success: false,
+        message: "Data referensi tidak valid atau tidak ditemukan",
+        code: "INVALID_REFERENCE",
+        field: "sizeTemplateId",
+        traceId
+      }, { status: 400 });
+    }
+
+    if (validatedData.categoryIds && validatedData.categoryIds.length > 0 && existingCategories !== validatedData.categoryIds.length) {
+      return NextResponse.json({
+        success: false,
+        message: "Data referensi tidak valid atau tidak ditemukan",
+        code: "INVALID_REFERENCE",
+        field: "categoryIds",
+        traceId
+      }, { status: 400 });
+    }
+
     productId = crypto.randomUUID();
 
     // 4. Upload Gambar Produk Utama
@@ -162,6 +209,8 @@ export async function POST(req: Request) {
       operatorId,
     });
 
+    logger.info({ productId: product.id, productCode: product.productCode, operatorId }, "New product created successfully");
+
     return NextResponse.json(
       { success: true, message: "Produk berhasil dibuat", data: product },
       { status: 201 },
@@ -172,16 +221,6 @@ export async function POST(req: Request) {
       await Promise.all(allUploadedKeys.map((key) => deleteFileFromS3(key)));
     }
 
-    if (error.code === "P2025" || error.code === "P2003" || error.message.includes("tidak ditemukan")) {
-      return NextResponse.json(
-        { success: false, message: "ID Kategori atau Size Template tidak ditemukan.", detail: error.message },
-        { status: 404 },
-      );
-    }
-
-    return NextResponse.json(
-      { success: false, message: "Terjadi kesalahan server", error: error.message },
-      { status: 500 },
-    );
+    return handleError(error);
   }
 }

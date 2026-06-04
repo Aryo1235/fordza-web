@@ -318,7 +318,7 @@ model Transaction {
 model TransactionItem {
   id          String  @id @default(cuid())
   quantity    Int
-  priceAtSale Decimal @map("price_at_sale") @db.Decimal(12, 2)
+  basePriceAtSale Decimal @map("price_at_sale") @db.Decimal(12, 2)
   productName String  @map("product_name")
   productCode String? @map("product_code")
 
@@ -332,7 +332,7 @@ model TransactionItem {
   skuSize      String? @map("sku_size") // Snapshot ukuran
 
   // Snapshot harga gimmick & nama promo (untuk struk belanja)
-  comparisonPriceAtSale Decimal? @map("comparison_price_at_sale") @db.Decimal(12, 2)
+  gimmickPriceAtSale Decimal? @map("comparison_price_at_sale") @db.Decimal(12, 2)
   promoName             String?  @map("promo_name")
 
   variant ProductVariant? @relation(fields: [variantId], references: [id])
@@ -371,9 +371,9 @@ model StockLog {
 
 // --- 13. SKU STOCK LEDGER — Level SKU (Per Ukuran) ---
 model SkuStockLog {
-  id    String     @id @default(cuid())
-  skuId String     @map("sku_id")
-  sku   ProductSku @relation(fields: [skuId], references: [id])
+  id    String      @id @default(cuid())
+  skuId String?     @map("sku_id")
+  sku   ProductSku? @relation(fields: [skuId], references: [id], onDelete: SetNull)
 
   delta        Int // + untuk masuk, - untuk keluar
   currentStock Int    @map("current_stock")
@@ -410,9 +410,10 @@ model SkuSalesSummary {
   variantColor String @default("-") @map("variant_color")
   skuSize      String @default("-") @map("sku_size")
 
-  totalQty     Int     @default(0) @map("total_qty")
-  totalRevenue Decimal @default(0) @map("total_revenue") @db.Decimal(12, 2)
-  totalOrders  Int     @default(0) @map("total_orders")
+  totalQty      Int     @default(0) @map("total_qty")
+  totalRevenue  Decimal @default(0) @map("total_revenue") @db.Decimal(12, 2)
+  totalDiscount Decimal @default(0) @map("total_discount") @db.Decimal(12, 2)
+  totalOrders   Int     @default(0) @map("total_orders")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")

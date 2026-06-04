@@ -103,6 +103,47 @@ Content-Type: application/json
 
 Endpoints yang dapat diakses tanpa autentikasi.
 
+### **Health Check**
+
+#### **GET /api/health**
+Health check endpoint untuk monitoring aplikasi dan database connection.
+
+**Example Request:**
+```http
+GET /api/health
+```
+
+**Example Response (Healthy):**
+```json
+{
+  "status": "healthy",
+  "timestamp": "2026-05-20T09:00:00.000Z",
+  "uptime": 3600.5,
+  "database": "connected"
+}
+```
+
+**Example Response (Unhealthy):**
+```json
+{
+  "status": "unhealthy",
+  "timestamp": "2026-05-20T09:00:00.000Z",
+  "database": "disconnected",
+  "error": "Connection timeout"
+}
+```
+
+**Status Codes:**
+- **200:** Application healthy
+- **503:** Service unavailable (database disconnected)
+
+**Use Cases:**
+- Uptime monitoring
+- Load balancer health checks
+- CI/CD deployment verification
+
+---
+
 ### **1. Products**
 
 #### **GET /api/public/products**
@@ -877,34 +918,6 @@ Bulk import produk dari CSV.
 
 ---
 
-#### **PATCH /api/admin/products/bulk-stock**
-Bulk update stok produk/SKU.
-
-**Content-Type:** `application/json`
-
-**Request Body:**
-```json
-{
-  "items": [
-    { "id": "sku123...", "stock": 50 },
-    { "id": "sku456...", "stock": 30 }
-  ]
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Stok berhasil diupdate",
-  "data": {
-    "updated": 2
-  }
-}
-```
-
----
-
 #### **GET /api/admin/products/export**
 Export produk ke Excel.
 
@@ -1209,6 +1222,30 @@ Hapus banner (hard delete + hapus dari S3).
 
 ### **Testimonials Management**
 
+#### **GET /api/admin/testimonials/products**
+List produk minimalis (hanya `id` dan `name`) untuk dropdown/selection ketika admin membuat testimoni.
+
+**Query Parameters:**
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `search` | string | No | Cari produk berdasarkan nama |
+
+**Example Response:**
+```json
+{
+  "success": true,
+  "message": "Berhasil mengambil daftar produk untuk testimoni",
+  "data": [
+    {
+      "id": "cm123...",
+      "name": "Oxford Classic Black"
+    }
+  ]
+}
+```
+
+---
+
 #### **GET /api/admin/testimonials**
 List testimoni dengan filter.
 
@@ -1371,6 +1408,93 @@ List kasir saja (untuk dropdown).
 ---
 
 ### **Stock Management**
+
+#### **GET /api/admin/stock/opname**
+List produk beserta detail varian dan SKU untuk kebutuhan stock opname.
+
+**Query Parameters:**
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `search` | string | No | - | Cari berdasarkan nama atau kode produk |
+| `page` | number | No | 1 | Halaman |
+| `limit` | number | No | 10 | Items per halaman |
+
+**Example Response:**
+```json
+{
+  "success": true,
+  "message": "Berhasil mengambil daftar produk untuk stock opname",
+  "data": [
+    {
+      "id": "cm123...",
+      "productCode": "FRD-001",
+      "name": "Oxford Classic Black",
+      "variants": [
+        {
+          "id": "var123...",
+          "color": "Black",
+          "variantCode": "FRD-001-BLK",
+          "skus": [
+            {
+              "id": "sku123...",
+              "size": "40",
+              "stock": 10
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "meta": {
+    "totalItems": 48,
+    "totalPage": 5,
+    "currentPage": 1,
+    "limit": 10
+  }
+}
+```
+
+---
+
+#### **PATCH /api/admin/stock/opname**
+Bulk update stok SKU untuk stock opname.
+
+**Content-Type:** `application/json`
+
+**Request Body:**
+```json
+{
+  "items": [
+    { "id": "sku123...", "stock": 50 },
+    { "id": "sku456...", "stock": 30 }
+  ]
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Stok berhasil diperbarui secara massal",
+  "code": "SUCCESS",
+  "traceId": "c8b417e2-452f-41f2-901d-9be24a3505c2"
+}
+```
+
+---
+
+#### **GET /api/admin/stock/opname/export**
+Export data stock opname ke file Excel atau PDF.
+
+**Query Parameters:**
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `search` | string | No | - | Filter pencarian berdasarkan nama/kode produk |
+| `format` | string | No | excel | Format output (`excel` atau `pdf`) |
+
+**Response:** Binary file stream (Excel spreadsheet atau PDF document).
+
+---
 
 #### **GET /api/admin/stock/logs**
 List stock logs (product level).
@@ -1605,7 +1729,7 @@ List semua transaksi.
         {
           "productName": "Oxford Classic Black",
           "quantity": 1,
-          "priceAtSale": 680000
+          "basePriceAtSale": 680000
         }
       ],
       "createdAt": "2026-05-14T10:30:00.000Z"
@@ -1628,6 +1752,50 @@ Export transaksi ke Excel.
 ---
 
 ### **Promo Management**
+
+#### **GET /api/admin/promo/products**
+List produk minimalis (hanya `id`, `name`, dan `productCode`) untuk dropdown/selection target promo.
+
+**Query Parameters:**
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `search` | string | No | Cari produk berdasarkan nama atau kode |
+
+**Example Response:**
+```json
+{
+  "success": true,
+  "message": "Berhasil mengambil daftar produk untuk promo",
+  "data": [
+    {
+      "id": "cm123...",
+      "name": "Oxford Classic Black",
+      "productCode": "FRD-001"
+    }
+  ]
+}
+```
+
+---
+
+#### **GET /api/admin/promo/categories**
+List kategori aktif minimalis (hanya `id` dan `name`) untuk dropdown/selection target promo.
+
+**Example Response:**
+```json
+{
+  "success": true,
+  "message": "Berhasil mengambil daftar kategori untuk promo",
+  "data": [
+    {
+      "id": "cat123...",
+      "name": "Formal"
+    }
+  ]
+}
+```
+
+---
 
 #### **GET /api/admin/promo**
 List semua promo.
@@ -1807,9 +1975,9 @@ Checkout transaksi baru.
       "variantId": "var123...",
       "skuId": "sku123...",
       "quantity": 1,
-      "priceAtSale": 680000,
+      "basePriceAtSale": 680000,
       "discountAmount": 170000,
-      "comparisonPriceAtSale": null,
+      "gimmickPriceAtSale": null,
       "promoName": "Diskon 20% Sepatu Formal"
     }
   ],
@@ -1932,5 +2100,6 @@ Verify admin PIN untuk void transaction.
 
 ---
 
-**Last Updated:** 2026-05-14  
+**Last Updated:** 2026-06-05  
 **Version:** 1.0.0
+

@@ -4,11 +4,11 @@ export const CreatePromoSchema = z.object({
   name: z.string().min(1, "Nama promo wajib diisi").max(255),
   description: z.string().optional(),
   type: z.enum(["PERCENTAGE", "NOMINAL"], {
-    errorMap: () => ({ message: "Tipe harus PERCENTAGE atau NOMINAL" }),
+    message: "Tipe harus PERCENTAGE atau NOMINAL"
   }),
   value: z.number().positive("Nilai harus lebih dari 0"),
   targetType: z.enum(["GLOBAL", "CATEGORY", "PRODUCT", "VARIANT"], {
-    errorMap: () => ({ message: "Target type tidak valid" }),
+    message: "Target type tidak valid"
   }),
   targetIds: z.array(z.string()).default([]),
   minPurchase: z.number().min(0).default(0),

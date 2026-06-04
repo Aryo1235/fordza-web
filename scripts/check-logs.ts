@@ -18,7 +18,7 @@ async function main() {
   console.log("Total logs in db:", count);
 
   logs.forEach((log, idx) => {
-    console.log(`${idx + 1}. [${log.createdAt.toISOString()}] Product: ${log.sku.variant.product.name} | Variant: ${log.sku.variant.color} | Size: ${log.sku.size} | Type: ${log.type} | Stok: ${log.currentStock} `);
+    console.log(`${idx + 1}. [${log.createdAt.toISOString()}] Product: ${log.sku?.variant?.product?.name || 'N/A'} | Variant: ${log.sku?.variant?.color || 'N/A'} | Size: ${log.sku?.size || 'N/A'} | Type: ${log.type} | Stok: ${log.currentStock} `);
   });
 }
 

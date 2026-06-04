@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useAllCategoriesAdmin } from "@/features/categories";
+import { useCategoriesForPromo } from "@/features/categories";
 import { useSizeTemplatesAdmin } from "@/features/admin/size-templates";
 import { Package, Save, Loader2, ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -45,12 +45,12 @@ export default function EditProductPage({
   const { id } = use(params);
   const router = useRouter();
 
-  const { data: product, isLoading: isFetching } = useProduct(id);
+  const { data: product, isLoading: isFetching, isError, error: fetchError } = useProduct(id);
   const updateMutation = useUpdateProduct();
   const addImageMutation = useAddProductImage();
   const delImageMutation = useDeleteProductImage();
 
-  const { data: categoriesData } = useAllCategoriesAdmin();
+  const { data: categoriesData } = useCategoriesForPromo();
   const { data: templatesData } = useSizeTemplatesAdmin();
   const categories = categoriesData?.data || [];
   const templates = templatesData?.data || [];
@@ -61,11 +61,17 @@ export default function EditProductPage({
 
     const catIds = Array.isArray(product.categories)
       ? product.categories
-          .map((c: any) => c.category?.id || c.categoryId || (typeof c === 'string' ? c : null))
+          .map(
+            (c: any) =>
+              c.category?.id ||
+              c.categoryId ||
+              (typeof c === "string" ? c : null),
+          )
           .filter(Boolean)
       : [];
 
-    const stId = product.detail?.sizeTemplateId || product.detail?.sizeTemplate?.id || "";
+    const stId =
+      product.detail?.sizeTemplateId || product.detail?.sizeTemplate?.id || "";
 
     return {
       productCode: product.productCode || "",
@@ -73,8 +79,9 @@ export default function EditProductPage({
       shortDescription: product.shortDescription || "",
       description: product.detail?.description || "",
       productType: (product.productType?.toLowerCase() as any) || "shoes",
-      gender: product.gender 
-        ? (product.gender.charAt(0).toUpperCase() + product.gender.slice(1).toLowerCase() as any) 
+      gender: product.gender
+        ? ((product.gender.charAt(0).toUpperCase() +
+            product.gender.slice(1).toLowerCase()) as any)
         : "Unisex",
       material: product.detail?.material || "",
       outsole: product.detail?.outsole || "",
@@ -146,23 +153,32 @@ export default function EditProductPage({
 
   const handleRemoveImage = async (imageId: string) => {
     try {
-      const imageToDelete = product?.images.find((img: any) => img.id === imageId);
-      
+      const imageToDelete = product?.images.find(
+        (img: any) => img.id === imageId,
+      );
+
       if (imageToDelete) {
         // 1. Panggil mutasi hapus di Database (Prisma)
         await delImageMutation.mutateAsync({ productId: id, imageId });
 
         // 2. Panggil fungsi hapus di S3
         // Key asli disimpan di DB, jika tidak ada fallback ke URL parsing
-        const fileKey = imageToDelete.key || imageToDelete.url.split(`${process.env.NEXT_PUBLIC_STORAGE_URL}/`).pop();
+        const fileKey =
+          imageToDelete.key ||
+          imageToDelete.url
+            .split(`${process.env.NEXT_PUBLIC_STORAGE_URL}/`)
+            .pop();
         if (fileKey) {
           await deleteFileFromS3(fileKey);
         }
-        
+
         toast.success("Gambar berhasil dihapus");
       }
     } catch (error: any) {
-      const msg = error?.response?.data?.message || error?.message || "Gagal menghapus gambar";
+      const msg =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Gagal menghapus gambar";
       toast.error(msg);
     }
   };
@@ -192,16 +208,49 @@ export default function EditProductPage({
     );
   };
 
-  // Loading terintegrasi: Tunggu Produk, Kategori, dan Template
-  const isInitialLoading = isFetching || !product || !categoriesData || !templatesData;
+  // Loading terintegrasi: Tunggu Fetching Selesai
+  const isInitialLoading = isFetching;
 
   if (isInitialLoading) {
     return (
       <div className="flex h-[60vh] flex-col items-center justify-center gap-4">
         <Loader2 className="h-10 w-10 animate-spin text-[#3C3025]" />
         <p className="text-sm font-medium text-stone-500 animate-pulse">
-           Menyiapkan data produk & referensi...
+          Menyiapkan data produk & referensi...
         </p>
+      </div>
+    );
+  }
+
+  // JIKA ERROR (Misal: 404 Not Found)
+  if (isError || !product) {
+    const errorData = (fetchError as any)?.response?.data;
+    return (
+      <div className="flex h-[80vh] flex-col items-center justify-center gap-6 p-6 text-center">
+        <div className="bg-red-50 p-6 rounded-full">
+          <Package className="h-16 w-16 text-red-500" />
+        </div>
+        <div className="space-y-2">
+          <h2 className="text-2xl font-bold text-stone-900">
+            {errorData?.message || "Produk tidak ditemukan"}
+          </h2>
+          <p className="text-stone-500 max-w-md mx-auto">
+            Kami tidak dapat menemukan data produk dengan ID tersebut. Pastikan
+            ID benar atau produk belum dihapus.
+          </p>
+          {errorData?.traceId && (
+            <p className="text-[10px] font-mono text-stone-400 mt-4">
+              Trace ID: {errorData.traceId}
+            </p>
+          )}
+        </div>
+        <Button
+          variant="outline"
+          onClick={() => router.push("/dashboard/products")}
+          className="mt-4"
+        >
+          <ChevronLeft className="h-4 w-4 mr-2" /> Kembali ke Daftar Produk
+        </Button>
       </div>
     );
   }
@@ -229,7 +278,7 @@ export default function EditProductPage({
       {Object.keys(errors).length > 0 && (
         <div className="p-4 bg-red-50 border border-red-200 rounded-xl space-y-1">
           <p className="text-sm font-bold text-red-600 flex items-center gap-2">
-             Ada kesalahan pada form:
+            Ada kesalahan pada form:
           </p>
           <ul className="list-disc list-inside text-xs text-red-500">
             {Object.entries(errors).map(([key, err]: [string, any]) => (
@@ -248,7 +297,7 @@ export default function EditProductPage({
                 Identitas & Spesifikasi
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                 <div className="space-y-1.5">
+                <div className="space-y-1.5">
                   <Label className="text-xs font-semibold">Nama Produk *</Label>
                   <Input {...register("name")} className="bg-stone-50/30" />
                   {errors.name && (
@@ -290,7 +339,7 @@ export default function EditProductPage({
                   <Label className="text-[10px] font-bold uppercase text-stone-400">
                     Kategori
                   </Label>
-                   <Controller
+                  <Controller
                     control={control}
                     name="categoryIds"
                     render={({ field }) => (
@@ -306,7 +355,10 @@ export default function EditProductPage({
                           <SelectContent>
                             {categories.map((c: any) => {
                               if (field.value?.includes(c.id)) {
-                                console.log("✅ Match Found for Category:", c.name);
+                                console.log(
+                                  "✅ Match Found for Category:",
+                                  c.name,
+                                );
                               }
                               return (
                                 <SelectItem key={c.id} value={c.id}>
@@ -394,7 +446,10 @@ export default function EditProductPage({
                           <SelectContent>
                             {templates.map((t: any) => {
                               if (field.value === t.id) {
-                                console.log("✅ Match Found for Template:", t.name);
+                                console.log(
+                                  "✅ Match Found for Template:",
+                                  t.name,
+                                );
                               }
                               return (
                                 <SelectItem key={t.id} value={t.id}>
@@ -416,7 +471,7 @@ export default function EditProductPage({
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                 <div className="space-y-1.5">
+                <div className="space-y-1.5">
                   <Label className="text-[10px] uppercase font-bold text-stone-400">
                     Material
                   </Label>
@@ -437,7 +492,11 @@ export default function EditProductPage({
                   <Label className="text-[10px] uppercase font-bold text-stone-400">
                     Insole
                   </Label>
-                  <Input {...register("insole")} className="h-10" placeholder="Cth: Memory Foam / EVA" />
+                  <Input
+                    {...register("insole")}
+                    className="h-10"
+                    placeholder="Cth: Memory Foam / EVA"
+                  />
                 </div>
               </div>
 
@@ -445,9 +504,7 @@ export default function EditProductPage({
                 {["isNew", "isBestseller", "isPopular", "isActive"].map(
                   (key) => (
                     <div key={key} className="space-y-1">
-                      <div
-                        className="flex items-center justify-between p-2 rounded-lg bg-stone-50 border"
-                      >
+                      <div className="flex items-center justify-between p-2 rounded-lg bg-stone-50 border">
                         <Label className="text-[9px] font-bold uppercase text-stone-500">
                           {key.replace("is", "")}
                         </Label>
@@ -528,6 +585,15 @@ export default function EditProductPage({
             Auto Save
           </Badge>
         </div>
+        <div className="mb-5 rounded-xl border border-blue-100 bg-blue-50/60 px-4 py-3 text-xs text-blue-900">
+          <p className="font-semibold">
+            Alur simpan varian terpisah dari produk.
+          </p>
+          <p className="mt-1 text-[11px] text-blue-700">
+            Simpan perubahan di panel varian langsung dari kartu varian. Tombol
+            paling bawah hanya untuk data inti produk.
+          </p>
+        </div>
         {/* VARIANT MANAGER AMAN DI LUAR FORM UTAMA */}
         <VariantManager
           productId={id}
@@ -552,7 +618,7 @@ export default function EditProductPage({
           {updateMutation.isPending && (
             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
           )}
-          <Save className="w-4 h-4 mr-2" /> Simpan Perubahan Utama
+          <Save className="w-4 h-4 mr-2" /> Simpan Data Produk
         </Button>
       </div>
     </div>

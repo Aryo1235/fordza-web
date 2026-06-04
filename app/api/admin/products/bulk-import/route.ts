@@ -1,13 +1,17 @@
 import { NextResponse } from "next/server";
 import { ProductService } from "@/backend/services/products.service";
+import { handleError } from "@/lib/error-handler";
+import { headers } from "next/headers";
 
 export async function POST(req: Request) {
   try {
+    const headerList = await headers();
+    const traceId = headerList.get("x-request-id") || "unknown";
     const products = await req.json();
 
     if (!products || !Array.isArray(products)) {
       return NextResponse.json(
-        { success: false, message: "Data produk (array) wajib ada" },
+        { success: false, message: "Data produk (array) wajib ada", code: "VALIDATION_ERROR", traceId },
         { status: 400 }
       );
     }
@@ -16,16 +20,16 @@ export async function POST(req: Request) {
     
     const results = await ProductService.bulkImport(products, operatorId);
 
+    const code = results.failed > 0 ? "PARTIAL_SUCCESS" : "SUCCESS";
+
     return NextResponse.json({
       success: true,
       message: "Proses import selesai",
+      code,
+      traceId,
       data: results
     });
   } catch (error: any) {
-    console.error("POST /api/admin/products/bulk-import error:", error.message);
-    return NextResponse.json(
-      { success: false, message: "Terjadi kesalahan server", error: error.message },
-      { status: 500 }
-    );
+    return await handleError(error);
   }
 }

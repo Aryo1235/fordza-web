@@ -9,10 +9,10 @@ interface TransactionItem {
   productName: string;
   productCode?: string | null;
   quantity: number;
-  priceAtSale: number;
+  basePriceAtSale: number;
   discountAmount: number;
   promoName?: string | null;
-  comparisonPriceAtSale?: number | null;
+  gimmickPriceAtSale?: number | null;
   variantColor?: string | null;
   skuSize?: string | null;
 }
@@ -91,8 +91,8 @@ export default function InvoiceModal({ transaction, onClose }: InvoiceModalProps
     doc.setFont("helvetica", "normal");
 
     for (const item of (transaction.items || [])) {
-      const netPrice = item.priceAtSale - item.discountAmount;
-      const gimmick = item.comparisonPriceAtSale || item.priceAtSale;
+      const netPrice = item.basePriceAtSale - item.discountAmount;
+      const gimmick = item.gimmickPriceAtSale || item.basePriceAtSale;
       const hasGimmick = gimmick > netPrice;
 
       // 1. Nama Produk
@@ -139,8 +139,8 @@ export default function InvoiceModal({ transaction, onClose }: InvoiceModalProps
 
     // Total Hemat (Total Selisih dari Gimmick)
     const totalSavings = (transaction.items || []).reduce((sum, item) => {
-      const netPrice = item.priceAtSale - item.discountAmount;
-      const gimmick = item.comparisonPriceAtSale || item.priceAtSale;
+      const netPrice = item.basePriceAtSale - item.discountAmount;
+      const gimmick = item.gimmickPriceAtSale || item.basePriceAtSale;
       return sum + ((gimmick - netPrice) * item.quantity);
     }, 0);
 
@@ -221,8 +221,8 @@ export default function InvoiceModal({ transaction, onClose }: InvoiceModalProps
 
             <div className="border-t border-dashed border-stone-300 pt-2 mb-2">
               {transaction.items?.map((item) => {
-                  const netPrice = item.priceAtSale - item.discountAmount;
-                  const gimmick = item.comparisonPriceAtSale || item.priceAtSale;
+                  const netPrice = item.basePriceAtSale - item.discountAmount;
+                  const gimmick = item.gimmickPriceAtSale || item.basePriceAtSale;
                   const hasGimmick = gimmick > netPrice;
 
                   return (
@@ -277,8 +277,8 @@ export default function InvoiceModal({ transaction, onClose }: InvoiceModalProps
               {/* Grand Saving Display (Gimmick based) */}
               {(() => {
                 const totalSavings = (transaction.items || []).reduce((sum, item) => {
-                  const netPrice = item.priceAtSale - item.discountAmount;
-                  const gimmick = item.comparisonPriceAtSale || item.priceAtSale;
+                  const netPrice = item.basePriceAtSale - item.discountAmount;
+                  const gimmick = item.gimmickPriceAtSale || item.basePriceAtSale;
                   return sum + ((gimmick - netPrice) * item.quantity);
                 }, 0);
                 

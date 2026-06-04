@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useTestimonialsAdmin, useUpdateTestimonial, useDeleteTestimonial, useCreateTestimonial } from "@/features/testimonials";
-import { useProductsAdmin } from "@/features/products";
+import { useProductsForTestimonials } from "@/features/products";
 import { DataTable } from "@/components/shared/DataTable";
 import { PageHeader } from "@/components/layout/admin/PageHeader";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
@@ -33,7 +33,7 @@ export default function TestimonialsPage() {
 
   const { data, isLoading } = useTestimonialsAdmin(page, limit, search);
   // Fetch products for dropdown - Only when modal is open (Optimization)
-  const { data: productsData } = useProductsAdmin({ page: 1, limit: 100 }, isAddOpen);
+  const { data: productsData } = useProductsForTestimonials(undefined, isAddOpen);
   
   const createMutation = useCreateTestimonial();
   const updateMutation = useUpdateTestimonial();

@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { StockRepository } from "@/backend/repositories/stock.repo";
+import { handleError } from "@/lib/error-handler";
+import { headers } from "next/headers";
 
 export async function GET(req: Request) {
   try {
@@ -22,6 +24,9 @@ export async function GET(req: Request) {
 
     const totalPages = Math.ceil(result.total / limit);
 
+    const headerList = await headers();
+    const traceId = headerList.get("x-request-id") || "unknown";
+
     return NextResponse.json({
       success: true,
       data: result.logs,
@@ -31,11 +36,9 @@ export async function GET(req: Request) {
         limit,
         totalPages,
       },
+      traceId,
     });
   } catch (error: any) {
-    return NextResponse.json(
-      { success: false, message: error.message },
-      { status: 500 }
-    );
+    return await handleError(error);
   }
 }

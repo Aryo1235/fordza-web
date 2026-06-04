@@ -1,4 +1,5 @@
 import { ShiftRepository } from "@/backend/repositories/shift.repo";
+import { AppError } from "@/lib/error-handler";
 
 export const ShiftService = {
   async openShift(adminId: string, startingCash: number, notes?: string) {
@@ -6,7 +7,7 @@ export const ShiftService = {
     const existingOpenShift = await ShiftRepository.findOpenShiftByAdmin(adminId);
     
     if (existingOpenShift) {
-      throw new Error("Kasir ini masih memiliki shift yang terbuka. Harap tutup shift sebelumnya.");
+      throw new AppError("Kasir ini masih memiliki shift yang terbuka. Harap tutup shift sebelumnya.", 409, "CONFLICT");
     }
 
     // 2. Eksekusi Pembukaan
@@ -26,7 +27,7 @@ export const ShiftService = {
     const currentShift = await ShiftRepository.findOpenShiftByAdmin(adminId);
     
     if (!currentShift) {
-        throw new Error("Tidak ada shift aktif yang ditemukan. Anda belum membuka shift.");
+        throw new AppError("Tidak ada shift aktif yang ditemukan. Anda belum membuka shift.", 400, "BAD_REQUEST");
     }
 
     // 2. Kalkulasi Sistem (Expected Cash) = Modal Awal + Total Hasil Penjualan

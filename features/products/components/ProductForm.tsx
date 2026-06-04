@@ -21,7 +21,7 @@ import { Loader2 } from "lucide-react";
 import { formatNumber, parseNumber } from "@/lib/utils";
 
 // Import hooks dari feature lain
-import { useAllCategoriesAdmin } from "@/features/categories";
+import { useCategoriesForPromo } from "@/features/categories";
 import { useSizeTemplatesAdmin } from "@/features/admin/size-templates";
 
 // Import schema & types dari feature sendiri
@@ -67,7 +67,7 @@ export function ProductForm({ initialData, onSubmit, isLoading, submitLabel }: P
   });
 
   // Fetch Kategori & Templates menggunakan hooks resmi
-  const { data: categoriesData } = useAllCategoriesAdmin();
+  const { data: categoriesData } = useCategoriesForPromo();
   const { data: templatesData } = useSizeTemplatesAdmin();
 
   const categories = categoriesData?.data || [];

@@ -7,6 +7,8 @@ import {
   REFRESH_COOKIE_NAME,
 } from "@/lib/auth";
 import { refreshLimiter } from "@/lib/rate-limit";
+import { handleError } from "@/lib/error-handler";
+import { logger } from "@/lib/logger";
 
 // POST /api/admin/auth/refresh — Dapat access token baru pakai refresh token
 export async function POST(req: Request) {
@@ -16,6 +18,7 @@ export async function POST(req: Request) {
     const rateLimitResult = refreshLimiter.check(10, ip);
 
     if (!rateLimitResult.success) {
+      logger.warn({ ip }, "Refresh rate limit exceeded");
       return NextResponse.json(
         {
           success: false,
@@ -95,12 +98,10 @@ export async function POST(req: Request) {
     // Set cookie baru
     response.cookies.set(getAccessCookieConfig(newAccessToken));
 
+    logger.info({ username: payload.username, ip }, "Access token refreshed successfully");
+
     return response;
   } catch (error: any) {
-    console.error("Refresh Token Error:", error.message);
-    return NextResponse.json(
-      { success: false, message: "Terjadi kesalahan server" },
-      { status: 500 },
-    );
+    return handleError(error);
   }
 }

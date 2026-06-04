@@ -1,0 +1,42 @@
+flowchart TD
+    Mulai([Mulai]) --> DashboardWeb[Dashboard Website]
+    DashboardWeb --> RegAkun[Registrasi akun user]
+    RegAkun --> CekReg{Belum \nRegistrasi?}
+    CekReg -- Tidak --> DashboardWeb
+    
+    CekReg -- Ya --> InputCreds[/Masukan Username & \nPassword/]
+    InputCreds --> CekAdmin{User = \nAdmin?}
+    
+    %% Admin Flow
+    CekAdmin -- Ya --> DashAdmin[Dashboard Admin]
+    DashAdmin --> DataProduk[Data Sepatu & Varian]
+    DataProduk --> DataKategori[Data Kategori & Promo]
+    DataKategori --> DataUser[Data Kasir & Customer]
+    DataUser --> TransaksiAdmin[Transaksi]
+    TransaksiAdmin --> LaporanAdmin[Laporan]
+    LaporanAdmin --> Selesai([Selesai])
+    
+    CekAdmin -- Tidak --> CekKasir{User = \nKasir?}
+    
+    %% Kasir Flow
+    CekKasir -- Ya --> DashKasir[Dashboard Kasir POS]
+    DashKasir --> Shift[Buka / Tutup Shift]
+    Shift --> PilihProdukKasir[Pilih / Scan Produk]
+    PilihProdukKasir --> TransaksiKasir[Transaksi]
+    TransaksiKasir --> PembayaranKasir[Pembayaran]
+    PembayaranKasir --> Selesai
+    
+    CekKasir -- Tidak --> CekCustomer{User = \nCustomer?}
+    
+    %% Customer Flow (Penyewa pada contoh Anda)
+    CekCustomer -- Ya --> DashCust[Katalog Produk]
+    DashCust --> Sepatu[Sepatu]
+    Sepatu --> CekStok{Tersedia / \nTidak Tersedia?}
+    
+    CekStok -- Tersedia --> Detail[Detail & Rekomendasi KNN]
+    Detail --> TransaksiCust[Transaksi]
+    TransaksiCust --> PembayaranCust[Pembayaran]
+    PembayaranCust --> Selesai
+    
+    CekStok -- Tidak Tersedia --> Batal[Batal]
+    Batal --> Selesai

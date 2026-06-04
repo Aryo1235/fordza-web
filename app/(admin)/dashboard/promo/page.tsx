@@ -45,8 +45,8 @@ import {
   PromoTarget,
   PromoType
 } from "@/features/promo";
-import { useAllCategoriesAdmin } from "@/features/categories";
-import { useProductsAdmin } from "@/features/products";
+import { useCategoriesForPromo } from "@/features/categories";
+import { useProductsForPromo } from "@/features/products";
 import { useVariantsAdminSearch } from "@/features/variants";
 import { MultiSelectComboBox } from "@/components/shared/MultiSelectComboBox";
 import { DatePicker } from "@/components/ui/date-picker";
@@ -59,12 +59,9 @@ export default function PromoPage() {
 
   // ✅ Hooks Pattern
   const { data: promos = [], isLoading } = usePromosAdmin();
-  const { data: productData, isLoading: isProductsLoading } = useProductsAdmin({ 
-    search: productSearch, 
-    limit: 50
-  });
+  const { data: productData, isLoading: isProductsLoading } = useProductsForPromo(productSearch);
   const { data: variantData, isLoading: isVariantsLoading } = useVariantsAdminSearch(variantSearch);
-  const { data: categoryData, isLoading: isCategoriesLoading } = useAllCategoriesAdmin();
+  const { data: categoryData, isLoading: isCategoriesLoading } = useCategoriesForPromo();
   
   const createMutation = useCreatePromo();
   const updateMutation = useUpdatePromo();
@@ -534,7 +531,7 @@ export default function PromoPage() {
                     value={formData.minPurchase}
                     onChange={(e) => setFormData(prev => ({ ...prev, minPurchase: e.target.value }))}
                   />
-                  <p className="text-[10px] text-muted-foreground italic">*Fitur minimal belanja akan diterapkan di tahap optimasi POS berikutnya.</p>
+                  <p className="text-[10px] text-green-600 font-semibold italic">*Fitur minimal belanja kini aktif sepenuhnya di sistem POS Kasir Desktop & Mobile.</p>
                 </div>
               </div>
             </div>

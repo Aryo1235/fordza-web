@@ -42,7 +42,6 @@ export function DatePicker({ date, setDate, placeholder = "Pilih tanggal", class
           mode="single"
           selected={date}
           onSelect={setDate}
-      
         />
       </PopoverContent>
     </Popover>

@@ -21,6 +21,8 @@
 import { TransactionRepository } from "@/backend/repositories/transaction.repo";
 import { AdminService } from "@/backend/services/admin.service";
 import { ShiftRepository } from "@/backend/repositories/shift.repo";
+import { prisma } from "@/lib/prisma";
+import { AppError } from "@/lib/error-handler";
 
 const DISCOUNT_AUTH_THRESHOLD = 300000;
 
@@ -43,7 +45,7 @@ export const TransactionService = {
       variantId?: string | null;
       skuId?: string | null;
       promoName?: string | null;
-      comparisonPriceAtSale?: number | null;
+      gimmickPriceAtSale?: number | null;
     }[];
     amountPaid: number;
     customerName?: string;
@@ -71,12 +73,46 @@ export const TransactionService = {
     ]);
 
     // ✅ KEPUTUSAN BISNIS #2: Validasi stok & hitung total
+    // STEP 1: Hitung subtotal dulu (tanpa discount) untuk cek minPurchase
+    let subtotalBeforeDiscount = 0;
+    
+    for (const item of items) {
+      const dbProduct = dbProducts.find((p) => p.id === item.productId);
+      if (!dbProduct) throw new AppError(`Produk tidak ditemukan: ${item.productId}`, 404, "NOT_FOUND");
+
+      let price: number;
+      if (item.skuId) {
+        const dbSku = dbSkus.find((s) => s.id === item.skuId);
+        if (!dbSku) throw new AppError(`SKU tidak ditemukan: ${item.skuId}`, 404, "NOT_FOUND");
+        price = Number(dbSku.priceOverride ?? dbSku.variant.basePrice);
+      } else {
+        price = Number(dbProduct.price ?? 0);
+      }
+      
+      subtotalBeforeDiscount += price * item.quantity;
+    }
+
+    console.log("💰 [Checkout] Subtotal Before Discount:", subtotalBeforeDiscount);
+
+    // STEP 2: Get active promos untuk re-calculate discount
+    const { PromoRepository } = await import("@/backend/repositories/promo.repo");
+    const activePromos = await PromoRepository.getActive();
+    
+    console.log("🎁 [Checkout] Active Promos:", activePromos.map(p => ({
+      name: p.name,
+      type: p.type,
+      value: p.value,
+      targetType: p.targetType,
+      minPurchase: p.minPurchase,
+    })));
+
+    // STEP 3: Validasi stok & hitung total dengan discount yang di-calculate ulang
     let totalPrice = 0;
     const validatedItems: {
       productId: string;
       productCode: string;
       quantity: number;
-      priceAtSale: number;
+      basePriceAtSale: number;
       productName: string;
       discountAmount: number;
       variantId?: string | null;
@@ -84,17 +120,17 @@ export const TransactionService = {
       skuId?: string | null;
       skuSize?: string | null;
       promoName?: string | null;
-      comparisonPriceAtSale?: number | null;
+      gimmickPriceAtSale?: number | null;
     }[] = [];
 
     let totalDiscount = 0;
     for (const item of items) {
       const dbProduct = dbProducts.find((p) => p.id === item.productId);
       if (!dbProduct)
-        throw new Error(`Produk tidak ditemukan: ${item.productId}`);
+        throw new AppError(`Produk tidak ditemukan: ${item.productId}`, 404, "NOT_FOUND");
 
       if (item.quantity <= 0)
-        throw new Error(`Jumlah produk untuk ${dbProduct.name} tidak valid`);
+        throw new AppError(`Jumlah produk untuk ${dbProduct.name} tidak valid`, 400, "BAD_REQUEST");
 
       let price: number;
       let actualStock: number;
@@ -106,7 +142,7 @@ export const TransactionService = {
       if (item.skuId) {
         // Produk DENGAN varian + SKU
         const dbSku = dbSkus.find((s) => s.id === item.skuId);
-        if (!dbSku) throw new Error(`SKU tidak ditemukan: ${item.skuId}`);
+        if (!dbSku) throw new AppError(`SKU tidak ditemukan: ${item.skuId}`, 404, "NOT_FOUND");
 
         actualStock = dbSku.stock;
         price = Number(dbSku.priceOverride ?? dbSku.variant.basePrice);
@@ -125,18 +161,82 @@ export const TransactionService = {
         const label = skuSize
           ? `${dbProduct.name} (${variantColor} / Size ${skuSize})`
           : dbProduct.name;
-        throw new Error(`Stok ${label} tidak cukup (tersisa ${actualStock})`);
+        throw new AppError(`Stok ${label} tidak cukup (tersisa ${actualStock})`, 400, "BAD_REQUEST");
       }
 
       const itemSubtotal = price * item.quantity;
-      const discount = Number(item.discountAmount || 0);
-
-      if (discount < 0)
-        throw new Error(`Diskon untuk ${dbProduct.name} tidak boleh negatif`);
-      if (discount > itemSubtotal)
-        throw new Error(
-          `Diskon ${dbProduct.name} tidak boleh lebih besar dari subtotal item (Rp ${itemSubtotal.toLocaleString("id-ID")})`,
+      
+      // ✅ FIX: IGNORE discountAmount dari frontend, hitung ulang berdasarkan promo
+      let discount = 0;
+      let promoName: string | null = null;
+      
+      // Cari promo terbaik (hierarchy: VARIANT → PRODUCT → CATEGORY → GLOBAL)
+      let bestPromo: any = activePromos.find(
+        (promo) => promo.targetType === "VARIANT" && item.variantId && promo.targetIds.includes(item.variantId)
+      );
+      if (!bestPromo) {
+        bestPromo = activePromos.find(
+          (promo) => promo.targetType === "PRODUCT" && promo.targetIds.includes(item.productId)
         );
+      }
+      if (!bestPromo) {
+        // Cari kategori produk
+        const productWithCategories = await import("@/backend/repositories/products.repo").then(
+          m => m.ProductRepository
+        );
+        const fullProduct = await prisma.product.findUnique({
+          where: { id: item.productId },
+          include: { categories: { select: { categoryId: true } } }
+        });
+        const categoryIds = fullProduct?.categories.map(c => c.categoryId) || [];
+        
+        bestPromo = activePromos.find(
+          (promo) => promo.targetType === "CATEGORY" && promo.targetIds.some(id => categoryIds.includes(id))
+        );
+      }
+      if (!bestPromo) {
+        bestPromo = activePromos.find((promo) => promo.targetType === "GLOBAL");
+      }
+      
+      // Hitung discount jika ada promo
+      if (bestPromo) {
+        const minPurchase = Number(bestPromo.minPurchase || 0);
+        
+        console.log(`🎁 [Checkout] Item "${dbProduct.name}":`, {
+          bestPromo: bestPromo.name,
+          promoType: bestPromo.type,
+          promoValue: bestPromo.value,
+          minPurchase,
+          subtotalBeforeDiscount,
+          meetsRequirement: minPurchase === 0 || subtotalBeforeDiscount >= minPurchase,
+        });
+        
+        // Cek apakah memenuhi minPurchase
+        if (minPurchase === 0 || subtotalBeforeDiscount >= minPurchase) {
+          // Apply promo
+          if (bestPromo.type === "PERCENTAGE") {
+            discount = (price * Number(bestPromo.value)) / 100 * item.quantity;
+          } else {
+            // FIXED promo
+            if (minPurchase > 0) {
+              // Conditional FIXED promo: flat discount, do NOT multiply by quantity!
+              discount = Number(bestPromo.value);
+            } else {
+              // Non-conditional FIXED promo: per-item discount, multiply by quantity!
+              discount = Number(bestPromo.value) * item.quantity;
+            }
+          }
+          promoName = bestPromo.name;
+          console.log(`✅ [Checkout] Promo APPLY: discount = ${discount}`);
+        } else {
+          console.log(`❌ [Checkout] Promo TIDAK apply (subtotal ${subtotalBeforeDiscount} < minPurchase ${minPurchase})`);
+        }
+      } else {
+        console.log(`ℹ️ [Checkout] Item "${dbProduct.name}": Tidak ada promo`);
+      }
+
+      // Validasi discount tidak boleh lebih besar dari subtotal
+      discount = Math.min(discount, itemSubtotal);
 
       totalPrice += itemSubtotal - discount;
       totalDiscount += discount;
@@ -147,32 +247,35 @@ export const TransactionService = {
           ? dbSkus.find(s => s.id === item.skuId)?.variant.variantCode || dbProduct.productCode || "-"
           : dbProduct.productCode || "-",
         quantity: item.quantity,
-        priceAtSale: price,
+        basePriceAtSale: price,
         productName: dbProduct.name,
         discountAmount: discount,
+        variantId,
         variantColor,
         skuId,
         skuSize,
-        promoName: item.promoName,
-        comparisonPriceAtSale: item.comparisonPriceAtSale,
+        promoName,
+        gimmickPriceAtSale: item.gimmickPriceAtSale,
       });
     }
 
     if (totalDiscount > DISCOUNT_AUTH_THRESHOLD) {
       if (!adminPin) {
-        throw new Error("Diskon besar membutuhkan otorisasi PIN Admin");
+        throw new AppError("Diskon besar membutuhkan otorisasi PIN Admin", 401, "UNAUTHORIZED");
       }
 
       const authorizedAdmin = await AdminService.verifyAdminPin(adminPin);
       if (!authorizedAdmin) {
-        throw new Error("PIN Admin salah atau tidak memiliki akses");
+        throw new AppError("PIN Admin salah atau tidak memiliki akses", 401, "UNAUTHORIZED");
       }
     }
 
     // ✅ KEPUTUSAN BISNIS #4: Uang yang dibayar harus >= total belanja
     if (amountPaid < totalPrice) {
-      throw new Error(
+      throw new AppError(
         `Nominal pembayaran (Rp ${amountPaid.toLocaleString("id-ID")}) kurang dari total belanja (Rp ${totalPrice.toLocaleString("id-ID")})`,
+        400,
+        "BAD_REQUEST"
       );
     }
 
@@ -181,7 +284,7 @@ export const TransactionService = {
     // ✅ KEPUTUSAN BISNIS #5: Pastikan Kasir Memiliki Laci Shift yang Aktif
     const currentShift = await ShiftRepository.findOpenShiftByAdmin(kasirId);
     if (!currentShift) {
-        throw new Error("Laci Kasir belum dibuka! Silakan muat ulang dan masukkan Modal Awal terlebih dahulu.");
+        throw new AppError("Laci Kasir belum dibuka! Silakan muat ulang dan masukkan Modal Awal terlebih dahulu.", 400, "BAD_REQUEST");
     }
 
     // ✅ KEPUTUSAN BISNIS #6: Generate nomor invoice unik harian
@@ -283,7 +386,7 @@ export const TransactionService = {
         productName: i.productName,
         productCode: i.productCode,
         quantity: i.quantity,
-        priceAtSale: Number(i.priceAtSale),
+        basePriceAtSale: Number(i.basePriceAtSale),
         discountAmount: Number(i.discountAmount),
         variantColor: i.variantColor,
         skuSize: i.skuSize,
@@ -321,7 +424,7 @@ export const TransactionService = {
         productName: i.productName,
         productCode: i.productCode,
         quantity: i.quantity,
-        priceAtSale: Number(i.priceAtSale),
+        basePriceAtSale: Number(i.basePriceAtSale),
         discountAmount: Number(i.discountAmount),
         variantColor: i.variantColor,
         skuSize: i.skuSize,
@@ -340,12 +443,12 @@ export const TransactionService = {
     const transaction = await TransactionRepository.findById(id);
 
     if (!transaction) {
-      throw new Error("Transaksi tidak ditemukan");
+      throw new AppError("Transaksi tidak ditemukan", 404, "NOT_FOUND");
     }
 
     // ✅ Validasi bisnis: tidak boleh void transaksi yang sudah void
     if (transaction.status === "VOID") {
-      throw new Error("Transaksi sudah berstatus VOID");
+      throw new AppError("Transaksi sudah berstatus VOID", 400, "BAD_REQUEST");
     }
 
     const items = await TransactionRepository.findItemsByTransactionId(id);
@@ -354,7 +457,7 @@ export const TransactionService = {
     await TransactionRepository.voidWithStockRestore(
       id,
       items.map((i) => ({
-        productId: i.productId,
+        productId: i.productId!,
         quantity: i.quantity,
         skuId: i.skuId ?? null,
         skuSize: i.skuSize ?? null,

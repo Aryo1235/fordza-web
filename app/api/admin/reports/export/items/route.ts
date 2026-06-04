@@ -15,8 +15,8 @@ function buildFileName(baseName: string, extension: string) {
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
-    const dateFrom = searchParams.get("from");
-    const dateTo = searchParams.get("to");
+    let dateFrom = searchParams.get("from");
+    let dateTo = searchParams.get("to");
     const search = searchParams.get("search") || undefined;
     const sortBy = searchParams.get("sortBy") || undefined;
     const minQuantityRaw = searchParams.get("minQuantity");
@@ -24,10 +24,10 @@ export async function GET(req: Request) {
     const formatType = (searchParams.get("format") || "excel").toLowerCase();
 
     if (!dateFrom || !dateTo) {
-      return NextResponse.json(
-        { success: false, message: "Parameter 'from' dan 'to' wajib ada" },
-        { status: 400 },
-      );
+      const wibNow = new Date(Date.now() + 7 * 60 * 60 * 1000);
+      const wib30DaysAgo = new Date(wibNow.getTime() - 30 * 24 * 60 * 60 * 1000);
+      if (!dateTo) dateTo = wibNow.toISOString().split("T")[0];
+      if (!dateFrom) dateFrom = wib30DaysAgo.toISOString().split("T")[0];
     }
 
     const report = await ReportService.getSalesReportStats(dateFrom, dateTo, {
@@ -64,6 +64,7 @@ export async function GET(req: Request) {
             "Warna",
             "Size",
             "Harga Satuan",
+            "Total Diskon",
             "Qty",
             "Revenue",
           ],
@@ -76,11 +77,12 @@ export async function GET(req: Request) {
                 product.name,
                 product.color || "-",
                 product.size || "-",
-                `Rp ${Number(product.priceAtSale || 0).toLocaleString("id-ID")}`,
+                `Rp ${Number(product.basePriceAtSale || 0).toLocaleString("id-ID")}`,
+                Number(product.discount || 0) > 0 ? `-Rp ${Number(product.discount).toLocaleString("id-ID")}` : "-",
                 product.quantity,
                 `Rp ${Number(product.revenue || 0).toLocaleString("id-ID")}`,
               ])
-            : [["-", "-", "Tidak ada data", "-", "-", "-", "-", "-"]],
+            : [["-", "-", "Tidak ada data", "-", "-", "-", "-", "-", "-"]],
         styles: { fontSize: 8 },
         headStyles: { fillColor: [60, 48, 37] },
       });
@@ -103,7 +105,8 @@ export async function GET(req: Request) {
             "Nama Produk": product.name,
             Warna: product.color || "-",
             Ukuran: product.size || "-",
-            "Harga Satuan": Number(product.priceAtSale || 0),
+            "Harga Satuan": Number(product.basePriceAtSale || 0),
+            "Total Diskon": Number(product.discount || 0),
             Qty: product.quantity,
             Revenue: Number(product.revenue || 0),
           }))
