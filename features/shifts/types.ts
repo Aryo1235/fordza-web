@@ -5,13 +5,23 @@ export interface CashierShift {
   adminId: string;
   startTime: string;
   endTime: string | null;
-  startingCash: number | string;
-  expectedEndingCash: number | string | null;
-  actualEndingCash: number | string | null;
+  startingCash: number;
+  expectedEndingCash: number | null;
+  actualEndingCash: number | null;
+  cashSales?: number;
+  debitSales?: number;
+  qrisSales?: number;
   status: ShiftStatus;
   notes: string | null;
   createdAt: string;
   updatedAt: string;
+  admin?: {
+    name: string | null;
+    username: string;
+  };
+  _count?: {
+    transactions: number;
+  };
 }
 
 export interface OpenShiftPayload {

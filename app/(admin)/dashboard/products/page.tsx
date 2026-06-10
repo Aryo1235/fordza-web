@@ -129,17 +129,13 @@ export default function ProductsPage() {
         const hasPromo = finalPrice < basePrice;
 
         return (
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-1 items-center">
             {/* Harga Jual Final */}
             <div className="flex items-center gap-2">
               <span className="font-bold whitespace-nowrap text-[#3C3025]">
                 Rp {finalPrice.toLocaleString("id-ID")}
               </span>
-              {hasPromo && (
-                <span className="text-[9px] font-black bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded">
-                  PROMO
-                </span>
-              )}
+
             </div>
 
             {/* Tampilkan Harga Asli (Coret) Jika Ada Promo Aktif */}
@@ -171,13 +167,23 @@ export default function ProductsPage() {
       cell: (item: any) => (
         <div className="flex justify-end gap-2">
           <Link href={`/dashboard/products/${item.id}/detail`}>
-            <Button variant="ghost" size="icon" title="Lihat Detail Admin">
+            <Button
+              variant="ghost"
+              size="icon"
+              title="Lihat Detail Admin"
+              className="text-stone-600 hover:text-amber-600 hover:bg-stone-50 rounded-lg"
+            >
               <Eye className="h-4 w-4" />
             </Button>
           </Link>
           <Link href={`/dashboard/products/${item.id}`}>
-            <Button variant="ghost" size="icon" title="Edit">
-              <Edit className="h-4 w-4 text-blue-600" />
+            <Button
+              variant="ghost"
+              size="icon"
+              title="Edit"
+              className="text-stone-600 hover:text-blue-600 hover:bg-stone-50 rounded-lg"
+            >
+              <Edit className="h-4 w-4" />
             </Button>
           </Link>
           <Button
@@ -185,7 +191,7 @@ export default function ProductsPage() {
             size="icon"
             title="Hapus"
             onClick={() => setDeleteId(item.id)}
-            className="hover:text-red-600"
+            className="text-stone-600 hover:text-red-600 hover:bg-stone-50 rounded-lg"
           >
             <Trash2 className="h-4 w-4" />
           </Button>
@@ -243,7 +249,7 @@ export default function ProductsPage() {
         <div className="bg-stone-50 border-b border-stone-100 py-3 px-6">
           <p className="text-[10px] font-bold text-stone-500 uppercase tracking-tight flex items-center gap-2">
             <Package className="w-3 h-3 text-stone-400" />
-            Product Master List Management ({data?.meta?.total || 0} Items)
+            Product Master List Management ({data?.meta?.totalItems || 0} Items)
           </p>
         </div>
         <DataTable

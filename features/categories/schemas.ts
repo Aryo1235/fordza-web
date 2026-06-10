@@ -10,6 +10,6 @@ export const categorySchema = z.object({
     z.number().int().min(1, "Urutan harus angka lebih besar dari 0"),
   ),
   image: fileSchema.optional(), // Kategori biasanya hanya 1 gambar utama
-}).strict();
+});
 
 export type CategorySchemaValues = z.infer<typeof categorySchema>;

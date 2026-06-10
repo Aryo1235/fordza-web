@@ -231,7 +231,7 @@ export const ProductRepository = {
           }
 
           if (highestPrice > minFinalPrice) {
-            totalDiscountPercent = Math.floor(
+            totalDiscountPercent = Math.round(
               ((highestPrice - minFinalPrice) / highestPrice) * 100,
             );
           }
@@ -480,7 +480,7 @@ export const ProductRepository = {
             origin: true,
             sizeTemplateId: true,
             sizeTemplate: {
-              select: { id: true, name: true, type: true, sizes: true },
+              select: { id: true, name: true, type: true, sizes: true, measurements: true },
             },
           },
         },
@@ -583,7 +583,7 @@ export const ProductRepository = {
 
       let totalDiscountPercent = 0;
       if (highestPrice > finalPrice) {
-        totalDiscountPercent = Math.floor(
+        totalDiscountPercent = Math.round(
           ((highestPrice - finalPrice) / highestPrice) * 100,
         );
       }
@@ -663,7 +663,7 @@ export const ProductRepository = {
   },
 
   async getAllAdmin(filters: any) {
-    const { search, page = 1, limit = 10 } = filters;
+    const { search, categoryId, page = 1, limit = 10 } = filters;
     const skip = (page - 1) * limit;
     const where: any = { deletedAt: null };
     if (search) {
@@ -671,6 +671,13 @@ export const ProductRepository = {
         { name: { contains: search, mode: "insensitive" } },
         { productCode: { contains: search, mode: "insensitive" } },
       ];
+    }
+    if (categoryId) {
+      where.categories = {
+        some: {
+          categoryId: categoryId,
+        },
+      };
     }
     const [products, totalItems] = await Promise.all([
       prisma.product.findMany({
@@ -795,7 +802,7 @@ export const ProductRepository = {
 
           let totalDiscountPercent = 0;
           if (highestPrice > finalPrice) {
-            totalDiscountPercent = Math.floor(
+            totalDiscountPercent = Math.round(
               ((highestPrice - finalPrice) / highestPrice) * 100,
             );
           }
@@ -833,6 +840,7 @@ export const ProductRepository = {
           id: p.id,
           productCode: p.productCode,
           name: p.name,
+          productType: p.productType,
           categories: p.categories,
           detail: p.detail,
           stock: p.stock,

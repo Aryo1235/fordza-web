@@ -51,6 +51,7 @@ export const TransactionService = {
     customerName?: string;
     customerPhone?: string;
     adminPin?: string;
+    paymentMethod?: string;
   }) {
     const {
       kasirId,
@@ -59,6 +60,7 @@ export const TransactionService = {
       customerName,
       customerPhone,
       adminPin,
+      paymentMethod,
     } = data;
 
     // ✅ KEPUTUSAN BISNIS #1: Pisahkan item SKU-based dan product-based
@@ -271,15 +273,28 @@ export const TransactionService = {
     }
 
     // ✅ KEPUTUSAN BISNIS #4: Uang yang dibayar harus >= total belanja
-    if (amountPaid < totalPrice) {
-      throw new AppError(
-        `Nominal pembayaran (Rp ${amountPaid.toLocaleString("id-ID")}) kurang dari total belanja (Rp ${totalPrice.toLocaleString("id-ID")})`,
-        400,
-        "BAD_REQUEST"
-      );
+    const method = paymentMethod || "CASH";
+    if (!["CASH", "DEBIT", "QRIS"].includes(method)) {
+      throw new AppError("Metode pembayaran tidak valid", 400, "BAD_REQUEST");
     }
 
-    const change = amountPaid - totalPrice;
+    let finalAmountPaid = amountPaid;
+    let change = 0;
+
+    if (method === "CASH") {
+      if (amountPaid < totalPrice) {
+        throw new AppError(
+          `Nominal pembayaran (Rp ${amountPaid.toLocaleString("id-ID")}) kurang dari total belanja (Rp ${totalPrice.toLocaleString("id-ID")})`,
+          400,
+          "BAD_REQUEST"
+        );
+      }
+      change = amountPaid - totalPrice;
+    } else {
+      // Untuk Debit & QRIS, uang diterima pas sebesar total belanja dan kembalian 0
+      finalAmountPaid = totalPrice;
+      change = 0;
+    }
 
     // ✅ KEPUTUSAN BISNIS #5: Pastikan Kasir Memiliki Laci Shift yang Aktif
     const currentShift = await ShiftRepository.findOpenShiftByAdmin(kasirId);
@@ -294,12 +309,13 @@ export const TransactionService = {
     return await TransactionRepository.createWithStockDecrement({
       invoiceNo,
       totalPrice,
-      amountPaid,
+      amountPaid: finalAmountPaid,
       change,
       kasirId,
       shiftId: currentShift.id,
       customerName,
       customerPhone,
+      paymentMethod: method,
       items: validatedItems,
     });
   },
@@ -406,6 +422,7 @@ export const TransactionService = {
       amountPaid: Number(transaction.amountPaid),
       change: Number(transaction.change),
       status: transaction.status,
+      paymentMethod: transaction.paymentMethod,
       notes: transaction.notes,
       cancelReason: transaction.cancelReason,
       createdAt: transaction.createdAt.toISOString(),

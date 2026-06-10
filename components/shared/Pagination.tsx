@@ -4,12 +4,12 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from "@/components/ui/select";
 
 interface PaginationProps {
@@ -56,7 +56,7 @@ export function Pagination({
               onValueChange={(val) => onLimitChange(parseInt(val))}
               disabled={isLoading}
             >
-              <SelectTrigger className="h-7 w-[70px] text-[11px] font-bold bg-white border-stone-200">
+              <SelectTrigger className="h-7 w-[70px] text-[11px] font-bold bg-white shadow-xs rounded-sm border-stone-200">
                 <SelectValue placeholder={limit} />
               </SelectTrigger>
               <SelectContent>
@@ -70,7 +70,7 @@ export function Pagination({
           </div>
         )}
       </div>
-      
+
       <div className="flex items-center gap-2 order-1 sm:order-2">
         <Button
           variant="outline"
@@ -84,11 +84,11 @@ export function Pagination({
         >
           <ChevronLeft className="w-3 h-3 mr-1" /> Prev
         </Button>
-        
+
         <div className="flex items-center gap-1 px-4 h-8 bg-white border border-stone-200 rounded-md text-[11px] font-bold text-stone-600 shadow-sm">
           {page} <span className="text-stone-300">/</span> {totalPages || 1}
         </div>
-        
+
         <Button
           variant="outline"
           size="sm"

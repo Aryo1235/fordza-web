@@ -205,6 +205,7 @@ model SizeTemplate {
   name           String
   type           String
   sizes          String[]
+  measurements   Json?
   productDetails ProductDetail[]
 
   createdAt DateTime @default(now()) @map("created_at")
@@ -290,6 +291,7 @@ model Transaction {
   amountPaid   Decimal           @map("amount_paid") @db.Decimal(12, 2)
   change       Decimal           @db.Decimal(12, 2)
   status       TransactionStatus @default(PAID)
+  paymentMethod String            @default("CASH") @map("payment_method")
   notes        String?           @db.Text
   cancelReason String?           @map("cancel_reason") @db.Text
 

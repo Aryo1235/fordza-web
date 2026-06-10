@@ -95,6 +95,7 @@ export const TransactionRepository = {
     shiftId?: string;
     customerName?: string;
     customerPhone?: string;
+    paymentMethod?: string;
     items: {
       productId: string;
       productCode: string;
@@ -120,6 +121,7 @@ export const TransactionRepository = {
           amountPaid: data.amountPaid,
           change: data.change,
           status: "PAID",
+          paymentMethod: data.paymentMethod ?? "CASH",
           kasirId: data.kasirId,
           shiftId: data.shiftId,
           customerName: data.customerName,

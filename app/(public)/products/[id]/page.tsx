@@ -45,6 +45,60 @@ export default function ProductDetailPage({
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
 
+  const getMeasurementText = (size: string, sizeTemplate: any) => {
+    if (!sizeTemplate || !sizeTemplate.measurements) return null;
+    const meas = sizeTemplate.measurements[size];
+    if (!meas) return null;
+
+    const tType = (sizeTemplate.type || "").toLowerCase();
+    if (tType === "sepatu") {
+      const length = meas.insoleLength || meas.insole || "";
+      const width = meas.insoleWidth || "";
+      if (length && width) return `${length}x${width} cm`;
+      if (length) return `${length} cm`;
+      return null;
+    }
+    if (tType === "apparel" || tType === "pakaian") {
+      const ld = meas.ld || "";
+      const pb = meas.pb || "";
+      if (ld && pb) return `LD:${ld} PB:${pb}`;
+      if (ld) return `LD:${ld}`;
+      if (pb) return `PB:${pb}`;
+      return null;
+    }
+    if (tType === "aksesoris" || tType === "gelang") {
+      return meas.lingkar ? `${meas.lingkar} cm` : null;
+    }
+    return meas.detail || null;
+  };
+
+  const getDetailedMeasurementSentence = (size: string, sizeTemplate: any) => {
+    if (!sizeTemplate || !sizeTemplate.measurements) return null;
+    const meas = sizeTemplate.measurements[size];
+    if (!meas) return null;
+
+    const tType = (sizeTemplate.type || "").toLowerCase();
+    if (tType === "sepatu") {
+      const length = meas.insoleLength || meas.insole || "";
+      const width = meas.insoleWidth || "";
+      if (length && width) return `Panjang Insole: ${length} cm, Lebar Insole: ${width} cm`;
+      if (length) return `Panjang Insole: ${length} cm`;
+      return null;
+    }
+    if (tType === "apparel" || tType === "pakaian") {
+      const ld = meas.ld || "";
+      const pb = meas.pb || "";
+      if (ld && pb) return `Lebar Dada (LD): ${ld} cm, Panjang Badan (PB): ${pb} cm`;
+      if (ld) return `Lebar Dada (LD): ${ld} cm`;
+      if (pb) return `Panjang Badan (PB): ${pb} cm`;
+      return null;
+    }
+    if (tType === "aksesoris" || tType === "gelang") {
+      return meas.lingkar ? `Lingkar Pergelangan: ${meas.lingkar} cm` : null;
+    }
+    return meas.detail ? `Keterangan: ${meas.detail}` : null;
+  };
+
   // Set default variant saat data pertama kali tiba
   useEffect(() => {
     if (product?.variants && product.variants.length > 0 && !selectedVariantId) {
@@ -367,13 +421,14 @@ export default function ProductDetailPage({
                   {product.detail?.sizeTemplate && product.detail.sizeTemplate.sizes.map((size) => {
                     const sku = selectedVariant?.skus?.find(s => s.size === size);
                     const isOutOfStock = !sku || sku.stock === 0;
+                    const measText = getMeasurementText(size, product.detail?.sizeTemplate);
                     return (
                       <button
                         key={size}
                         onClick={() => setSelectedSize(size)}
                         disabled={isOutOfStock}
                         className={cn(
-                          "min-w-[3.5rem] rounded-lg border-2 px-3 py-2.5 text-sm font-black transition-all outline-none",
+                          "min-w-[4rem] rounded-lg border-2 px-3 py-2 text-sm font-black transition-all outline-none flex flex-col items-center justify-center",
                           selectedSize === size
                             ? "border-[#4A3B2E] bg-[#4A3B2E] text-white shadow-md scale-105"
                             : isOutOfStock
@@ -381,13 +436,25 @@ export default function ProductDetailPage({
                               : "border-amber-200 bg-white text-[#4A3B2E] hover:border-[#4A3B2E]/50 hover:bg-amber-50 hover:-translate-y-0.5"
                         )}
                       >
-                        {size}
+                        <span>{size}</span>
+
                       </button>
                     );
                   })}
                 </div>
 
-                {!selectedSize && (
+                {selectedSize ? (
+                  (() => {
+                    const detailedMeas = getDetailedMeasurementSentence(selectedSize, product.detail?.sizeTemplate);
+                    if (!detailedMeas) return null;
+                    return (
+                      <div className="text-xs text-amber-900 bg-amber-50/50 p-3 rounded-xl border border-amber-200/50 animate-in fade-in slide-in-from-top-1 duration-200">
+                        <span className="font-bold uppercase tracking-wider text-[10px] text-amber-700 block mb-1">Rincian Ukuran {selectedSize}</span>
+                        <span className="font-medium text-[#4A3B2E]">{detailedMeas}</span>
+                      </div>
+                    );
+                  })()
+                ) : (
                   <p className="text-[10px] text-amber-700/60 font-bold italic">
                     * Silakan pilih ukuran untuk melihat ketersediaan stok
                   </p>
@@ -396,7 +463,7 @@ export default function ProductDetailPage({
             )}
 
             {/* Specs & Description — fade-up saat scroll */}
-            <motion.div variants={infoItem} className="pt-8 space-y-8">
+            <motion.div variants={infoItem} className=" space-y-8">
               {product.detail && (
                 <FadeUpSection>
                   <h3 className="mb-4 text-xs font-black uppercase tracking-widest text-[#4A3B2E]/60 border-b border-amber-200 pb-2">

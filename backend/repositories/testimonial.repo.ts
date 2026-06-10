@@ -86,7 +86,7 @@ export const TestimonialRepository = {
         take: limit,
         include: {
           product: {
-            select: { name: true },
+            select: { name: true, productCode: true },
           },
         },
       }),
@@ -110,7 +110,26 @@ export const TestimonialRepository = {
   },
 
   async findById(id: string) {
-    return await prisma.testimonial.findUnique({ where: { id } });
+    return await prisma.testimonial.findUnique({
+      where: { id },
+      include: {
+        product: {
+          select: {
+            id: true,
+            name: true,
+            productCode: true,
+            images: { take: 1, select: { url: true } },
+            categories: {
+              select: {
+                category: {
+                  select: { name: true }
+                }
+              }
+            }
+          }
+        }
+      }
+    });
   },
 
   async update(id: string, data: any) {

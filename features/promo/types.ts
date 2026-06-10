@@ -1,7 +1,7 @@
 // features/promo/types.ts
 
 export type PromoType = "PERCENTAGE" | "NOMINAL";
-export type PromoTarget = "GLOBAL" | "CATEGORY" | "PRODUCT";
+export type PromoTarget = "GLOBAL" | "CATEGORY" | "PRODUCT" | "VARIANT";
 
 export interface Promo {
   id: string;
@@ -17,6 +17,10 @@ export interface Promo {
   endDate: string;
   createdAt: string;
   updatedAt: string;
+  // Populated fields from backend resolution
+  targets?: Array<{ id: string; name: string; code?: string }>;
+  createdBy?: { name: string | null; username: string } | null;
+  updatedBy?: { name: string | null; username: string } | null;
 }
 
 export interface CreatePromoInput {

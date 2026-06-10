@@ -162,7 +162,7 @@ export function ProductCard({ product }: { product: Product }) {
                 {formatRupiah(displayFinalPrice)}
               </span>
               {hasDiscount && (
-                <span className="text-[9px] font-black text-red-500 bg-red-50 px-1.5 py-0.5 rounded shadow-sm">
+                <span className="text-[10px] md:text-[11px] font-black text-red-500 bg-red-50 px-2 py-0.5 rounded shadow-sm">
                   -{displayDiscount}%
                 </span>
               )}

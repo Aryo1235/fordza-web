@@ -7,8 +7,9 @@ import { PageHeader } from "@/components/layout/admin/PageHeader";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { Button } from "@/components/ui/button";
-import { Plus, Edit, Trash2 } from "lucide-react";
+import { Plus, Edit, Trash2, Eye, Layers } from "lucide-react";
 import Link from "next/link";
+import { toast } from "sonner";
 
 export default function CategoriesPage() {
   const [page, setPage] = useState(1);
@@ -21,7 +22,18 @@ export default function CategoriesPage() {
   const handleDelete = () => {
     if (deleteId) {
       deleteMutation.mutate(deleteId, {
-        onSuccess: () => setDeleteId(null),
+        onSuccess: () => {
+          toast.success("Kategori berhasil dihapus");
+          setDeleteId(null);
+        },
+        onError: (err: any) => {
+          const errMsg = err?.response?.data?.message || err?.message || "Gagal menghapus kategori";
+          const traceId = err?.response?.data?.traceId;
+          
+          toast.error(errMsg);
+          console.error(`Error deleting category (Trace ID: ${traceId || "N/A"}):`, err);
+          setDeleteId(null);
+        }
       });
     }
   };
@@ -47,17 +59,34 @@ export default function CategoriesPage() {
       className: "text-right",
       cell: (item: any) => (
         <div className="flex justify-end gap-2">
-          <Link href={`/dashboard/categories/${item.id}`}>
-            <Button variant="ghost" size="icon" title="Edit">
-              <Edit className="h-4 w-4 text-blue-600" />
-            </Button>
-          </Link>
-          <Button 
-            variant="ghost" 
-            size="icon" 
+          <Button
+            variant="ghost"
+            size="icon"
+            title="Detail"
+            className="text-stone-600 hover:text-amber-600 hover:bg-stone-50 rounded-lg"
+            asChild
+          >
+            <Link href={`/dashboard/categories/${item.id}/detail`}>
+              <Eye className="h-4 w-4" />
+            </Link>
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            title="Edit"
+            className="text-stone-600 hover:text-blue-600 hover:bg-stone-50 rounded-lg"
+            asChild
+          >
+            <Link href={`/dashboard/categories/${item.id}`}>
+              <Edit className="h-4 w-4" />
+            </Link>
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
             title="Hapus"
             onClick={() => setDeleteId(item.id)}
-            className="hover:text-red-600"
+            className="text-stone-600 hover:text-red-600 hover:bg-stone-50 rounded-lg"
           >
             <Trash2 className="h-4 w-4" />
           </Button>
@@ -80,14 +109,27 @@ export default function CategoriesPage() {
         }
       />
 
-      <DataTable 
-        columns={columns} 
-        data={data?.data || []} 
-        isLoading={isLoading} 
-        meta={data?.meta}
-        onPageChange={setPage}
-        showNumber={true}
-      />
+      <div className="border border-stone-200 rounded-xl shadow-sm overflow-hidden bg-white mb-6">
+        <div className="bg-stone-50 border-b border-stone-100 py-3 px-6">
+          <p className="text-[10px] font-bold text-stone-500 uppercase tracking-tight flex items-center gap-2">
+            <Layers className="w-3 h-3 text-stone-400" />
+            Category Master List Management ({data?.meta?.totalItems || data?.data?.length || 0} Items)
+          </p>
+        </div>
+        <DataTable 
+          columns={columns} 
+          data={data?.data || []} 
+          isLoading={isLoading} 
+          meta={data?.meta}
+          onPageChange={setPage}
+          onLimitChange={(l) => {
+            setLimit(l);
+            setPage(1);
+          }}
+          showNumber={true}
+          className="space-y-0 [&_.rounded-md.border]:border-none [&_.rounded-md.border]:shadow-none [&_.rounded-md.border]:rounded-none"
+        />
+      </div>
 
       <ConfirmDialog 
         open={!!deleteId}

@@ -27,7 +27,7 @@ export default function NewCategoryPage() {
         router.push("/dashboard/categories");
       },
       onError: (err: any) => {
-        toast.error(err?.response?.data?.message || "Gagal membuat kategori");
+        toast.error(err?.response?.data?.message || err?.message || "Gagal membuat kategori");
       }
     });
   };

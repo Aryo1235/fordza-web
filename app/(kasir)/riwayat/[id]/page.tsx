@@ -126,7 +126,27 @@ export default function TransactionDetailPage() {
                 </div>
               </div>
             </div>
-            <div className="p-6 space-y-4 md:col-span-2">
+            <div className="p-6 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-stone-100 flex items-center justify-center font-bold text-stone-600 text-sm">
+                  💳
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase font-bold text-stone-400">Metode Pembayaran</p>
+                  <span className={cn(
+                    "inline-flex items-center px-2 py-0.5 rounded-sm font-black text-[10px] uppercase tracking-wide border mt-0.5",
+                    transaction.paymentMethod === "DEBIT"
+                      ? "bg-blue-50 text-blue-700 border-blue-200"
+                      : transaction.paymentMethod === "QRIS"
+                        ? "bg-purple-50 text-purple-700 border-purple-200"
+                        : "bg-stone-50 text-stone-600 border-stone-200"
+                  )}>
+                    {transaction.paymentMethod || "CASH"}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div className="p-6 space-y-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-stone-100 flex items-center justify-center">
                   <Package className="w-5 h-5 text-stone-600" />
@@ -220,6 +240,12 @@ export default function TransactionDetailPage() {
                     <td colSpan={3} className={cn("px-4 text-right text-stone-500 font-bold uppercase text-[10px]", totalDiscount > 0 ? "py-2" : "py-4")}>Total Akhir</td>
                     <td className="px-4 py-4 text-right font-black text-stone-900 text-lg">
                       Rp {transaction.totalPrice.toLocaleString("id-ID")}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td colSpan={3} className="px-4 py-2 text-right text-stone-500 text-[10px]">Metode Pembayaran</td>
+                    <td className="px-4 py-2 text-right text-stone-700 font-black text-xs uppercase">
+                      {transaction.paymentMethod || "CASH"}
                     </td>
                   </tr>
                   <tr>

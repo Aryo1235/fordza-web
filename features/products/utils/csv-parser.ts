@@ -1,4 +1,4 @@
-import Papa from "papaparse";
+import * as XLSX from "xlsx";
 
 export interface BulkProductRow {
   productCode: string;
@@ -61,47 +61,68 @@ export interface BulkProduct {
 
 export const parseProductCsv = (file: File): Promise<BulkProduct[]> => {
   return new Promise((resolve, reject) => {
-    Papa.parse<BulkProductRow>(file, {
-      header: true,
-      skipEmptyLines: true,
-      complete: (results) => {
-        const rows = results.data;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = e.target?.result;
+        if (!data) {
+          throw new Error("File data is empty");
+        }
+        
+        // Membaca workbook menggunakan ArrayBuffer
+        const workbook = XLSX.read(data, { type: "array" });
+        
+        // Mengambil nama sheet pertama
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        
+        // Mengonversi sheet ke bentuk array of objects JSON
+        const rows = XLSX.utils.sheet_to_json<BulkProductRow>(worksheet, { defval: "" });
         const productsMap = new Map<string, BulkProduct>();
 
         rows.forEach((row) => {
-          if (!row.productCode || !row.name) return;
+          const productCode = row.productCode ? String(row.productCode).trim() : "";
+          const name = row.name ? String(row.name).trim() : "";
+          
+          if (!productCode || !name) return;
 
-          let product = productsMap.get(row.productCode);
+          let product = productsMap.get(productCode);
           if (!product) {
+            const catIdsStr = row.categoryIds !== undefined && row.categoryIds !== null ? String(row.categoryIds) : "";
             product = {
-              productCode: row.productCode,
-              name: row.name,
-              shortDescription: row.shortDescription,
-              productType: row.productType as any,
-              gender: row.gender || "Unisex",
-              categoryIds: row.categoryIds ? row.categoryIds.split(",").map(id => id.trim()) : [],
-              sizeTemplateId: row.sizeTemplateId,
-              material: row.material,
-              outsole: row.outsole,
-              insole: row.insole,
-              closureType: row.closureType,
-              origin: row.origin,
-              notes: row.notes,
+              productCode,
+              name,
+              shortDescription: row.shortDescription ? String(row.shortDescription) : "",
+              productType: row.productType ? String(row.productType).trim() : "shoes",
+              gender: row.gender ? String(row.gender).trim() : "Unisex",
+              categoryIds: catIdsStr ? catIdsStr.split(",").map(id => id.trim()) : [],
+              sizeTemplateId: row.sizeTemplateId ? String(row.sizeTemplateId).trim() : "",
+              material: row.material ? String(row.material) : "",
+              outsole: row.outsole ? String(row.outsole) : undefined,
+              insole: row.insole ? String(row.insole) : undefined,
+              closureType: row.closureType ? String(row.closureType) : undefined,
+              origin: row.origin ? String(row.origin) : undefined,
+              notes: row.notes ? String(row.notes) : undefined,
               isPopular: String(row.isPopular) === "true",
               isBestseller: String(row.isBestseller) === "true",
-              isNew: row.isNew === undefined ? true : String(row.isNew) === "true",
+              isNew: row.isNew === undefined || row.isNew === "" ? true : String(row.isNew) === "true",
               variants: []
             };
-            productsMap.set(row.productCode, product);
+            productsMap.set(productCode, product);
           }
 
           const basePrice = Number(row.basePrice) || 0;
           const comparisonPrice = row.comparisonPrice ? Number(row.comparisonPrice) : null;
           const oversizePrice = row.oversizePrice ? Number(row.oversizePrice) : null;
-          const oversizeSizes = row.oversizeSizes ? row.oversizeSizes.split(",").map(s => s.trim()) : [];
+          
+          const oversizeSizesStr = row.oversizeSizes !== undefined && row.oversizeSizes !== null ? String(row.oversizeSizes) : "";
+          const oversizeSizes = oversizeSizesStr ? oversizeSizesStr.split(",").map(s => s.trim()) : [];
 
-          const sizes = row.sizes ? row.sizes.split(",").map(s => s.trim()) : [];
-          const stocks = row.stocks ? row.stocks.split(",").map(s => Number(s.trim()) || 0) : [];
+          const sizesStr = row.sizes !== undefined && row.sizes !== null ? String(row.sizes) : "";
+          const stocksStr = row.stocks !== undefined && row.stocks !== null ? String(row.stocks) : "";
+
+          const sizes = sizesStr ? sizesStr.split(",").map(s => s.trim()) : [];
+          const stocks = stocksStr ? stocksStr.split(",").map(s => Number(s.trim()) || 0) : [];
 
           const skus = sizes.map((size, index) => {
             const stock = stocks[index] || 0;
@@ -114,8 +135,8 @@ export const parseProductCsv = (file: File): Promise<BulkProduct[]> => {
           });
 
           product.variants.push({
-            color: row.variantColor,
-            variantCode: row.variantCode,
+            color: row.variantColor ? String(row.variantColor).trim() : "Default",
+            variantCode: row.variantCode ? String(row.variantCode).trim() : "",
             basePrice,
             comparisonPrice,
             discountPercent: row.discountPercent ? Number(row.discountPercent) : null,
@@ -124,10 +145,15 @@ export const parseProductCsv = (file: File): Promise<BulkProduct[]> => {
         });
 
         resolve(Array.from(productsMap.values()));
-      },
-      error: (error) => {
-        reject(error);
+      } catch (err) {
+        reject(err);
       }
-    });
+    };
+    
+    reader.onerror = (err) => {
+      reject(err);
+    };
+    
+    reader.readAsArrayBuffer(file);
   });
 };

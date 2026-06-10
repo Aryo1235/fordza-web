@@ -18,10 +18,10 @@ export default async function ProductsPage(props: {
   return (
     <div className="min-h-screen bg-[#FDFCFB] pt-14">
       <main className="mx-auto max-w-7xl px-4 sm:px-6 py-8 sm:py-12">
-        <div className="flex flex-col lg:flex-row gap-8">
+        <div className="flex flex-col lg:flex-row gap-5">
 
           {/* Sidebar Filter */}
-          <aside className="w-full lg:w-64 flex-shrink-0 lg:sticky lg:top-24 lg:self-start z-30">
+          <aside className="w-full lg:w-64.5 flex-shrink-0 lg:sticky lg:top-24 lg:self-start z-30">
             <Suspense fallback={<div className="h-96 w-full bg-zinc-100 animate-pulse rounded-xl" />}>
               <ProductFilters categories={categories} />
             </Suspense>

@@ -31,6 +31,7 @@ export interface ProductDetail {
     name: string;
     type: string;
     sizes: string[];
+    measurements?: Record<string, any> | null;
   } | null;
 }
 

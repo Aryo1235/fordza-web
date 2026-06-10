@@ -5,13 +5,15 @@ import {
   getAdminSizeTemplates, 
   createSizeTemplate, 
   updateSizeTemplate, 
-  deleteSizeTemplate 
+  deleteSizeTemplate,
+  getSizeTemplateDetail
 } from "./api";
 import type { SizeTemplateCreateInput } from "./types";
 
 export const sizeTemplateKeys = {
   all: ["size-templates"] as const,
   adminList: () => ["admin-size-templates"] as const,
+  detail: (id: string, page = 1, limit = 10) => ["admin-size-template", id, page, limit] as const,
 };
 
 export function useSizeTemplatesAdmin() {
@@ -56,5 +58,14 @@ export function useDeleteSizeTemplate() {
       queryClient.invalidateQueries({ queryKey: ["admin-size-templates"] });
       queryClient.invalidateQueries({ queryKey: ["admin-size-templates-all"] });
     },
+  });
+}
+
+export function useSizeTemplate(id: string, page = 1, limit = 10) {
+  return useQuery({
+    queryKey: sizeTemplateKeys.detail(id, page, limit),
+    queryFn: () => getSizeTemplateDetail(id, page, limit),
+    enabled: !!id,
+    placeholderData: (prev) => prev,
   });
 }

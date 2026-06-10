@@ -118,9 +118,10 @@ export function useDeleteSku(productId: string) {
 }
 
 /** Search varian untuk dropdown admin */
-export function useVariantsAdminSearch(search: string = "", limit: number = 20) {
+export function useVariantsAdminSearch(search: string = "", limit: number = 20, enabled: boolean = true) {
   return useQuery({
     queryKey: ["variants", "admin-search", search, limit] as const,
     queryFn: () => searchVariantsAdmin(search, limit),
+    enabled,
   });
 }

@@ -172,6 +172,9 @@ export default function AdminTransactionsPage() {
                   <th className="text-left px-6 py-4 text-[10px] font-bold text-stone-400 uppercase">
                     Kasir
                   </th>
+                  <th className="text-left px-6 py-4 text-[10px] font-bold text-stone-400 uppercase">
+                    Pembayaran
+                  </th>
                   <th className="text-right px-6 py-4 text-[10px] font-bold text-stone-400 uppercase">
                     Total
                   </th>
@@ -191,7 +194,7 @@ export default function AdminTransactionsPage() {
                   Array.from({ length: limit }).map((_, i) => (
                     <tr key={i} className="animate-pulse">
                       <td
-                        colSpan={7}
+                        colSpan={8}
                         className="px-6 py-4 h-12 bg-stone-50/30"
                       />
                     </tr>
@@ -199,7 +202,7 @@ export default function AdminTransactionsPage() {
                 ) : transactions.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={7}
+                      colSpan={8}
                       className="px-6 py-16 text-center text-stone-400"
                     >
                       <div className="flex flex-col items-center gap-2">
@@ -217,17 +220,31 @@ export default function AdminTransactionsPage() {
                       className="hover:bg-stone-50 transition-colors group"
                     >
                       <td className="px-6 py-4">
-                        <span className="font-mono font-bold text-stone-900 group-hover:text-amber-800 transition-colors italic uppercase">
+                        <span className="font-mono font-bold text-[#3C3025] group-hover:text-amber-800 transition-colors italic uppercase">
                           {tx.invoiceNo}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-stone-500 text-xs whitespace-nowrap font-medium">
                         {format(new Date(tx.createdAt), "dd MMM yyyy, HH:mm")}
                       </td>
-                      <td className="px-6 py-4 text-stone-700 font-bold">
+                      <td className="px-6 py-4 text-[#3C3025] font-bold">
                         {tx.cashier || tx.kasir?.name || "-"}
                       </td>
-                      <td className="px-6 py-4 text-right font-black text-stone-900">
+                      <td className="px-6 py-4 text-xs">
+                        <span
+                          className={cn(
+                            "inline-flex items-center px-1.5 py-0.5 rounded-sm font-black text-[9px] uppercase tracking-wide border",
+                            tx.paymentMethod === "DEBIT"
+                              ? "bg-blue-50 text-blue-700 border-blue-200"
+                              : tx.paymentMethod === "QRIS"
+                                ? "bg-purple-50 text-purple-700 border-purple-200"
+                                : "bg-stone-50 text-stone-600 border-stone-200"
+                          )}
+                        >
+                          {tx.paymentMethod || "CASH"}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right font-black text-[#3C3025]">
                         Rp {tx.totalPrice.toLocaleString("id-ID")}
                       </td>
                       <td className="px-6 py-4 text-center">

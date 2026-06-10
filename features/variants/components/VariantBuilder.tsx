@@ -154,8 +154,12 @@ export function StockGrid({
               <Input
                 type="number"
                 min={0}
-                value={stockPerSize[size] ?? 0}
-                onChange={(e) => onChange(size, parseInt(e.target.value) || 0)}
+                value={stockPerSize[size] === 0 ? "" : (stockPerSize[size] ?? "")}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  onChange(size, val === "" ? 0 : parseInt(val) || 0);
+                }}
+                placeholder="0"
                 className="w-14 h-8 text-center text-sm p-1"
               />
               <label className="text-[10px] flex items-center gap-1 mt-0.5 text-amber-700 cursor-pointer select-none">

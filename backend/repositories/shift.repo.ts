@@ -40,7 +40,14 @@ export const ShiftRepository = {
   async findById(id: string) {
     return await prisma.cashierShift.findUnique({
       where: { id },
-      include: { transactions: true }
+      include: {
+        admin: {
+          select: { name: true, username: true }
+        },
+        transactions: {
+          orderBy: { createdAt: "desc" }
+        }
+      }
     });
   },
 
@@ -56,5 +63,113 @@ export const ShiftRepository = {
         }
       }
     });
+  },
+
+  async getAllShiftsPaginated(filters: {
+    page: number;
+    limit: number;
+    search?: string;
+    status?: string;
+    kasirId?: string;
+  }) {
+    const { page, limit, search, status, kasirId } = filters;
+    const skip = (page - 1) * limit;
+
+    const where: any = {};
+
+    if (status && status !== "ALL") {
+      where.status = status;
+    }
+
+    if (kasirId && kasirId !== "ALL") {
+      where.adminId = kasirId;
+    }
+
+    if (search) {
+      where.admin = {
+        OR: [
+          { name: { contains: search, mode: "insensitive" } },
+          { username: { contains: search, mode: "insensitive" } },
+        ],
+      };
+    }
+
+    const [shifts, totalItems] = await Promise.all([
+      prisma.cashierShift.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        include: {
+          admin: {
+            select: { name: true, username: true }
+          },
+          _count: {
+            select: { transactions: true }
+          },
+          transactions: {
+            select: {
+              status: true,
+              totalPrice: true,
+              paymentMethod: true,
+            }
+          }
+        },
+        skip,
+        take: limit,
+      }),
+      prisma.cashierShift.count({ where }),
+    ]);
+
+    return {
+      shifts,
+      totalItems,
+      totalPages: Math.ceil(totalItems / limit),
+    };
+  },
+
+  async getShiftsStats() {
+    // 1. Get count by status
+    const [totalActive, totalClosed] = await Promise.all([
+      prisma.cashierShift.count({ where: { status: "OPEN" } }),
+      prisma.cashierShift.count({ where: { status: "CLOSED" } }),
+    ]);
+
+    // 2. Get all closed shifts for calculation of actual cash and disparity
+    const closedShifts = await prisma.cashierShift.findMany({
+      where: { status: "CLOSED" },
+      select: {
+        startingCash: true,
+        expectedEndingCash: true,
+        actualEndingCash: true,
+      }
+    });
+
+    let totalStartingCash = 0;
+    let totalActualCash = 0;
+    let totalMinusCases = 0;
+    let totalMinusAmount = 0;
+
+    closedShifts.forEach((s) => {
+      const start = Number(s.startingCash || 0);
+      const expected = Number(s.expectedEndingCash || 0);
+      const actual = Number(s.actualEndingCash || 0);
+      
+      totalStartingCash += start;
+      totalActualCash += actual;
+
+      const diff = actual - expected;
+      if (diff < 0) {
+        totalMinusCases += 1;
+        totalMinusAmount += Math.abs(diff);
+      }
+    });
+
+    return {
+      totalActiveShifts: totalActive,
+      totalClosedShifts: totalClosed,
+      totalStartingCash,
+      totalActualCash,
+      totalMinusCases,
+      totalMinusAmount,
+    };
   }
 };

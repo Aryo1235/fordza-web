@@ -1,7 +1,7 @@
 "use client";
 
-import { Suspense, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, LayoutGrid } from "lucide-react";
 import { usePublicCategories } from "@/features/categories/hooks";
 import { PublicCategoryCard } from "@/features/categories/components/PublicCategoryCard";
@@ -40,7 +40,8 @@ const cardVariant = {
 
 function CategoriesContent() {
   const router = useRouter();
-  const [page, setPage] = useState(1);
+  const searchParams = useSearchParams();
+  const page = parseInt(searchParams?.get("page") || "1", 10);
   const limit = 9;
 
   const { data: response, isLoading } = usePublicCategories(page, limit);
@@ -105,7 +106,7 @@ function CategoriesContent() {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="w-full">
           {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 xl:gap-6">
               {Array.from({ length: 6 }).map((_, i) => (
                 <div key={i} className="aspect-[4/3] bg-zinc-200 rounded-xl animate-pulse" />
               ))}
@@ -114,7 +115,7 @@ function CategoriesContent() {
             <>
               {/* Grid — stagger tiap card */}
               <motion.div
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 xl:gap-6"
                 variants={gridVariants}
                 initial="hidden"
                 animate="show"
@@ -137,7 +138,7 @@ function CategoriesContent() {
                   <PublicPagination
                     currentPage={page}
                     totalPage={meta.totalPage}
-                    onPageChange={setPage}
+                    useLinks={true}
                   />
                 </motion.div>
               )}

@@ -8,4 +8,7 @@ export interface Category {
   imageKey?: string | null;
   isActive: boolean;
   order: number;
+  _count?: {
+    products: number;
+  };
 }

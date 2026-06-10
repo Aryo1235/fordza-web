@@ -443,14 +443,12 @@ GET /api/public/size-templates
       "id": "tpl123...",
       "name": "EU Size",
       "type": "shoes",
-      "sizes": ["39", "40", "41", "42", "43", "44", "45"],
-      "createdAt": "2026-01-01T00:00:00.000Z"
-    },
-    {
-      "id": "tpl456...",
-      "name": "US Size",
-      "type": "shoes",
-      "sizes": ["7", "8", "9", "10", "11", "12"],
+      "sizes": ["39", "40", "41"],
+      "measurements": {
+        "39": { "insoleLength": "25", "insoleWidth": "9" },
+        "40": { "insoleLength": "26", "insoleWidth": "9.5" },
+        "41": { "insoleLength": "27", "insoleWidth": "10" }
+      },
       "createdAt": "2026-01-01T00:00:00.000Z"
     }
   ]
@@ -1298,21 +1296,39 @@ List semua size templates.
 ---
 
 #### **POST /api/admin/size-templates**
-Buat size template baru.
+Buat size template baru dengan pemetaan centimeter opsional.
 
 **Request Body:**
 ```json
 {
   "name": "EU Size",
   "type": "shoes",
-  "sizes": ["39", "40", "41", "42", "43", "44", "45"]
+  "sizes": ["39", "40", "41"],
+  "measurements": {
+    "39": { "insoleLength": "25", "insoleWidth": "9" },
+    "40": { "insoleLength": "26", "insoleWidth": "9.5" },
+    "41": { "insoleLength": "27", "insoleWidth": "10" }
+  }
 }
 ```
 
 ---
 
 #### **PUT /api/admin/size-templates/:id**
-Update size template.
+Update nama, ukuran, atau detail centimeter (measurements) size template.
+
+**Request Body:**
+```json
+{
+  "name": "EU Size (Updated)",
+  "sizes": ["39", "40", "41"],
+  "measurements": {
+    "39": { "insoleLength": "25", "insoleWidth": "9" },
+    "40": { "insoleLength": "26.5", "insoleWidth": "9.8" },
+    "41": { "insoleLength": "27.5", "insoleWidth": "10" }
+  }
+}
+```
 
 ---
 

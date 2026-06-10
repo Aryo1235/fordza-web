@@ -314,7 +314,7 @@ Pivot table untuk relasi Product-Category (many-to-many).
 
 ### **9. SizeTemplate**
 
-Template ukuran (EU, US, UK, dll).
+Template ukuran (EU, US, UK, dll) dengan detail CM.
 
 **Fields:**
 
@@ -324,6 +324,7 @@ Template ukuran (EU, US, UK, dll).
 | name | String | No | Nama template |
 | type | String | No | Tipe (shoes, sandals, dll) |
 | sizes | String[] | No | Array ukuran |
+| measurements | Json | Yes | Pemetaan ukuran ke rincian centimeter (CM) |
 | createdAt | DateTime | No | Waktu dibuat |
 | updatedAt | DateTime | No | Waktu diupdate |
 

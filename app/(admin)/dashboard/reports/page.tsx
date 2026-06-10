@@ -497,16 +497,16 @@ export default function ReportsPage() {
                         <TableCell className="font-mono text-[10px] text-stone-500">
                           {product.code}
                         </TableCell>
-                        <TableCell className="font-mono text-[10px] text-stone-700 font-semibold">
+                        <TableCell className="font-mono text-[10px] text-[#3C3025] font-semibold">
                           {product.variantCode}
                         </TableCell>
-                        <TableCell className="font-semibold text-stone-800">
+                        <TableCell className="font-semibold text-[#3C3025]">
                           {product.name}
                         </TableCell>
                         <TableCell className="text-xs text-stone-500">
                           {product.color} - Size: {product.size}
                         </TableCell>
-                        <TableCell className="text-right font-medium">
+                        <TableCell className="text-right font-medium text-[#3C3025]">
                           {product.quantity}
                         </TableCell>
                         <TableCell className="text-right text-stone-600">
@@ -518,7 +518,7 @@ export default function ReportsPage() {
                         <TableCell className="text-right text-red-600 font-medium">
                           {Number(product.discount || 0) > 0 ? `-Rp ${Number(product.discount).toLocaleString("id-ID")}` : "-"}
                         </TableCell>
-                        <TableCell className="text-right font-bold text-stone-900">
+                        <TableCell className="text-right font-bold text-[#3C3025]">
                           Rp{" "}
                           {Number(product.revenue || 0).toLocaleString("id-ID")}
                         </TableCell>

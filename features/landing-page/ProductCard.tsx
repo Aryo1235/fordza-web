@@ -101,7 +101,7 @@ export function ProductCard({ product }: { product: Product }) {
   return (
     <Link
       href={`/products/${product.id}`}
-      className="group relative h-full flex flex-col  rounded-2xl overflow-hidden bg-[var(--fordza-cream)] border border-[var(--fordza-cream-dark)] shadow-sm hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:-translate-y-0.5 transition-all duration-300"
+      className="group relative h-full flex flex-col   rounded-2xl overflow-hidden bg-[var(--fordza-cream)] border border-[var(--fordza-cream-dark)] shadow-sm hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:-translate-y-0.5 transition-all duration-300"
     >
       {/* ── Ornamen Segitiga Khas Fordza (Di atas Cream, Di luar kotak putih) ── */}
       {/* <div
@@ -130,7 +130,7 @@ export function ProductCard({ product }: { product: Product }) {
       </div>
 
       {/* ── Body ── */}
-      <div className="flex flex-1 flex-col gap-2 p-2.5 pb-5 pt-5 z-10">
+      <div className="flex flex-1 flex-col gap-2 p-2.5 pb-3 pt-2 z-10">
         {/* Badges */}
         <div className="flex flex-wrap gap-1.5 md:gap-1.5 min-h-[24px]">
           {(product.isPopular || product.isBestseller || product.isNew) && (
@@ -183,7 +183,7 @@ export function ProductCard({ product }: { product: Product }) {
                 {formatRupiah(displayFinalPrice)}
               </span>
               {hasDiscount && (
-                <span className="text-[9px] font-black text-red-500 bg-red-50 px-1.5 py-0.5 rounded shadow-sm">
+                <span className="text-[10px] md:text-[11px] font-black text-red-500 bg-red-50 px-1.5 py-0.5 rounded shadow-sm">
                   -{displayDiscount}%
                 </span>
               )}

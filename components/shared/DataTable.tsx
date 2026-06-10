@@ -117,7 +117,7 @@ export function DataTable<T>({
           totalItems={meta.totalItems}
           limit={meta.limit}
           onPageChange={(p) => onPageChange?.(p)}
-          onLimitChange={(l) => onLimitChange?.(l)}
+          onLimitChange={onLimitChange ? (l) => onLimitChange(l) : undefined}
           isLoading={isLoading}
         />
       )}

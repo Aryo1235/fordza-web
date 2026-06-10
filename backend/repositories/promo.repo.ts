@@ -50,6 +50,20 @@ export const PromoRepository = {
   async getById(id: string) {
     return await prisma.promo.findUnique({
       where: { id },
+      include: {
+        createdBy: {
+          select: {
+            name: true,
+            username: true,
+          },
+        },
+        updatedBy: {
+          select: {
+            name: true,
+            username: true,
+          },
+        },
+      },
     });
   },
 

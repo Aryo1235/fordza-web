@@ -73,6 +73,7 @@ export interface Transaction {
   amountPaid: number;
   change: number;
   status: "PAID" | "VOID";
+  paymentMethod?: string;
   customerName?: string;
   customerPhone?: string;
   createdAt: string;
@@ -109,4 +110,5 @@ export interface CheckoutPayload {
   amountPaid: number;
   customerName?: string;
   customerPhone?: string;
+  paymentMethod?: "CASH" | "DEBIT" | "QRIS";
 }

@@ -15,7 +15,7 @@ export default function GlobalNotFound() {
             <FileQuestion className="h-16 w-16 text-[#3C3025]" />
           </div>
         </div>
-        
+
         <div className="space-y-3">
           <h1 className="text-6xl font-bold text-[#3C3025]">404</h1>
           <h2 className="text-2xl font-semibold text-foreground">
@@ -35,14 +35,14 @@ export default function GlobalNotFound() {
           >
             Kembali
           </Button>
-          <Button
+          {/* <Button
             onClick={() => router.push("/")}
             size="lg"
             className="bg-[#3C3025] hover:bg-[#2a2318] text-white"
           >
             <Home className="h-4 w-4 mr-2" />
             Ke Beranda
-          </Button>
+          </Button> */}
         </div>
       </div>
     </div>

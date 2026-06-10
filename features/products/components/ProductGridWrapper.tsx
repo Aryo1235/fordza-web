@@ -39,7 +39,7 @@ export async function ProductGridWrapper({ searchParams }: ProductGridWrapperPro
     <>
       {/* Grid Produk */}
       {products.length > 0 ? (
-        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 transition-all duration-500">
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 transition-all duration-500">
           {products.map((product: any) => (
             <ProductCard key={product.id} product={product} />
           ))}

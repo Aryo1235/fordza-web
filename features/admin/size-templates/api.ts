@@ -36,3 +36,14 @@ export async function deleteSizeTemplate(id: string) {
     throw new Error(error?.response?.data?.message || "Gagal menghapus template ukuran");
   }
 }
+
+export async function getSizeTemplateDetail(id: string, page = 1, limit = 10) {
+  try {
+    const res = await api.get(`/api/admin/size-templates/${id}`, {
+      params: { page, limit }
+    });
+    return res.data;
+  } catch (error: any) {
+    throw new Error(error?.response?.data?.message || "Gagal mengambil detail template ukuran");
+  }
+}

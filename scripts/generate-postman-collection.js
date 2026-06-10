@@ -331,7 +331,12 @@ const sizeTemplatesFolder = {
       ...createRequest("✅ Create Size Template", "POST", "/api/admin/size-templates", {
         name: "EU Size",
         type: "shoes",
-        sizes: ["39", "40", "41", "42", "43", "44", "45"]
+        sizes: ["39", "40", "41"],
+        measurements: {
+          "39": { "insoleLength": "25", "insoleWidth": "9" },
+          "40": { "insoleLength": "26", "insoleWidth": "9.5" },
+          "41": { "insoleLength": "27", "insoleWidth": "10" }
+        }
       }),
       event: [createSuccessTest(201)]
     }

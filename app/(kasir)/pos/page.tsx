@@ -38,6 +38,7 @@ export default function POSPage() {
 
   const [cart, setCart] = useState<CartItem[]>([]);
   const [amountPaid, setAmountPaid] = useState(0);
+  const [paymentMethod, setPaymentMethod] = useState<"CASH" | "DEBIT" | "QRIS">("CASH");
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -200,6 +201,7 @@ export default function POSPage() {
     return () => window.clearTimeout(timeoutId);
   }, [justAddedProductId]);
 
+
   // ✅ Hitung subtotal seluruh keranjang sebelum diskon dengan konversi tipe yang aman
   const cartSubtotal = useMemo(() => {
     return cart.reduce((sum: number, c: CartItem) => sum + Number(c.price ?? 0) * c.quantity, 0);
@@ -293,6 +295,13 @@ export default function POSPage() {
   const canCheckout =
     cart.length > 0 && amountPaid >= totalPrice && !hasInvalidDiscount;
 
+  // Auto-fill amountPaid when DEBIT or QRIS is selected, or when totalPrice changes
+  useEffect(() => {
+    if (paymentMethod !== "CASH") {
+      setAmountPaid(totalPrice);
+    }
+  }, [paymentMethod, totalPrice]);
+
   useEffect(() => {
     const handleShortcut = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
@@ -367,6 +376,7 @@ export default function POSPage() {
         amountPaid,
         customerName,
         customerPhone,
+        paymentMethod,
         ...(authPin && { adminPin: authPin }),
       },
       {
@@ -691,9 +701,32 @@ export default function POSPage() {
                 </span>
               </div>
 
+              {/* Metode Pembayaran Desktop */}
+              <div className="space-y-1.5">
+                <Label className="text-[9px] text-stone-400 uppercase font-black">Metode Pembayaran</Label>
+                <div className="grid grid-cols-3 gap-2">
+                  {(["CASH", "DEBIT", "QRIS"] as const).map((method) => (
+                    <Button
+                      key={method}
+                      type="button"
+                      variant="outline"
+                      onClick={() => setPaymentMethod(method)}
+                      className={cn(
+                        "h-8 text-xs font-bold transition-all rounded-lg",
+                        paymentMethod === method
+                          ? "bg-[#3C3025] text-white hover:bg-[#3C3025] border-transparent"
+                          : "bg-white border-stone-200 text-stone-600 hover:bg-stone-50"
+                      )}
+                    >
+                      {method}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
               <div className="space-y-1.5 pt-1">
                 <Label className="text-[9px] text-stone-400 uppercase font-black">
-                  Uang Diterima (Rp)
+                  {paymentMethod === "CASH" ? "Uang Diterima (Rp)" : `Uang Diterima (${paymentMethod})`}
                 </Label>
                 <Input
                   ref={amountPaidInputRef}
@@ -705,15 +738,19 @@ export default function POSPage() {
                       setAmountPaid(parseNumber(val));
                     }
                   }}
-                  className="bg-white h-10 text-base font-black border-stone-300"
+                  disabled={paymentMethod !== "CASH"}
+                  className={cn(
+                    "bg-white h-10 text-base font-black border-stone-300",
+                    paymentMethod !== "CASH" && "bg-stone-50 text-stone-400 border-stone-200"
+                  )}
                 />
-                {amountPaid > 0 && amountPaid >= totalPrice && (
+                {paymentMethod === "CASH" && amountPaid > 0 && amountPaid >= totalPrice && (
                   <div className="flex justify-between items-center text-xs text-green-700 font-bold bg-green-50 px-2 py-1.5 rounded border border-green-100">
                     <span>Kembalian:</span>
                     <span>Rp {change.toLocaleString("id-ID")}</span>
                   </div>
                 )}
-                {amountPaid > 0 && amountPaid < totalPrice && (
+                {paymentMethod === "CASH" && amountPaid > 0 && amountPaid < totalPrice && (
                   <p className="text-[9px] text-red-500 font-bold bg-red-50 px-2 py-1 rounded">
                     Kurang Bayar Rp {remainingPayment.toLocaleString("id-ID")}
                   </p>
@@ -814,6 +851,8 @@ export default function POSPage() {
           onCustomerPhoneChange={setCustomerPhone}
           onCheckout={handleCheckout}
           isLoading={checkoutMutation.isPending}
+          paymentMethod={paymentMethod}
+          onPaymentMethodChange={setPaymentMethod}
         />
       )}
 

@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
 import { ImageUpload } from "@/components/shared/ImageUpload";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { categorySchema, type CategorySchemaValues } from "../schemas";
 
@@ -39,6 +39,12 @@ export function CategoryForm({ initialData, onSubmit, isLoading }: CategoryFormP
       order: 1,
     },
   });
+
+  useEffect(() => {
+    if (Object.keys(errors).length > 0) {
+      console.log("❌ Form Errors:", errors);
+    }
+  }, [errors]);
 
   const handleUploadTemp = async (uploadedFile: File) => {
     setFile(uploadedFile);
@@ -71,6 +77,17 @@ export function CategoryForm({ initialData, onSubmit, isLoading }: CategoryFormP
 
   return (
     <form onSubmit={handleSubmit(submitWrapper)} className="space-y-6">
+      {/* BANNER ERROR GLOBAL */}
+      {Object.keys(errors).length > 0 && (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-xl space-y-1">
+          <p className="text-sm font-bold text-red-600">Ada kesalahan pada form:</p>
+          <ul className="list-disc list-inside text-xs text-red-500">
+            {Object.entries(errors).map(([key, err]: [string, any]) => (
+              <li key={key}>{err?.message || `${key} tidak valid`}</li>
+            ))}
+          </ul>
+        </div>
+      )}
       <div className="grid gap-8 lg:grid-cols-12">
         <div className="lg:col-span-8 space-y-4">
           <div className="space-y-1.5">

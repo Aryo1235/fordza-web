@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { X, Trash2, Minus, Plus } from "lucide-react";
-import { formatNumber, parseNumber } from "@/lib/utils";
+import { cn, formatNumber, parseNumber } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,6 +24,8 @@ interface CartDrawerProps {
   onCheckout: () => void;
   isLoading: boolean;
   highlightedProductId?: string | null;
+  paymentMethod?: "CASH" | "DEBIT" | "QRIS";
+  onPaymentMethodChange?: (method: "CASH" | "DEBIT" | "QRIS") => void;
 }
 
 export default function CartDrawer({
@@ -41,6 +43,8 @@ export default function CartDrawer({
   onCheckout,
   isLoading,
   highlightedProductId = null,
+  paymentMethod = "CASH",
+  onPaymentMethodChange,
 }: CartDrawerProps) {
   // ✅ FIX: Hitung subtotal dulu untuk cek minPurchase dengan konversi tipe yang aman
   const subtotal = items.reduce((sum, item) => sum + Number(item.price ?? 0) * item.quantity, 0);
@@ -287,9 +291,34 @@ export default function CartDrawer({
               </div>
             </div>
             
+            {/* Metode Pembayaran */}
+            <div className="space-y-1.5">
+              <Label className="text-[10px] text-stone-500 uppercase font-black">Metode Pembayaran</Label>
+              <div className="grid grid-cols-3 gap-2">
+                {(["CASH", "DEBIT", "QRIS"] as const).map((method) => (
+                  <Button
+                    key={method}
+                    type="button"
+                    variant="outline"
+                    onClick={() => onPaymentMethodChange?.(method)}
+                    className={cn(
+                      "h-9 text-xs font-bold transition-all rounded-lg",
+                      paymentMethod === method
+                        ? "bg-[#3C3025] text-white hover:bg-[#3C3025] border-transparent"
+                        : "bg-white border-stone-200 text-stone-600 hover:bg-stone-50"
+                    )}
+                  >
+                    {method}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
             {/* Bayar Tunai */}
             <div className="space-y-1.5">
-              <Label className="text-[10px] text-stone-500 uppercase font-black">Bayar Tunai</Label>
+              <Label className="text-[10px] text-stone-500 uppercase font-black">
+                {paymentMethod === "CASH" ? "Bayar Tunai (Rp)" : `Uang Diterima (${paymentMethod})`}
+              </Label>
               <Input
                 type="text"
                 value={formatNumber(amountPaid)}
@@ -299,16 +328,20 @@ export default function CartDrawer({
                     onAmountPaidChange(parseNumber(val));
                   }
                 }}
+                disabled={paymentMethod !== "CASH"}
                 placeholder="0"
-                className="bg-white h-10 text-lg font-bold"
+                className={cn(
+                  "bg-white h-10 text-lg font-bold",
+                  paymentMethod !== "CASH" && "bg-stone-50 text-stone-400 border-stone-200"
+                )}
               />
-              {amountPaid >= total && total > 0 && (
+              {paymentMethod === "CASH" && amountPaid >= total && total > 0 && (
                 <div className="flex justify-between items-center text-xs text-green-700 font-bold bg-green-50 px-2 py-1.5 rounded">
                   <span>Kembalian:</span>
                   <span>Rp {change.toLocaleString("id-ID")}</span>
                 </div>
               )}
-              {amountPaid > 0 && amountPaid < total && (
+              {paymentMethod === "CASH" && amountPaid > 0 && amountPaid < total && (
                 <p className="text-[10px] text-red-500 font-bold">Kurang: Rp {remainingPayment.toLocaleString("id-ID")}</p>
               )}
             </div>

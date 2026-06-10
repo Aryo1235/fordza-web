@@ -50,24 +50,24 @@ export function ProductSectionRow({
 
       {/* ── Carousel Produk (Horizontal Scroll) ── */}
       <div
-        className="flex overflow-x-auto snap-x snap-mandatory gap-4 sm:gap-5 pb-4 custom-scrollbar"
+        className="flex overflow-x-auto  overflow-y-hidden py-1 snap-x snap-mandatory gap-4 sm:gap-4.5 pb-4 custom-scrollbar"
         style={{ scrollPaddingLeft: "0px" }}
       >
         {isLoading
           ? skeletons.map((_, i) => (
-              <div key={i} className="snap-start shrink-0 w-[65%] sm:w-[45%] md:w-[31%] lg:w-[31%] xl:w-[23.5%]">
-                <ProductCardSkeleton />
-              </div>
-            ))
+            <div key={i} className="snap-start shrink-0 w-[65%] sm:w-[45%] md:w-[31%] lg:w-[31%] xl:w-[23.5%]">
+              <ProductCardSkeleton />
+            </div>
+          ))
           : products.slice(0, limit).map((p, i) => (
-              <FadeUpSection
-                key={p.id}
-                delay={i * 0.07}
-                className="snap-start shrink-0 w-[65%] sm:w-[45%] md:w-[31%] lg:w-[31%] xl:w-[23.5%]"
-              >
-                <ProductCard product={p} />
-              </FadeUpSection>
-            ))}
+            <FadeUpSection
+              key={p.id}
+              delay={i * 0.07}
+              className="snap-start shrink-0 w-[65%] sm:w-[45%] md:w-[31%] lg:w-[31%] xl:w-[23.5%]"
+            >
+              <ProductCard product={p} />
+            </FadeUpSection>
+          ))}
       </div>
     </div>
   );

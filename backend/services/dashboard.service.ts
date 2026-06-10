@@ -21,6 +21,7 @@ export const DashboardService = {
 
     // 🧠 LOGIKA BISNIS: Transformasi data mentah → format siap tampil di chart
     const chartData = raw.categoryStats.map((c) => ({
+      id: c.id,
       name: c.name,
       total: c._count.products,
     }));
@@ -31,6 +32,33 @@ export const DashboardService = {
       totalBanners: raw.totalBanners,
       totalTestimonials: raw.totalTestimonials,
       chartData, // ← hasil olahan Service, bukan dari Repo mentah
+      lowStockSkus: raw.lowStockSkus.map((sku) => ({
+        id: sku.id,
+        productName: sku.variant.product.name,
+        productCode: sku.variant.product.productCode,
+        color: sku.variant.color,
+        size: sku.size,
+        stock: sku.stock,
+      })),
+      latestTestimonials: raw.latestTestimonials.map((t) => ({
+        id: t.id,
+        customerName: t.customerName,
+        rating: t.rating,
+        content: t.content,
+        productName: t.product?.name || "Produk",
+        createdAt: t.createdAt,
+      })),
+      latestStockLogs: raw.latestStockLogs.map((log) => ({
+        id: log.id,
+        productName: log.sku?.variant?.product?.name || "Produk",
+        color: log.color,
+        size: log.size,
+        delta: log.delta,
+        type: log.type,
+        notes: log.notes,
+        operatorName: log.operator?.name || "System",
+        createdAt: log.createdAt,
+      })),
     };
   },
 };

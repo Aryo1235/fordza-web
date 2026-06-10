@@ -55,6 +55,7 @@ export const sizeTemplateSchema = z.object({
   name: z.string().min(3, "Nama template minimal 3 karakter"),
   type: z.string().min(2, "Tipe wajib diisi"),
   sizes: z.array(z.string()).min(1, "Minimal harus ada satu ukuran"),
+  measurements: z.record(z.string(), z.any()).optional().nullable(),
 }).strict();
 
 export const testimonialSchema = z.object({

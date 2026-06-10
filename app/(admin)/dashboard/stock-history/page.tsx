@@ -244,7 +244,7 @@ export default function StockLogsPage() {
                           <TableCell className="text-stone-500 text-[10px] font-bold uppercase">{formatDate(log.createdAt)}</TableCell>
                           <TableCell>
                             <div className="flex flex-col">
-                              <span className="font-bold text-stone-800 text-sm">{log.product?.name}</span>
+                              <span className="font-bold text-[#3C3025] text-sm">{log.product?.name}</span>
                               <span className="text-[10px] text-stone-400 font-mono uppercase">{log.product?.productCode}</span>
                             </div>
                           </TableCell>
@@ -292,8 +292,8 @@ export default function StockLogsPage() {
                         <TableRow key={log.id} className="hover:bg-stone-50/50 transition-colors">
                           <TableCell className="text-stone-500 text-[10px] font-bold uppercase">{formatDate(log.createdAt)}</TableCell>
                           <TableCell>
-                            <div className="flex flex-col">
-                              <span className="font-bold text-stone-800 text-sm whitespace-nowrap">
+                             <div className="flex flex-col">
+                              <span className="font-bold text-[#3C3025] text-sm whitespace-nowrap">
                                 {log.sku?.variant?.product?.name || "Produk Terhapus"}
                               </span>
                               <span className="text-[10px] text-stone-400 font-mono uppercase">
@@ -306,10 +306,10 @@ export default function StockLogsPage() {
                               {log.color || log.sku?.variant?.color || "-"}
                             </Badge>
                           </TableCell>
-                          <TableCell className="font-black text-stone-700">{log.size || log.sku?.size || "-"}</TableCell>
+                          <TableCell className="font-black text-[#3C3025]">{log.size || log.sku?.size || "-"}</TableCell>
                           <TableCell>{getLogBadge(log.type)}</TableCell>
                           <TableCell className="text-right font-black"><DeltaBadge delta={log.delta} /></TableCell>
-                          <TableCell className="text-right font-mono text-stone-800 font-bold">{log.currentStock}</TableCell>
+                          <TableCell className="text-right font-mono text-[#3C3025] font-bold">{log.currentStock}</TableCell>
                           <TableCell className="text-[10px] font-bold text-stone-500 uppercase">{log.operator?.name || "Sistem"}</TableCell>
                         </TableRow>
                       ))}

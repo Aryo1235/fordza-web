@@ -37,6 +37,10 @@ export const TestimonialService = {
     return await TestimonialRepository.getAllAdmin(filters);
   },
 
+  async getById(id: string) {
+    return await TestimonialRepository.findById(id);
+  },
+
   // 🧠 LOGIKA BISNIS: Create + hitung ulang rating
   async create(data: Prisma.TestimonialCreateInput) {
     // LANGKAH 1: Suruh Repo buat review baru

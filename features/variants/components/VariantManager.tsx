@@ -143,7 +143,7 @@ function AddSkuForm({
     formState: { errors },
   } = useForm<SkuSchemaValues>({
     resolver: zodResolver(skuSchema) as any,
-    defaultValues: { size: "", stock: 0, priceOverride: null, isActive: true },
+    defaultValues: { size: "", stock: "" as any, priceOverride: null, isActive: true },
   });
 
   const onSubmit = (data: SkuSchemaValues) => {

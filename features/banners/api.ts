@@ -28,6 +28,32 @@ export async function deleteBanner(id: string) {
     const res = await api.delete(`/api/admin/banners/${id}`);
     return res.data;
   } catch (error: any) {
-    throw new Error(error?.response?.data?.message || "Gagal menghapus banner");
+    const err = new Error(error?.response?.data?.message || "Gagal menghapus banner");
+    (err as any).response = error?.response;
+    throw err;
+  }
+}
+
+export async function getBannerById(id: string) {
+  try {
+    const res = await api.get(`/api/admin/banners/${id}`);
+    return res.data.data;
+  } catch (error: any) {
+    const err = new Error(error?.response?.data?.message || "Gagal mengambil detail banner");
+    (err as any).response = error?.response;
+    throw err;
+  }
+}
+
+export async function updateBanner(id: string, formData: FormData) {
+  try {
+    const res = await api.put(`/api/admin/banners/${id}`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return res.data;
+  } catch (error: any) {
+    const err = new Error(error?.response?.data?.message || "Gagal memperbarui banner");
+    (err as any).response = error?.response;
+    throw err;
   }
 }

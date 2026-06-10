@@ -18,7 +18,16 @@ export const CategoryRepository = {
           order: true,
           isActive: true,
           _count: {
-            select: { products: true },
+            select: {
+              products: {
+                where: {
+                  product: {
+                    isActive: true,
+                    deletedAt: null,
+                  },
+                },
+              },
+            },
           },
         },
         skip,
@@ -66,12 +75,48 @@ export const CategoryRepository = {
   },
 
   async getById(id: string) {
-    return await prisma.category.findFirst({
+    const category = await prisma.category.findFirst({
       where: { id, deletedAt: null },
       include: {
-        _count: { select: { products: true } },
+        _count: {
+          select: {
+            products: {
+              where: {
+                product: {
+                  isActive: true,
+                  deletedAt: null,
+                },
+              },
+            },
+          },
+        },
       },
     });
+
+    if (!category) return null;
+
+    // Hitung total stok fisik dari produk-produk di kategori ini
+    const productsStock = await prisma.productCategory.findMany({
+      where: {
+        categoryId: id,
+        product: {
+          isActive: true,
+          deletedAt: null,
+        },
+      },
+      select: {
+        product: {
+          select: { stock: true }
+        }
+      }
+    });
+
+    const totalStock = productsStock.reduce((acc, item) => acc + (item.product?.stock || 0), 0);
+
+    return {
+      ...category,
+      totalStock
+    };
   },
 
   // Admin: termasuk inactive
@@ -90,7 +135,17 @@ export const CategoryRepository = {
           imageKey: true,
           order: true,
           isActive: true,
-          _count: { select: { products: true } },
+          _count: {
+            select: {
+              products: {
+                where: {
+                  product: {
+                    deletedAt: null,
+                  },
+                },
+              },
+            },
+          },
         },
         skip,
         take: limit,

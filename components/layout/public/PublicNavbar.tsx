@@ -118,6 +118,7 @@ export default function PublicNavbar() {
             <button
               aria-label="Buka menu"
               className="lg:hidden flex items-center justify-center size-9 rounded-lg text-white/80 hover:bg-white/10 transition-colors duration-150"
+              suppressHydrationWarning
             >
               <div className="flex flex-col gap-[5px]">
                 <span className="block h-[2px] w-5 rounded-full bg-white" />

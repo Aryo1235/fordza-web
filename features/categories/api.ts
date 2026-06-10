@@ -39,7 +39,9 @@ export async function createCategory(formData: FormData) {
     });
     return res.data;
   } catch (error: any) {
-    throw new Error(error?.response?.data?.message || "Gagal membuat kategori");
+    const err = new Error(error?.response?.data?.message || "Gagal membuat kategori");
+    (err as any).response = error?.response;
+    throw err;
   }
 }
 
@@ -50,7 +52,9 @@ export async function updateCategory(id: string, formData: FormData) {
     });
     return res.data;
   } catch (error: any) {
-    throw new Error(error?.response?.data?.message || "Gagal memperbarui kategori");
+    const err = new Error(error?.response?.data?.message || "Gagal memperbarui kategori");
+    (err as any).response = error?.response;
+    throw err;
   }
 }
 
@@ -59,7 +63,9 @@ export async function deleteCategory(id: string) {
     const res = await api.delete(`/api/admin/categories/${id}`);
     return res.data;
   } catch (error: any) {
-    throw new Error(error?.response?.data?.message || "Gagal menghapus kategori");
+    const err = new Error(error?.response?.data?.message || "Gagal menghapus kategori");
+    (err as any).response = error?.response;
+    throw err;
   }
 }
 

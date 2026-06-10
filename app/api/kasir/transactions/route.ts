@@ -35,7 +35,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { items, amountPaid, customerName, customerPhone, adminPin } = body;
+    const { items, amountPaid, customerName, customerPhone, adminPin, paymentMethod } = body;
 
     // Kasir ID diambil dari header (diset oleh middleware auth)
     const kasirId = request.headers.get("x-user-id");
@@ -55,7 +55,8 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!amountPaid || amountPaid <= 0) {
+    const method = paymentMethod || "CASH";
+    if (method === "CASH" && (!amountPaid || amountPaid <= 0)) {
       return NextResponse.json(
         { success: false, message: "Nominal pembayaran tidak valid" },
         { status: 400 }
@@ -66,10 +67,11 @@ export async function POST(request: Request) {
     const transaction = await TransactionService.checkout({ 
       kasirId, 
       items, 
-      amountPaid,
+      amountPaid: amountPaid || 0,
       customerName,
       customerPhone,
       adminPin,
+      paymentMethod: method,
     });
 
     const headerList = await headers();

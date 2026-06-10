@@ -14,10 +14,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Plus, Edit, Trash2, Loader2 } from "lucide-react";
+import { Plus, Edit, Trash2, Loader2, Eye, Ruler } from "lucide-react";
 import { toast } from "sonner";
+import Link from "next/link";
 
 export default function SizeTemplatesPage() {
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -26,6 +29,7 @@ export default function SizeTemplatesPage() {
   const [name, setName] = useState("");
   const [type, setType] = useState("Sepatu");
   const [sizesStr, setSizesStr] = useState("");
+  const [measurements, setMeasurements] = useState<Record<string, any>>({});
 
   const { data, isLoading } = useSizeTemplatesAdmin();
   const createMutation = useCreateSizeTemplate();
@@ -37,6 +41,7 @@ export default function SizeTemplatesPage() {
     setName("");
     setType("Sepatu");
     setSizesStr("");
+    setMeasurements({});
     setIsFormOpen(true);
   };
 
@@ -45,6 +50,7 @@ export default function SizeTemplatesPage() {
     setName(item.name);
     setType(item.type);
     setSizesStr(item.sizes.join(", "));
+    setMeasurements(item.measurements || {});
     setIsFormOpen(true);
   };
 
@@ -62,6 +68,50 @@ export default function SizeTemplatesPage() {
     }
   };
 
+  const updateMeasurement = (size: string, key: string, value: string) => {
+    setMeasurements(prev => ({
+      ...prev,
+      [size]: {
+        ...(prev[size] || {}),
+        [key]: value
+      }
+    }));
+  };
+
+  const blockInvalidChar = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (["e", "E", "+", "-"].includes(e.key)) {
+      e.preventDefault();
+    }
+  };
+
+  const handleSizesStrChange = (val: string) => {
+    if (type === "Sepatu") {
+      // Allow only numbers, commas, spaces
+      const cleanVal = val.replace(/[^0-9,\s]/g, "");
+      setSizesStr(cleanVal);
+    } else {
+      setSizesStr(val.toUpperCase());
+    }
+  };
+
+  const handleTypeChange = (newType: string) => {
+    setType(newType);
+    if (newType === "Sepatu") {
+      const cleanVal = sizesStr.replace(/[^0-9,\s]/g, "");
+      setSizesStr(cleanVal);
+    } else {
+      setSizesStr(sizesStr.toUpperCase());
+    }
+  };
+
+  const handleNumericChange = (size: string, key: string, val: string) => {
+    // Only allow numbers and a single dot
+    const cleanVal = val.replace(/[^0-9.]/g, "");
+    const parts = cleanVal.split(".");
+    const formatted = parts.length > 2 ? `${parts[0]}.${parts.slice(1).join("")}` : cleanVal;
+    updateMeasurement(size, key, formatted);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !sizesStr) {
@@ -75,7 +125,14 @@ export default function SizeTemplatesPage() {
       return;
     }
 
-    const payload = { name, type, sizes };
+    const filteredMeasurements: Record<string, any> = {};
+    sizes.forEach(size => {
+      if (measurements[size]) {
+        filteredMeasurements[size] = measurements[size];
+      }
+    });
+
+    const payload = { name, type, sizes, measurements: filteredMeasurements };
 
     if (editingId) {
       updateMutation.mutate({ id: editingId, data: payload }, {
@@ -137,12 +194,22 @@ export default function SizeTemplatesPage() {
       className: "text-right",
       cell: (item: any) => (
         <div className="flex justify-end gap-2">
+          <Link href={`/dashboard/size-templates/${item.id}/detail`}>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              title="Lihat Detail"
+              className="hover:text-stone-700 text-stone-500"
+            >
+              <Eye className="h-4 w-4" />
+            </Button>
+          </Link>
           <Button 
             variant="ghost" 
             size="icon" 
             title="Edit"
             onClick={() => handleOpenEdit(item)}
-            className="hover:text-blue-600"
+            className="hover:text-blue-600 text-stone-500"
           >
             <Edit className="h-4 w-4" />
           </Button>
@@ -151,7 +218,7 @@ export default function SizeTemplatesPage() {
             size="icon" 
             title="Hapus"
             onClick={() => setDeleteId(item.id)}
-            className="hover:text-red-600"
+            className="hover:text-red-600 text-stone-500"
             disabled={item.productDetails?.length > 0}
           >
             <Trash2 className="h-4 w-4" />
@@ -160,6 +227,18 @@ export default function SizeTemplatesPage() {
       ),
     },
   ];
+
+  const rawTemplates = data?.data || [];
+  const totalItems = rawTemplates.length;
+  const paginatedTemplates = rawTemplates.slice((page - 1) * limit, page * limit);
+  const totalPage = Math.ceil(totalItems / limit) || 1;
+
+  const meta = {
+    currentPage: page,
+    limit,
+    totalItems,
+    totalPage,
+  };
 
   return (
     <div className="p-6">
@@ -173,12 +252,27 @@ export default function SizeTemplatesPage() {
         }
       />
 
-      <DataTable 
-        columns={columns} 
-        data={data?.data || []} 
-        isLoading={isLoading} 
-        showNumber={true}
-      />
+      <div className="border border-stone-200 rounded-xl shadow-sm overflow-hidden bg-white mb-6">
+        <div className="bg-stone-50 border-b border-stone-100 py-3 px-6">
+          <p className="text-[10px] font-bold text-stone-500 uppercase tracking-tight flex items-center gap-2">
+            <Ruler className="w-3 h-3 text-stone-400" />
+            Size Chart Template Management ({totalItems} Templates)
+          </p>
+        </div>
+        <DataTable 
+          columns={columns} 
+          data={paginatedTemplates} 
+          isLoading={isLoading} 
+          meta={meta}
+          onPageChange={setPage}
+          onLimitChange={(l) => {
+            setLimit(l);
+            setPage(1);
+          }}
+          showNumber={true}
+          className="space-y-0 [&_.rounded-md.border]:border-none [&_.rounded-md.border]:shadow-none [&_.rounded-md.border]:rounded-none"
+        />
+      </div>
 
       <ConfirmDialog 
         open={!!deleteId}
@@ -190,43 +284,168 @@ export default function SizeTemplatesPage() {
       />
 
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-md md:max-w-lg max-h-[90vh] flex flex-col p-6">
           <DialogHeader>
             <DialogTitle>{editingId ? "Edit Template Ukuran" : "Buat Template Ukuran Baru"}</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4 py-4">
-            <div className="space-y-1.5">
-              <Label>Nama Template</Label>
-              <Input 
-                value={name} 
-                onChange={(e) => setName(e.target.value)} 
-                placeholder="Cth: Sepatu Formal Pria" 
-                required 
-              />
-            </div>
-            
-            <div className="space-y-1.5">
-              <Label>Tipe (Untuk display icon)</Label>
-              <Input 
-                value={type} 
-                onChange={(e) => setType(e.target.value)} 
-                placeholder="Cth: Sepatu, Pakaian, Aksesoris"
-                required 
-              />
+          <form onSubmit={handleSubmit} className="flex-1 flex flex-col space-y-4 py-4 overflow-hidden">
+            <div className="flex-1 overflow-y-auto space-y-4 pr-1">
+              <div className="space-y-1.5">
+                <Label>Nama Template</Label>
+                <Input 
+                  value={name} 
+                  onChange={(e) => setName(e.target.value)} 
+                  placeholder="Cth: Sepatu Formal Pria" 
+                  required 
+                />
+              </div>
+              
+              <div className="space-y-1.5">
+                <Label>Tipe Template</Label>
+                <select
+                  value={type}
+                  onChange={(e) => handleTypeChange(e.target.value)}
+                  className="flex h-9 w-full rounded-md border border-stone-200 bg-white px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-stone-400"
+                >
+                  <option value="Sepatu">Sepatu</option>
+                  <option value="Apparel">Apparel (Pakaian)</option>
+                  <option value="Aksesoris">Aksesoris / Gelang</option>
+                  <option value="Lainnya">Lainnya</option>
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label>Daftar Ukuran</Label>
+                <Input 
+                  value={sizesStr} 
+                  onChange={(e) => handleSizesStrChange(e.target.value)} 
+                  placeholder={
+                    type === "Sepatu" 
+                      ? "Cth: 39, 40, 41, 42, 43" 
+                      : type === "Apparel" 
+                      ? "Cth: S, M, L, XL atau 28, 30, 32"
+                      : type === "Aksesoris"
+                      ? "Cth: S, M, L atau 15, 16, 17"
+                      : "Cth: S, M, L, XL"
+                  } 
+                  required 
+                />
+                {type === "Sepatu" ? (
+                  <p className="text-[11px] text-amber-600 font-semibold flex items-center gap-1">
+                    ⚠️ Tipe Sepatu hanya mendukung ukuran berupa angka (huruf otomatis diblokir).
+                  </p>
+                ) : (
+                  <p className="text-[11px] text-stone-500 font-medium">
+                    Pisahkan dengan koma (,). Bisa berupa huruf (S, M, L) maupun angka.
+                  </p>
+                )}
+              </div>
+
+              {sizesStr.split(",").map(s => s.trim()).filter(Boolean).length > 0 && (
+                <div className="space-y-3 border-t border-stone-150 pt-4">
+                  <Label className="text-stone-700 font-semibold block mb-1">Rincian Ukuran (dalam CM)</Label>
+                  <div className="space-y-2">
+                    {sizesStr.split(",").map(s => s.trim()).filter(Boolean).map((size) => (
+                      <div key={size} className="flex items-center gap-4 bg-stone-50 p-2.5 rounded-lg border border-stone-200">
+                        <span className="min-w-[40px] font-bold text-center bg-[#FEF4E8] text-[#3C3025] px-2 py-1 rounded border border-[#e8ded3] text-sm">
+                          {size}
+                        </span>
+                        <div className="flex-1 grid grid-cols-2 gap-2">
+                           {type === "Sepatu" && (
+                            <>
+                              <div>
+                                <Label className="text-[10px] text-stone-500 uppercase">Panjang Insole (cm)</Label>
+                                <Input
+                                  type="text"
+                                  inputMode="decimal"
+                                  pattern="[0-9.]*"
+                                  onKeyDown={blockInvalidChar}
+                                  placeholder="Cth: 25.5"
+                                  className="h-8 text-xs bg-white"
+                                  value={measurements[size]?.insoleLength || measurements[size]?.insole || ""}
+                                  onChange={(e) => handleNumericChange(size, "insoleLength", e.target.value)}
+                                />
+                              </div>
+                              <div>
+                                <Label className="text-[10px] text-stone-500 uppercase">Lebar Insole (cm)</Label>
+                                <Input
+                                  type="text"
+                                  inputMode="decimal"
+                                  pattern="[0-9.]*"
+                                  onKeyDown={blockInvalidChar}
+                                  placeholder="Cth: 9.0"
+                                  className="h-8 text-xs bg-white"
+                                  value={measurements[size]?.insoleWidth || ""}
+                                  onChange={(e) => handleNumericChange(size, "insoleWidth", e.target.value)}
+                                />
+                              </div>
+                            </>
+                          )}
+                          {type === "Apparel" && (
+                            <>
+                              <div>
+                                <Label className="text-[10px] text-stone-500 uppercase">Lebar Dada (cm)</Label>
+                                <Input
+                                  type="text"
+                                  inputMode="decimal"
+                                  pattern="[0-9.]*"
+                                  onKeyDown={blockInvalidChar}
+                                  placeholder="Cth: 52"
+                                  className="h-8 text-xs bg-white"
+                                  value={measurements[size]?.ld || ""}
+                                  onChange={(e) => handleNumericChange(size, "ld", e.target.value)}
+                                />
+                              </div>
+                              <div>
+                                <Label className="text-[10px] text-stone-500 uppercase">Panjang Badan (cm)</Label>
+                                <Input
+                                  type="text"
+                                  inputMode="decimal"
+                                  pattern="[0-9.]*"
+                                  onKeyDown={blockInvalidChar}
+                                  placeholder="Cth: 70"
+                                  className="h-8 text-xs bg-white"
+                                  value={measurements[size]?.pb || ""}
+                                  onChange={(e) => handleNumericChange(size, "pb", e.target.value)}
+                                />
+                              </div>
+                            </>
+                          )}
+                          {type === "Aksesoris" && (
+                            <div className="col-span-2">
+                              <Label className="text-[10px] text-stone-500 uppercase">Lingkar Pergelangan (cm)</Label>
+                              <Input
+                                type="text"
+                                inputMode="decimal"
+                                pattern="[0-9.]*"
+                                onKeyDown={blockInvalidChar}
+                                placeholder="Cth: 18"
+                                className="h-8 text-xs bg-white"
+                                value={measurements[size]?.lingkar || ""}
+                                onChange={(e) => handleNumericChange(size, "lingkar", e.target.value)}
+                              />
+                            </div>
+                          )}
+                          {type !== "Sepatu" && type !== "Apparel" && type !== "Aksesoris" && (
+                            <div className="col-span-2">
+                              <Label className="text-[10px] text-stone-500 uppercase">Keterangan Detail (CM / Custom)</Label>
+                              <Input
+                                placeholder="Cth: Panjang tali 60cm"
+                                className="h-8 text-xs bg-white"
+                                value={measurements[size]?.detail || ""}
+                                onChange={(e) => updateMeasurement(size, "detail", e.target.value)}
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
-            <div className="space-y-1.5">
-              <Label>Daftar Ukuran</Label>
-              <Input 
-                value={sizesStr} 
-                onChange={(e) => setSizesStr(e.target.value)} 
-                placeholder="Cth: 39, 40, 41, 42, 43" 
-                required 
-              />
-              <p className="text-xs text-muted-foreground">Pisahkan dengan koma (,). Contoh: S, M, L, XL</p>
-            </div>
-
-            <DialogFooter className="pt-4">
+            <DialogFooter className="pt-4 border-t border-stone-100 flex-shrink-0">
               <Button type="button" variant="outline" onClick={() => setIsFormOpen(false)}>
                 Batal
               </Button>

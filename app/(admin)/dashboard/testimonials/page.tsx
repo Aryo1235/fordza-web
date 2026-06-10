@@ -9,19 +9,21 @@ import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Trash2, Search, Plus, Loader2 } from "lucide-react";
+import { Trash2, Search, Plus, Loader2, Edit, Eye } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import Link from "next/link";
 
 export default function TestimonialsPage() {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [search, setSearch] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [isAddOpen, setIsAddOpen] = useState(false);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   // Form State
   const [customerName, setCustomerName] = useState("");
@@ -33,7 +35,7 @@ export default function TestimonialsPage() {
 
   const { data, isLoading } = useTestimonialsAdmin(page, limit, search);
   // Fetch products for dropdown - Only when modal is open (Optimization)
-  const { data: productsData } = useProductsForTestimonials(undefined, isAddOpen);
+  const { data: productsData } = useProductsForTestimonials(undefined, isFormOpen);
   
   const createMutation = useCreateTestimonial();
   const updateMutation = useUpdateTestimonial();
@@ -58,26 +60,63 @@ export default function TestimonialsPage() {
     });
   };
 
-  const handleCreate = (e: React.FormEvent) => {
+  const handleOpenNew = () => {
+    setEditingId(null);
+    setCustomerName("");
+    setProductId("");
+    setProductSearch("");
+    setRating(5);
+    setContent("");
+    setIsFormOpen(true);
+  };
+
+  const handleOpenEdit = (item: any) => {
+    setEditingId(item.id);
+    setCustomerName(item.customerName);
+    setProductId(item.productId);
+    setProductSearch(item.product?.name || "");
+    setRating(item.rating);
+    setContent(item.content);
+    setIsFormOpen(true);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!productId || !customerName || !content) {
       toast.error("Harap isi semua kolom dengan benar!");
       return;
     }
     
-    // Status langsung aktif karena admin yang buat
-    createMutation.mutate({ productId, customerName, rating, content, isActive: true }, {
-      onSuccess: () => {
-        setIsAddOpen(false);
-        setCustomerName("");
-        setProductId("");
-        setProductSearch("");
-        setRating(5);
-        setContent("");
-        toast.success("Testimoni berhasil ditambahkan!");
-      },
-      onError: (err: any) => toast.error(err?.response?.data?.message || "Gagal menambah testimoni")
-    });
+    const payload = { productId, customerName, rating, content };
+
+    if (editingId) {
+      updateMutation.mutate({ id: editingId, data: payload }, {
+        onSuccess: () => {
+          setIsFormOpen(false);
+          setCustomerName("");
+          setProductId("");
+          setProductSearch("");
+          setRating(5);
+          setContent("");
+          setEditingId(null);
+          toast.success("Testimoni berhasil diperbarui!");
+        },
+        onError: (err: any) => toast.error(err?.response?.data?.message || "Gagal memperbarui testimoni")
+      });
+    } else {
+      createMutation.mutate({ ...payload, isActive: true }, {
+        onSuccess: () => {
+          setIsFormOpen(false);
+          setCustomerName("");
+          setProductId("");
+          setProductSearch("");
+          setRating(5);
+          setContent("");
+          toast.success("Testimoni berhasil ditambahkan!");
+        },
+        onError: (err: any) => toast.error(err?.response?.data?.message || "Gagal menambah testimoni")
+      });
+    }
   };
 
   // Filter products for dropdown
@@ -107,18 +146,15 @@ export default function TestimonialsPage() {
       ),
     },
     {
-      header: "Ulasan & Produk",
+      header: "Produk",
       cell: (item: any) => (
-        <div className="max-w-[300px] lg:max-w-[400px]">
-          <p className="text-sm italic text-gray-700">"{item.content}"</p>
-          <div className="flex items-center gap-2 mt-2">
-            <div className="h-6 w-6 rounded bg-gray-100 overflow-hidden relative">
-              {item.product?.images?.[0]?.url && (
-                <img src={item.product.images[0].url} alt="" className="w-full h-full object-cover" />
-              )}
-            </div>
-            <p className="text-xs font-medium text-gray-500 truncate">{item.product?.name}</p>
-          </div>
+        <div className="max-w-[220px]">
+          <p className="font-semibold text-[#3C3025] truncate" title={item.product?.name}>
+            {item.product?.name || "-"}
+          </p>
+          <p className="text-[10px] text-stone-400 font-mono mt-0.5">
+            {item.product?.productCode || "-"}
+          </p>
         </div>
       ),
     },
@@ -147,12 +183,31 @@ export default function TestimonialsPage() {
       className: "text-right",
       cell: (item: any) => (
         <div className="flex justify-end gap-2">
+          <Link href={`/dashboard/testimonials/${item.id}/detail`}>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              title="Lihat Detail"
+              className="hover:text-stone-700 text-stone-500"
+            >
+              <Eye className="h-4 w-4" />
+            </Button>
+          </Link>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            title="Edit Ulasan"
+            onClick={() => handleOpenEdit(item)}
+            className="hover:text-blue-600 text-stone-500"
+          >
+            <Edit className="h-4 w-4" />
+          </Button>
           <Button 
             variant="ghost" 
             size="icon" 
             title="Hapus Permanen"
             onClick={() => setDeleteId(item.id)}
-            className="hover:text-red-600"
+            className="hover:text-red-600 text-stone-500"
           >
             <Trash2 className="h-4 w-4" />
           </Button>
@@ -167,7 +222,7 @@ export default function TestimonialsPage() {
         title="Moderasi Testimoni" 
         description="Pilih ulasan mana saja yang akan ditampilkan untuk dilihat publik."
         action={
-          <Button onClick={() => setIsAddOpen(true)} className="bg-[#3C3025] hover:bg-[#5a4a38] text-white">
+          <Button onClick={handleOpenNew} className="bg-[#3C3025] hover:bg-[#5a4a38] text-white">
             <Plus className="mr-2 h-4 w-4" /> Tambah Manual
           </Button>
         }
@@ -227,13 +282,15 @@ export default function TestimonialsPage() {
         onConfirm={handleDelete}
       />
 
-      {/* Dialog Tambah Manual */}
-      <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+
+
+      {/* Dialog Form Terpadu */}
+      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Tambah Testimoni Manual</DialogTitle>
+            <DialogTitle>{editingId ? "Edit Testimoni" : "Tambah Testimoni Manual"}</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleCreate} className="space-y-4 py-4">
+          <form onSubmit={handleSubmit} className="space-y-4 py-4">
             <div className="space-y-1.5">
               <Label>Nama Pelanggan (Cth: dari WhatsApp)</Label>
               <Input 
@@ -309,12 +366,18 @@ export default function TestimonialsPage() {
             </div>
 
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setIsAddOpen(false)}>
+              <Button type="button" variant="outline" onClick={() => setIsFormOpen(false)}>
                 Batal
               </Button>
-              <Button type="submit" disabled={createMutation.isPending} className="bg-[#3C3025] hover:bg-[#5a4a38] text-white">
-                {createMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                Simpan & Langsung Tayang
+              <Button 
+                type="submit" 
+                disabled={createMutation.isPending || updateMutation.isPending} 
+                className="bg-[#3C3025] hover:bg-[#5a4a38] text-white"
+              >
+                {(createMutation.isPending || updateMutation.isPending) ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : null}
+                {editingId ? "Simpan Perubahan" : "Simpan & Langsung Tayang"}
               </Button>
             </DialogFooter>
           </form>

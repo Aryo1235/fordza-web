@@ -36,6 +36,33 @@ export default function BulkImportPage() {
   const categories = useMemo(() => categoriesData?.data || [], [categoriesData]);
   const templates = useMemo(() => templatesData?.data || [], [templatesData]);
 
+  // Otomatis memetakan nama kategori & nama size template ke ID database agar terbaca di UI Select
+  const resolvedPreviewData = useMemo(() => {
+    return previewData.map((p) => {
+      const resolvedCategoryIds = p.categoryIds.map((catInput) => {
+        const matched = categories.find(
+          (c: any) => c.id === catInput || c.name.toLowerCase() === catInput.toLowerCase()
+        );
+        return matched ? matched.id : catInput;
+      });
+
+      let resolvedTemplateId = p.sizeTemplateId;
+      if (resolvedTemplateId) {
+        const matched = templates.find(
+          (t: any) => t.id === resolvedTemplateId || t.name.toLowerCase() === resolvedTemplateId.toLowerCase()
+        );
+        if (matched) resolvedTemplateId = matched.id;
+      }
+
+      return {
+        ...p,
+        categoryIds: resolvedCategoryIds,
+        sizeTemplateId: resolvedTemplateId,
+      };
+    });
+  }, [previewData, categories, templates]);
+
+
   const processFile = async (selectedFile: File) => {
     if (!selectedFile.name.endsWith(".csv") && !selectedFile.name.endsWith(".xlsx") && !selectedFile.name.endsWith(".xls")) {
       toast.error("Mohon unggah file format .csv atau .xlsx");
@@ -98,9 +125,9 @@ export default function BulkImportPage() {
   };
 
   const handleImport = () => {
-    if (previewData.length === 0) return;
+    if (resolvedPreviewData.length === 0) return;
 
-    importMutation.mutate(previewData, {
+    importMutation.mutate(resolvedPreviewData, {
       onSuccess: (res) => {
         const results = res.data;
         if (results.failed > 0) {
@@ -215,7 +242,7 @@ export default function BulkImportPage() {
         </div>
       </div>
 
-      {previewData.length > 0 && (
+      {resolvedPreviewData.length > 0 && (
         <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div className="flex items-center justify-between bg-white p-4 rounded-xl border border-stone-100 shadow-sm">
             <div className="flex items-center gap-8">
@@ -223,7 +250,7 @@ export default function BulkImportPage() {
                 <span className="text-[10px] text-stone-400 font-bold uppercase tracking-widest">Status Data</span>
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                  <span className="text-sm font-bold text-stone-700">{previewData.length} Produk Terdeteksi</span>
+                  <span className="text-sm font-bold text-stone-700">{resolvedPreviewData.length} Produk Terdeteksi</span>
                 </div>
               </div>
               <div className="w-px h-8 bg-stone-100" />
@@ -263,7 +290,7 @@ export default function BulkImportPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {previewData.map((p, idx) => {
+                    {resolvedPreviewData.map((p, idx) => {
                       const isCatValid = categories.some((c: any) => c.id === p.categoryIds[0] || c.name === p.categoryIds[0]);
                       const isTplValid = templates.some((t: any) => t.id === p.sizeTemplateId || t.name === p.sizeTemplateId);
                       const error = importErrors[p.productCode];
@@ -371,7 +398,7 @@ export default function BulkImportPage() {
         </div>
       )}
 
-      {previewData.length === 0 && !isParsing && (
+      {resolvedPreviewData.length === 0 && !isParsing && (
         <div 
           className={`bg-white border-2 border-dashed rounded-3xl py-32 flex flex-col items-center justify-center text-center shadow-sm transition-all duration-300 ${isDragging ? "border-emerald-500 bg-emerald-50/30 scale-[1.01]" : "border-stone-100"}`}
           onDragOver={handleDragOver}

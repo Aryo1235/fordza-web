@@ -14,6 +14,7 @@ export async function GET(req: Request) {
 
     const filters = {
       search: searchParams.get("search") || undefined,
+      categoryId: searchParams.get("categoryId") || undefined,
       page: parseInt(searchParams.get("page") || "1"),
       limit: parseInt(searchParams.get("limit") || "10"),
     };

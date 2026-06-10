@@ -290,16 +290,108 @@ collection.item.push({
 collection.item.push({
   name: "📏 Size Templates (Admin)",
   item: [
-    req({ name: "List Size Templates", method: "GET", path: "/api/admin/size-templates", example: { status: 200, body: { success: true, data: [{ id: "tpl123", name: "EU Size", type: "shoes", sizes: ["39", "40", "41", "42", "43", "44", "45"] }] } } }),
+    req({
+      name: "List Size Templates",
+      method: "GET",
+      path: "/api/admin/size-templates",
+      example: {
+        status: 200,
+        body: {
+          success: true,
+          data: [
+            {
+              id: "tpl123",
+              name: "EU Size",
+              type: "shoes",
+              sizes: ["39", "40", "41"],
+              measurements: {
+                "39": { "insoleLength": "25", "insoleWidth": "9" },
+                "40": { "insoleLength": "26", "insoleWidth": "9.5" },
+                "41": { "insoleLength": "27", "insoleWidth": "10" }
+              }
+            }
+          ]
+        }
+      }
+    }),
     {
       name: "Get Size Template by ID",
       item: [
-        req({ name: "200 Success", method: "GET", path: "/api/admin/size-templates/{{size_template_id}}", example: { status: 200, body: { success: true, data: { id: "tpl123", name: "EU Size", type: "shoes", sizes: ["39", "40", "41", "42", "43", "44", "45"] } } }, saveVars: { statusCode: 200, vars: { size_template_id: "response.data.id" } } }),
+        req({
+          name: "200 Success",
+          method: "GET",
+          path: "/api/admin/size-templates/{{size_template_id}}",
+          example: {
+            status: 200,
+            body: {
+              success: true,
+              data: {
+                id: "tpl123",
+                name: "EU Size",
+                type: "shoes",
+                sizes: ["39", "40", "41"],
+                measurements: {
+                  "39": { "insoleLength": "25", "insoleWidth": "9" },
+                  "40": { "insoleLength": "26", "insoleWidth": "9.5" },
+                  "41": { "insoleLength": "27", "insoleWidth": "10" }
+                }
+              }
+            }
+          },
+          saveVars: { statusCode: 200, vars: { size_template_id: "response.data.id" } }
+        }),
         req({ name: "404 Not Found", method: "GET", path: "/api/admin/size-templates/invalid-id", example: { status: 404, statusText: "Not Found", body: { success: false, message: "SizeTemplate tidak ditemukan", code: "NOT_FOUND", traceId: "req_123" } } })
       ]
     },
-    req({ name: "Create Size Template", method: "POST", path: "/api/admin/size-templates", body: { name: "US Size", type: "shoes", sizes: ["7", "8", "9", "10", "11", "12"] }, example: { status: 201, statusText: "Created", body: { success: true, message: "Size template berhasil dibuat", data: { id: "tpl456", name: "US Size", type: "shoes" } } } }),
-    req({ name: "Update Size Template", method: "PUT", path: "/api/admin/size-templates/{{size_template_id}}", body: { name: "EU Size (Updated)", sizes: ["38", "39", "40", "41", "42", "43", "44", "45", "46"] }, example: { status: 200, body: { success: true, message: "Size template berhasil diupdate" } } }),
+    req({
+      name: "Create Size Template",
+      method: "POST",
+      path: "/api/admin/size-templates",
+      body: {
+        name: "US Size",
+        type: "shoes",
+        sizes: ["7", "8", "9"],
+        measurements: {
+          "7": { "insoleLength": "25", "insoleWidth": "9" },
+          "8": { "insoleLength": "26", "insoleWidth": "9.5" },
+          "9": { "insoleLength": "27", "insoleWidth": "10" }
+        }
+      },
+      example: {
+        status: 201,
+        statusText: "Created",
+        body: {
+          success: true,
+          message: "Size template berhasil dibuat",
+          data: {
+            id: "tpl456",
+            name: "US Size",
+            type: "shoes"
+          }
+        }
+      }
+    }),
+    req({
+      name: "Update Size Template",
+      method: "PUT",
+      path: "/api/admin/size-templates/{{size_template_id}}",
+      body: {
+        name: "EU Size (Updated)",
+        sizes: ["38", "39", "40"],
+        measurements: {
+          "38": { "insoleLength": "24", "insoleWidth": "8.5" },
+          "39": { "insoleLength": "25", "insoleWidth": "9" },
+          "40": { "insoleLength": "26", "insoleWidth": "9.5" }
+        }
+      },
+      example: {
+        status: 200,
+        body: {
+          success: true,
+          message: "Size template berhasil diupdate"
+        }
+      }
+    }),
     req({ name: "Delete Size Template", method: "DELETE", path: "/api/admin/size-templates/{{size_template_id}}", example: { status: 200, body: { success: true, message: "Size template berhasil dihapus" } } })
   ]
 });
@@ -490,8 +582,12 @@ collection.item.push({
 const outputPath = path.join(__dirname, '..', 'postman', 'Fordza-Complete.postman_collection.json');
 fs.writeFileSync(outputPath, JSON.stringify(collection, null, 2));
 
+const outputPathV3 = path.join(__dirname, '..', 'postman', 'Fordza API - Complete Collection v3.postman_collection.json');
+fs.writeFileSync(outputPathV3, JSON.stringify(collection, null, 2));
+
 console.log('✅ Complete Postman collection generated!');
-console.log(`📁 File: ${outputPath}`);
+console.log(`📁 File 1: ${outputPath}`);
+console.log(`📁 File 2: ${outputPathV3}`);
 console.log(`📊 Total folders: ${collection.item.length}`);
 const totalRequests = collection.item.reduce((sum, folder) => {
   const countItems = (items) => items.reduce((s, item) => s + (item.item ? countItems(item.item) : 1), 0);

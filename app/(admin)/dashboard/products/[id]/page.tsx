@@ -22,7 +22,8 @@ import { useCategoriesForPromo } from "@/features/categories";
 import { useSizeTemplatesAdmin } from "@/features/admin/size-templates";
 import { Package, Save, Loader2, ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { PageHeader } from "@/components/layout/admin/PageHeader";
+import { BreadcrumbsHeader } from "@/components/layout/admin/BreadcrumbsHeader";
+import Link from "next/link";
 import { ImageUpload } from "@/components/shared/ImageUpload";
 import { RichTextEditor } from "@/components/shared/RichTextEditor";
 import {
@@ -61,13 +62,13 @@ export default function EditProductPage({
 
     const catIds = Array.isArray(product.categories)
       ? product.categories
-          .map(
-            (c: any) =>
-              c.category?.id ||
-              c.categoryId ||
-              (typeof c === "string" ? c : null),
-          )
-          .filter(Boolean)
+        .map(
+          (c: any) =>
+            c.category?.id ||
+            c.categoryId ||
+            (typeof c === "string" ? c : null),
+        )
+        .filter(Boolean)
       : [];
 
     const stId =
@@ -81,7 +82,7 @@ export default function EditProductPage({
       productType: (product.productType?.toLowerCase() as any) || "shoes",
       gender: product.gender
         ? ((product.gender.charAt(0).toUpperCase() +
-            product.gender.slice(1).toLowerCase()) as any)
+          product.gender.slice(1).toLowerCase()) as any)
         : "Unisex",
       material: product.detail?.material || "",
       outsole: product.detail?.outsole || "",
@@ -257,22 +258,21 @@ export default function EditProductPage({
 
   return (
     <div className="p-6 mx-auto space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => router.back()}>
-            <ChevronLeft className="h-5 w-5" />
-          </Button>
-          <PageHeader
-            title="Edit Produk"
-            description={`ID: ${product?.productCode}`}
-          />
-        </div>
-        {isDirty && (
-          <Badge className="bg-amber-100 text-amber-600 border-amber-200 animate-pulse">
-            Perubahan Belum Disimpan
-          </Badge>
-        )}
-      </div>
+      <BreadcrumbsHeader
+        title="Edit Produk"
+        breadcrumbs={[
+          { label: "Produk", href: "/dashboard/products" },
+          { label: product?.name || "", href: `/dashboard/products/${id}/detail` },
+          { label: "Edit Produk" },
+        ]}
+        action={
+          isDirty && (
+            <Badge className="bg-amber-100 text-amber-600 border-amber-200 animate-pulse">
+              Perubahan Belum Disimpan
+            </Badge>
+          )
+        }
+      />
 
       {/* BANNER ERROR GLOBAL */}
       {Object.keys(errors).length > 0 && (

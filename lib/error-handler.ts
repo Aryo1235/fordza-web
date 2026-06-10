@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { AppError } from "./errors";
-export { AppError };  
+export { AppError };
 import { ZodError } from "zod";
 import { Prisma } from "@prisma/client";
 import { logger } from "./logger";
@@ -13,10 +13,10 @@ export async function handleError(error: unknown) {
   // Custom AppError
   if (error instanceof AppError) {
     logger.warn({ traceId, code: error.code, details: error.details }, error.message);
-    
+
     // Extract 'field' from details to present at the root level if requested
-    const field = error.details && typeof error.details === 'object' && 'field' in error.details 
-      ? error.details.field 
+    const field = error.details && typeof error.details === 'object' && 'field' in error.details
+      ? error.details.field
       : undefined;
 
     return NextResponse.json(
@@ -52,13 +52,13 @@ export async function handleError(error: unknown) {
     if (error.code === "P2002") {
       const target = error.meta?.target as string[] | string | undefined;
       console.log("DEBUG P2002 TARGET:", target); // DEBUGGING!
-      
+
       let message = "Data sudah ada dalam sistem";
-      
+
       const targetStr = Array.isArray(target) ? target.join(",") : (target || "");
       const errorMsg = error.message || "";
       const searchStr = (targetStr + " " + errorMsg).toLowerCase();
-      
+
       if (searchStr.includes("productcode") || searchStr.includes("product_code")) {
         message = "Kode produk sudah digunakan";
       } else if (searchStr.includes("username")) {
@@ -70,13 +70,13 @@ export async function handleError(error: unknown) {
       } else if (searchStr.includes("invoice_no")) {
         message = "Nomor invoice sudah digunakan";
       }
-      
+
       let extractedField = Array.isArray(target) ? target[0] : target;
       if (!extractedField && error.message) {
         const match = error.message.match(/fields: \(`(.*?)`\)/) || error.message.match(/constraint: `(.*?)`/);
         if (match && match[1]) extractedField = match[1];
       }
-      
+
       logger.warn({ traceId, extractedField }, "Duplicate entry error");
       return NextResponse.json(
         {
@@ -90,11 +90,11 @@ export async function handleError(error: unknown) {
       );
     }
 
-    
+
     if (error.code === "P2025") {
       const cause = error.meta?.cause as string | undefined;
       const modelName = error.meta?.modelName as string | undefined;
-      
+
       // Deteksi jika P2025 karena gagal melakukan 'connect' ke tabel relasi (misal kategori tidak ada)
       if (cause && (cause.includes("nested connect") || cause.includes("relation"))) {
         logger.warn({ traceId, cause, modelName }, "Invalid reference during connect");
@@ -122,7 +122,7 @@ export async function handleError(error: unknown) {
         { status: 404 }
       );
     }
-    
+
     if (error.code === "P2003") {
       const target = error.meta?.field_name as string | undefined;
       logger.warn({ traceId, target }, "Foreign key constraint failed");

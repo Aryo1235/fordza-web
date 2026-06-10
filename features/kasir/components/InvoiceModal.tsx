@@ -24,6 +24,7 @@ interface Transaction {
   amountPaid: number;
   change: number;
   status: string;
+  paymentMethod?: string;
   customerName?: string;
   customerPhone?: string;
   createdAt: string;
@@ -81,6 +82,7 @@ export default function InvoiceModal({ transaction, onClose }: InvoiceModalProps
     doc.text(`No. Invoice : ${transaction.invoiceNo}`, marginX, y); y += lineH * 0.8;
     doc.text(`Tanggal    : ${formatDate(transaction.createdAt)}`, marginX, y); y += lineH * 0.8;
     doc.text(`Kasir      : ${transaction.kasir?.name || transaction.kasir?.username || "-"}`, marginX, y); y += lineH * 0.8;
+    doc.text(`Pembayaran : ${transaction.paymentMethod || "CASH"}`, marginX, y); y += lineH * 0.8;
     doc.line(marginX, y, 75, y); y += lineH * 0.8;
 
     // Items
@@ -210,6 +212,10 @@ export default function InvoiceModal({ transaction, onClose }: InvoiceModalProps
               <div className="flex justify-between">
                 <span className="text-stone-500">Kasir</span>
                 <span>{transaction.kasir?.name || transaction.kasir?.username || "-"}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-stone-500">Pembayaran</span>
+                <span className="font-bold">{transaction.paymentMethod || "CASH"}</span>
               </div>
               {transaction.customerName && (
                 <div className="flex justify-between">
