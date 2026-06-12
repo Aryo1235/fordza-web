@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
+import { Prisma } from "@/app/generated/prisma/client";
 import { AppError } from "./errors";
 export { AppError };
 import { ZodError } from "zod";
-import { Prisma } from "../app/generated/prisma";
 import { logger } from "./logger";
 import { headers } from "next/headers";
 
