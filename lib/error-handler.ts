@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { AppError } from "./errors";
 export { AppError };
 import { ZodError } from "zod";
-import { Prisma } from "@prisma/client";
+import { Prisma } from "../app/generated/prisma";
 import { logger } from "./logger";
 import { headers } from "next/headers";
 
