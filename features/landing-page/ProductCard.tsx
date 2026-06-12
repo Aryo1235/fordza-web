@@ -34,7 +34,7 @@ function StatusBadge({
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-[3px] px-2 py-1.5 text-[10px] font-medium leading-none whitespace-nowrap",
+        "inline-flex items-center rounded-[3px] px-1 py-0 md:px-2 md:py-1 text-[9px] md:text-[11px] font-medium leading-none whitespace-nowrap",
         styles[color],
       )}
     >
@@ -82,15 +82,15 @@ export function ProductCard({ product }: { product: Product }) {
       displayFinalPrice = minPrice;
       displayHighestPrice = Number(
         targetVariant.highestPrice ??
-          targetVariant.comparisonPrice ??
-          targetVariant.basePrice ??
-          minPrice,
+        targetVariant.comparisonPrice ??
+        targetVariant.basePrice ??
+        minPrice,
       );
       displayDiscount = Math.round(
         Number(
           targetVariant.totalDiscountPercent ??
-            targetVariant.discountPercent ??
-            0,
+          targetVariant.discountPercent ??
+          0,
         ),
       );
     }
@@ -101,17 +101,17 @@ export function ProductCard({ product }: { product: Product }) {
   return (
     <Link
       href={`/products/${product.id}`}
-      className="group relative h-full flex flex-col p-2.5 rounded-2xl overflow-hidden bg-[var(--fordza-cream)] border border-[var(--fordza-cream-dark)] shadow-sm hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:-translate-y-0.5 transition-all duration-300"
+      className="group relative h-full flex flex-col   rounded-2xl overflow-hidden bg-[var(--fordza-cream)] border border-[var(--fordza-cream-dark)] shadow-sm hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:-translate-y-0.5 transition-all duration-300"
     >
       {/* ── Ornamen Segitiga Khas Fordza (Di atas Cream, Di luar kotak putih) ── */}
-      <div
+      {/* <div
         className="absolute top-0 left-0 w-[14.5rem] h-[13rem] md:w-[16rem] md:h-[14.5rem] lg:w-[20rem] lg:h-[18rem] xl:w-[18rem] xl:h-[17rem] bg-[#4A3B2E] z-0"
         style={{ clipPath: "polygon(0 0, 100% 0, 0 100%)" }}
-      />
+      /> */}
 
       {/* ── Area Gambar Putih ── */}
       <div
-        className="relative w-full bg-white rounded-xl overflow-hidden shadow-sm z-10"
+        className="relative w-full bg-white overflow-hidden shadow-sm z-10"
         style={{ aspectRatio: "1 / 1" }}
       >
         {/* Gambar Sepatu - MENGGUNAKAN IMG STANDAR UNTUK MENGHINDARI LIMIT VERCEL */}
@@ -130,9 +130,9 @@ export function ProductCard({ product }: { product: Product }) {
       </div>
 
       {/* ── Body ── */}
-      <div className="flex flex-1 flex-col gap-2 p-1 pb-3 pt-3 z-10">
+      <div className="flex flex-1 flex-col gap-2 p-2.5 pb-3 pt-2 z-10">
         {/* Badges */}
-        <div className="flex flex-wrap gap-1.5 min-h-[24px]">
+        <div className="flex flex-wrap gap-1.5 md:gap-1.5 min-h-[24px]">
           {(product.isPopular || product.isBestseller || product.isNew) && (
             <>
               {product.isPopular && (
@@ -148,7 +148,7 @@ export function ProductCard({ product }: { product: Product }) {
 
         {/* Nama produk */}
         <p
-          className="text-sm font-bold text-gray-900 leading-snug line-clamp-2 min-h-[40px]"
+          className="text-sm font-bold text-gray-900 leading-snug line-clamp-2"
           style={{ fontFamily: "Inter, sans-serif" }}
         >
           {product.name}
@@ -164,7 +164,7 @@ export function ProductCard({ product }: { product: Product }) {
         </div>
 
         {/* Footer */}
-        <div className="mt-auto flex items-end justify-between pt-3 border-t border-transparent">
+        <div className="mt-auto flex items-end justify-between pt-3  pb-1 border-t border-transparent">
           {/* Harga */}
           <div className="flex flex-col gap-0.5">
             <div className="flex items-center gap-1.5 flex-wrap">
@@ -172,7 +172,7 @@ export function ProductCard({ product }: { product: Product }) {
                 Harga
               </span>
               {hasDiscount && displayHighestPrice !== displayFinalPrice ? (
-                <span className="text-[9px] font-medium text-gray-400 line-through">
+                <span className="text-xs font-medium text-gray-400 line-through">
                   {formatRupiah(displayHighestPrice)}
                 </span>
               ) : null}
@@ -183,7 +183,7 @@ export function ProductCard({ product }: { product: Product }) {
                 {formatRupiah(displayFinalPrice)}
               </span>
               {hasDiscount && (
-                <span className="text-[9px] font-black text-red-500 bg-red-50 px-1.5 py-0.5 rounded shadow-sm">
+                <span className="text-[10px] md:text-[11px] font-black text-red-500 bg-red-50 px-1.5 py-0.5 rounded shadow-sm">
                   -{displayDiscount}%
                 </span>
               )}
@@ -192,20 +192,20 @@ export function ProductCard({ product }: { product: Product }) {
 
           {/* Wishlist button */}
           {/* <button
-            aria-label="Tambah ke wishlist"
-            onClick={(e) => {
-              e.preventDefault();
-              setWished((w) => !w);
-            }}
-            className={cn(
-              "flex size-7 flex-shrink-0 items-center justify-center rounded-[4px] border-[1.5px] transition-colors duration-200",
-              wished
-                ? "bg-rose-500 border-rose-500 text-white"
-                : "bg-transparent border-gray-400 text-gray-400 hover:border-rose-500 hover:bg-rose-50 hover:text-rose-500"
-            )}
-          >
-            <Heart className={cn("size-3.5", wished && "fill-white text-rose-500")} />
-          </button> */}
+              aria-label="Tambah ke wishlist"
+              onClick={(e) => {
+                e.preventDefault();
+                setWished((w) => !w);
+              }}
+              className={cn(
+                "flex size-7 flex-shrink-0 items-center justify-center rounded-[4px] border-[1.5px] transition-colors duration-200",
+                wished
+                  ? "bg-rose-500 border-rose-500 text-white"
+                  : "bg-transparent border-gray-400 text-gray-400 hover:border-rose-500 hover:bg-rose-50 hover:text-rose-500"
+              )}
+            >
+              <Heart className={cn("size-3.5", wished && "fill-white text-rose-500")} />
+            </button> */}
         </div>
       </div>
     </Link>

@@ -22,8 +22,12 @@ export const SizeTemplateService = {
     return await SizeTemplateRepository.create(data);
   },
 
-  async getById(id: string) {
-    return await SizeTemplateRepository.getById(id);
+  async getById(id: string, page?: number, limit?: number) {
+    return await SizeTemplateRepository.getById(id, page, limit);
+  },
+
+  async countProducts(id: string) {
+    return await SizeTemplateRepository.countProducts(id);
   },
 
   async update(id: string, data: any) {

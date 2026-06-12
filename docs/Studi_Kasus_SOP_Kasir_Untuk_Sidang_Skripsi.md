@@ -18,7 +18,7 @@ Berikut adalah skenario jawaban telak (*Real Case Scenario*) yang mengadopsi sta
 *Tidak, Bapak/Ibu Dosen. Logika Akuntansi di sistem Fordza Web secara tegas membelah 2 aliran uang ke dalam mesin database yang berbeda:*
 
 1. **Aliran Omzet Murni (Laporan Manajer):**
-   Pada layer Repository API kami (`TransactionRepository.getReportStats`), sistem menarik grafik laporan omzet murni dari transaksi sepatu yang statusnya valid/dibayar (`priceAtSale` × `quantity`). Modal Rp 500.000 yang diketik Kasir disimpan terpisah di tabel `CashierShift` dan **tidak memiliki Foreign Key maupun rumus kalkulasi yang bersinggungan** dengan grafik menu Laporan Omzet. Sehingga, Laporan Omzet akan tampil jujur 100% senilai **Rp 2.000.000**.
+   Pada layer Repository API kami (`TransactionRepository.getReportStats`), sistem menarik grafik laporan omzet murni dari transaksi sepatu yang statusnya valid/dibayar (`basePriceAtSale` × `quantity`). Modal Rp 500.000 yang diketik Kasir disimpan terpisah di tabel `CashierShift` dan **tidak memiliki Foreign Key maupun rumus kalkulasi yang bersinggungan** dengan grafik menu Laporan Omzet. Sehingga, Laporan Omzet akan tampil jujur 100% senilai **Rp 2.000.000**.
 
 2. **Aliran Audit Fisik (Laporan Laci / Cash Float):**
    Satu-satunya tempat di mana Modal Rp 500.000 ini diikutkan dalam hitungan adalah pada Menu **Audit Laporan Laci Kasir**. Menu ini dibangun khusus untuk Manajer sebagai "Alat Uji Kejujuran Karyawan". 

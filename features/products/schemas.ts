@@ -14,20 +14,24 @@ export const productSchema = z.object({
   description: z.string().default("").optional().nullable(),
   material: z.string().min(1, "Material Utama wajib diisi"),
   outsole: z.string().default("").optional().nullable(),
+  insole: z.string().default("").optional().nullable(),
   closureType: z.string().default("").optional().nullable(),
   origin: z.string().default("").optional().nullable(),
   notes: z.string().default("").optional().nullable(),
-  sizeTemplateId: z.string().min(1, "Size Template wajib dipilih"),
+  sizeTemplateId: z.string().trim().min(1, "Size Template wajib dipilih"),
 
-  categoryIds: z.array(z.string()).min(1),
+  categoryIds: z.array(z.string().trim().min(1, "ID Kategori tidak boleh kosong")).min(1, "Minimal pilih 1 kategori"),
   isPopular: z.boolean().default(false),
   isBestseller: z.boolean().default(false),
   isNew: z.boolean().default(true),
   isActive: z.boolean().default(true),
 
+  customSizes: z.array(z.string()).default([]).optional(),
+  customMeasurements: z.any().optional(),
+
   images: z.any().optional(),
   variants: z.array(z.any()).optional(), // Mengizinkan data varian masuk ke service
-}).superRefine((data, ctx) => {
+}).strict().superRefine((data, ctx) => {
   if (!data.isActive && (data.isPopular || data.isBestseller || data.isNew)) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,

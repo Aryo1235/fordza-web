@@ -5,6 +5,7 @@ export const VariantRepository = {
     const variants = await prisma.productVariant.findMany({
       where: {
         isActive: true,
+        deletedAt: null,
         OR: [
           { color: { contains: query, mode: "insensitive" } },
           { variantCode: { contains: query, mode: "insensitive" } },

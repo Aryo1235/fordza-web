@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getAdminBanners, createBanner, deleteBanner } from "./api";
+import { getAdminBanners, createBanner, deleteBanner, getBannerById, updateBanner } from "./api";
 
 export const bannerKeys = {
   all: ["banners"] as const,
@@ -34,6 +34,26 @@ export function useDeleteBanner() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: bannerKeys.all });
       queryClient.invalidateQueries({ queryKey: ["admin-banners"] });
+    },
+  });
+}
+
+export function useBanner(id: string) {
+  return useQuery({
+    queryKey: ["banner", id],
+    queryFn: () => getBannerById(id),
+    enabled: !!id,
+  });
+}
+
+export function useUpdateBanner() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, formData }: { id: string; formData: FormData }) => updateBanner(id, formData),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: bannerKeys.all });
+      queryClient.invalidateQueries({ queryKey: ["admin-banners"] });
+      queryClient.invalidateQueries({ queryKey: ["banner", variables.id] });
     },
   });
 }

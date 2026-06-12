@@ -51,6 +51,7 @@ export default function AdminTransactionDetailPage() {
   }
 
   const isVoid = transaction.status === "VOID";
+  const totalDiscount = transaction.items?.reduce((sum: number, item: any) => sum + Number(item.discountAmount || 0), 0) || 0;
 
   return (
     <div className="p-4 md:p-8 max-w-5xl mx-auto space-y-8">
@@ -138,6 +139,13 @@ export default function AdminTransactionDetailPage() {
                               {item.productCode}
                             </span>
                           </div>
+                          {Number(item.discountAmount) > 0 && (
+                            <div className="mt-2 flex items-center gap-1.5">
+                              <span className="inline-flex px-1.5 py-0.5 rounded-sm bg-red-100 text-red-700 text-[9px] font-bold tracking-wider uppercase border border-red-200">
+                                {item.promoName || "Promo Diskon"}
+                              </span>
+                            </div>
+                          )}
                         </td>
                         <td className="px-6 py-4 text-center">
                           <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-stone-100 text-xs font-bold text-stone-600">
@@ -145,10 +153,26 @@ export default function AdminTransactionDetailPage() {
                           </span>
                         </td>
                         <td className="px-6 py-4 text-right text-stone-500 font-medium">
-                          Rp {item.priceAtSale.toLocaleString("id-ID")}
+                          {Number(item.discountAmount) > 0 ? (
+                            <div className="flex flex-col items-end">
+                              <span className="text-[10px] line-through text-stone-400">
+                                Rp {Number(item.basePriceAtSale).toLocaleString("id-ID")}
+                              </span>
+                              <span className="font-bold text-stone-800">
+                                Rp {(Number(item.basePriceAtSale) - (Number(item.discountAmount) / item.quantity)).toLocaleString("id-ID")}
+                              </span>
+                            </div>
+                          ) : item.gimmickPriceAtSale && Number(item.gimmickPriceAtSale) > Number(item.basePriceAtSale) ? (
+                            <div className="flex flex-col items-end">
+                              <span className="text-[10px] line-through text-stone-400">Rp {Number(item.gimmickPriceAtSale).toLocaleString("id-ID")}</span>
+                              <span>Rp {Number(item.basePriceAtSale).toLocaleString("id-ID")}</span>
+                            </div>
+                          ) : (
+                            <span>Rp {Number(item.basePriceAtSale).toLocaleString("id-ID")}</span>
+                          )}
                         </td>
                         <td className="px-6 py-4 text-right font-black text-stone-900">
-                          Rp {(item.quantity * item.priceAtSale).toLocaleString("id-ID")}
+                          Rp {((item.quantity * Number(item.basePriceAtSale)) - Number(item.discountAmount)).toLocaleString("id-ID")}
                         </td>
                       </tr>
                     ))}
@@ -198,6 +222,12 @@ export default function AdminTransactionDetailPage() {
                 <span className="text-stone-500">Metode</span>
                 <span className="font-bold text-stone-800 uppercase italic">Tunai</span>
               </div>
+              {totalDiscount > 0 && (
+                <div className="flex justify-between items-center py-2 border-b border-stone-50 text-sm">
+                  <span className="text-stone-500">Total Promo Diskon</span>
+                  <span className="font-bold text-red-600">- Rp {totalDiscount.toLocaleString("id-ID")}</span>
+                </div>
+              )}
               <div className="flex justify-between items-center py-2 border-b border-stone-50 text-sm">
                 <span className="text-stone-500">Diterima</span>
                 <span className="font-bold text-stone-800">Rp {transaction.amountPaid.toLocaleString("id-ID")}</span>

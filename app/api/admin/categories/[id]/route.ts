@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { CategoryService } from "@/backend/services/category.service";
 import { uploadFileToS3, deleteFileFromS3 } from "@/actions/upload";
+import { handleError, AppError } from "@/lib/error-handler";
+import { logger } from "@/lib/logger";
+import { headers } from "next/headers";
 
 // GET /api/admin/categories/[id]
 export async function GET(
@@ -12,18 +15,12 @@ export async function GET(
     const category = await CategoryService.getById(id);
 
     if (!category) {
-      return NextResponse.json(
-        { success: false, message: "Kategori tidak ditemukan" },
-        { status: 404 },
-      );
+      throw new AppError("Kategori tidak ditemukan", 404, "NOT_FOUND");
     }
 
     return NextResponse.json({ success: true, data: category });
   } catch (error: any) {
-    return NextResponse.json(
-      { success: false, error: error.message },
-      { status: 500 },
-    );
+    return await handleError(error);
   }
 }
 
@@ -37,10 +34,7 @@ export async function PUT(
 
     const existing = await CategoryService.getById(id);
     if (!existing) {
-      return NextResponse.json(
-        { success: false, message: "Kategori tidak ditemukan" },
-        { status: 404 },
-      );
+      throw new AppError("Kategori tidak ditemukan", 404, "NOT_FOUND");
     }
 
     const formData = await req.formData();
@@ -75,17 +69,25 @@ export async function PUT(
       }
     }
 
-    const category = await CategoryService.update(id, updateData);
+    const headerList = await headers();
+    const traceId = headerList.get("x-request-id") || "unknown";
+    const operatorId = req.headers.get("x-user-id") || undefined;
+
+    const category = await CategoryService.update(id, { ...updateData, updatedById: operatorId });
+
+    logger.info({ traceId, categoryId: id, operatorId }, "Category updated successfully");
 
     return NextResponse.json(
-      { success: true, message: "Kategori berhasil diupdate", data: category },
+      {
+        success: true,
+        message: "Kategori berhasil diupdate",
+        data: category,
+        traceId
+      },
       { status: 200 },
     );
   } catch (error: any) {
-    return NextResponse.json(
-      { success: false, message: error.message },
-      { status: error.message.includes("sudah digunakan") ? 400 : 500 },
-    );
+    return await handleError(error);
   }
 }
 
@@ -99,21 +101,25 @@ export async function DELETE(
 
     const existing = await CategoryService.getById(id);
     if (!existing) {
-      return NextResponse.json(
-        { success: false, message: "Kategori tidak ditemukan" },
-        { status: 404 },
-      );
+      throw new AppError("Kategori tidak ditemukan", 404, "NOT_FOUND");
     }
+
+    const headerList = await headers();
+    const traceId = headerList.get("x-request-id") || "unknown";
+    const operatorId = req.headers.get("x-user-id") || undefined;
 
     await CategoryService.delete(id);
 
+    logger.info({ traceId, categoryId: id, operatorId }, "Category soft-deleted successfully");
+
     return NextResponse.json(
-      { success: true, message: "Kategori berhasil dihapus (soft delete)" },
+      {
+        success: true,
+        message: "Kategori berhasil dihapus",
+        traceId
+      },
     );
   } catch (error: any) {
-    return NextResponse.json(
-      { success: false, error: error.message },
-      { status: 500 },
-    );
+    return await handleError(error);
   }
 }

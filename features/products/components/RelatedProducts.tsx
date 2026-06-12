@@ -50,14 +50,6 @@ export function RelatedProducts({ productId }: Props) {
       .finally(() => setLoading(false));
   }, [productId]);
 
-  const formatRupiah = (price: string | number) => {
-    return new Intl.NumberFormat("id-ID", {
-      style: "currency",
-      currency: "IDR",
-      minimumFractionDigits: 0,
-    }).format(Number(price));
-  };
-
   // Jangan render apa-apa jika error atau tidak ada rekomendasi
   if (!loading && (error || products.length === 0)) {
     return null;
@@ -77,12 +69,12 @@ export function RelatedProducts({ productId }: Props) {
       {/* Loading Skeleton */}
       {loading && (
         <div
-          className="flex overflow-x-auto snap-x snap-mandatory gap-4 sm:gap-5 pb-4 custom-scrollbar"
+          className="flex overflow-x-auto snap-x snap-mandatory gap-4 sm:gap-5 pb-4 custom-scrollbar items-stretch"
           style={{ scrollPaddingLeft: "0px" }}
         >
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="snap-start shrink-0 w-[65%] sm:w-[45%] md:w-[31%] lg:w-[31%] xl:w-[23.5%] h-full">
-              <div className="animate-pulse rounded-2xl bg-white p-3 shadow-sm h-full flex flex-col">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="snap-start shrink-0 w-[65%] sm:w-[45%] md:w-[31%] lg:w-[31%] xl:w-[23.5%] flex flex-col">
+              <div className="animate-pulse rounded-2xl bg-white p-3 shadow-sm h-full flex flex-col flex-1">
                 <div className="aspect-square rounded-xl bg-zinc-200 w-full" />
                 <div className="mt-3 flex flex-1 flex-col gap-2">
                   <div className="h-4 w-3/4 rounded bg-zinc-200" />
@@ -98,7 +90,7 @@ export function RelatedProducts({ productId }: Props) {
       {/* Product Cards Carousel */}
       {!loading && products.length > 0 && (
         <div
-          className="flex overflow-x-auto snap-x snap-mandatory gap-4 sm:gap-4 pb-4 custom-scrollbar"
+          className="flex overflow-x-auto snap-x snap-mandatory gap-4 sm:gap-4 pb-4 custom-scrollbar items-stretch"
           style={{ scrollPaddingLeft: "0px" }}
         >
           {products.map((product) => {
@@ -110,8 +102,19 @@ export function RelatedProducts({ productId }: Props) {
             } as any;
 
             return (
-              <div key={product.id} className="snap-start shrink-0 w-[65%] sm:w-[45%] md:w-[31%] lg:w-[31%] xl:w-[23.5%] h-full relative p-1">
-                <ProductCard product={productForCard} />
+              <div
+                key={product.id}
+                className="snap-start shrink-0 w-[65%] sm:w-[45%] md:w-[31%] lg:w-[31%] xl:w-[23.5%] relative p-1 flex flex-col items-stretch"
+              >
+                {/* 
+                  Kunci Perbaikan: 
+                  h-full memaksa container ini memenuhi tinggi maksimal grid.
+                  [&>div]:h-full memaksa element root pertama di dalam ProductCard untuk ikut setinggi 100% 
+                */}
+                <div className="h-full [&>div]:h-full">
+                  <ProductCard product={productForCard} />
+                </div>
+
                 {/* Similarity Badge Overlay */}
                 <div className="absolute top-4 right-4 z-20 rounded-full bg-black/70 px-2 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm shadow-sm">
                   Match: {product.distance}

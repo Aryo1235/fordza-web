@@ -1,20 +1,35 @@
 import bcrypt from "bcryptjs";
 import { SignJWT, jwtVerify } from "jose";
+import { config } from "./config";
 
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || "fordza-secret-key-change-in-production",
-);
+// Validate JWT secrets on startup
+if (!process.env.JWT_ACCESS_SECRET || !process.env.JWT_REFRESH_SECRET) {
+  throw new Error(
+    "JWT_ACCESS_SECRET and JWT_REFRESH_SECRET must be set in environment variables"
+  );
+}
+
+if (process.env.JWT_ACCESS_SECRET.length < 32) {
+  throw new Error("JWT_ACCESS_SECRET must be at least 32 characters");
+}
+
+if (process.env.JWT_REFRESH_SECRET.length < 32) {
+  throw new Error("JWT_REFRESH_SECRET must be at least 32 characters");
+}
+
+const JWT_ACCESS_SECRET = new TextEncoder().encode(process.env.JWT_ACCESS_SECRET);
+const JWT_REFRESH_SECRET = new TextEncoder().encode(process.env.JWT_REFRESH_SECRET);
 
 // --- TOKEN CONFIG ---
-const ACCESS_TOKEN_EXPIRY = "15m"; // 15 menit
-const REFRESH_TOKEN_EXPIRY = "7d"; // 7 hari
+const ACCESS_TOKEN_EXPIRY = config.jwt.accessExpiry;
+const REFRESH_TOKEN_EXPIRY = config.jwt.refreshExpiry;
 
 const ACCESS_COOKIE_NAME = "access_token";
 const REFRESH_COOKIE_NAME = "refresh_token";
 
 // --- PASSWORD ---
 export async function hashPassword(password: string): Promise<string> {
-  return await bcrypt.hash(password, 12);
+  return await bcrypt.hash(password, config.bcrypt.rounds);
 }
 
 export async function verifyPassword(
@@ -34,7 +49,7 @@ export async function signAccessToken(payload: {
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime(ACCESS_TOKEN_EXPIRY)
-    .sign(JWT_SECRET);
+    .sign(JWT_ACCESS_SECRET);
 }
 
 // --- JWT: REFRESH TOKEN (panjang, untuk dapat access token baru) ---
@@ -47,15 +62,17 @@ export async function signRefreshToken(payload: {
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime(REFRESH_TOKEN_EXPIRY)
-    .sign(JWT_SECRET);
+    .sign(JWT_REFRESH_SECRET);
 }
 
 // --- VERIFY TOKEN (bisa access atau refresh) ---
 export async function verifyToken(
   token: string,
+  type: "access" | "refresh" = "access"
 ): Promise<{ id: string; username: string; role: string; type: string } | null> {
   try {
-    const { payload } = await jwtVerify(token, JWT_SECRET);
+    const secret = type === "access" ? JWT_ACCESS_SECRET : JWT_REFRESH_SECRET;
+    const { payload } = await jwtVerify(token, secret);
     return payload as { id: string; username: string; role: string; type: string };
   } catch {
     return null;

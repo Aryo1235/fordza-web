@@ -15,7 +15,10 @@ import {
   addProductImage,
   getStockLogs,
   getSkuStockLogs,
+  bulkImportProducts,
   getPublicProductById,
+  getProductsForPromo,
+  getProductsForTestimonials,
 } from "./api";
 import type { ProductFilters, Product } from "./types";
 
@@ -26,6 +29,9 @@ export const productKeys = {
   detail: (id: string) => ["products", "detail", id] as const,
   publicDetail: (id: string) => ["products", "public-detail", id] as const,
   stockLogs: (params: any) => ["products", "stock-logs", params.detail, params] as const,
+  variants: (id: string) => ["variants", "product", id] as const,
+  promoProductsSelection: (search?: string) => ["products", "promo-selection", search] as const,
+  testimonialProductsSelection: (search?: string) => ["products", "testimonial-selection", search] as const,
 };
 
 /** List produk untuk halaman Admin (dengan pagination & filter) */
@@ -90,6 +96,7 @@ export function useCreateProduct() {
     mutationFn: (formData: FormData) => createProduct(formData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: productKeys.all });
+
     },
   });
 }
@@ -100,10 +107,11 @@ export function useUpdateProduct() {
   return useMutation({
     mutationFn: ({ id, formData }: { id: string; formData: FormData }) =>
       updateProduct(id, formData),
-    onSuccess: () => {
-      // Hanya invalidate list — tidak perlu invalidate detail
-      // karena halaman langsung redirect setelah update
+    onSuccess: (_, variables) => {
+      // Invalidate list AND the specific product detail
       queryClient.invalidateQueries({ queryKey: productKeys.all });
+      queryClient.invalidateQueries({ queryKey: productKeys.detail(variables.id) });
+      queryClient.invalidateQueries({ queryKey: productKeys.variants(variables.id) });
     },
   });
 }
@@ -140,5 +148,36 @@ export function useAddProductImage() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: productKeys.detail(variables.productId) });
     },
+  });
+}
+
+/** Bulk Import Produk */
+export function useBulkImportProducts() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (products: any[]) => bulkImportProducts(products),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: productKeys.all });
+    },
+  });
+}
+
+/** Fetch products specifically for promo selection dropdown */
+export function useProductsForPromo(search?: string, enabled: boolean = true) {
+  return useQuery({
+    queryKey: productKeys.promoProductsSelection(search),
+    queryFn: () => getProductsForPromo(search),
+    placeholderData: (prev) => prev,
+    enabled,
+  });
+}
+
+/** Fetch products specifically for testimonial creation dropdown */
+export function useProductsForTestimonials(search?: string, enabled: boolean = true) {
+  return useQuery({
+    queryKey: productKeys.testimonialProductsSelection(search),
+    queryFn: () => getProductsForTestimonials(search),
+    placeholderData: (prev) => prev,
+    enabled,
   });
 }

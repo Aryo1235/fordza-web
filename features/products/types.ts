@@ -31,7 +31,11 @@ export interface ProductDetail {
     name: string;
     type: string;
     sizes: string[];
+    measurements?: Record<string, any> | null;
   } | null;
+  // Ukuran kustom terisolasi per-produk (tidak mempengaruhi template bersama)
+  customSizes: string[];
+  customMeasurements?: Record<string, any> | null;
 }
 
 export interface ProductSku {

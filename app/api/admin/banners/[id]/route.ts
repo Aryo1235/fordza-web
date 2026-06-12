@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { BannerService } from "@/backend/services/banner.service";
 import { uploadFileToS3, deleteFileFromS3 } from "@/actions/upload";
+import { handleError, AppError } from "@/lib/error-handler";
+import { logger } from "@/lib/logger";
+import { headers } from "next/headers";
 
 // GET /api/admin/banners/[id]
 export async function GET(
@@ -12,18 +15,15 @@ export async function GET(
     const banner = await BannerService.getById(id);
 
     if (!banner) {
-      return NextResponse.json(
-        { success: false, message: "Banner tidak ditemukan" },
-        { status: 404 },
-      );
+      throw new AppError("Banner tidak ditemukan", 404, "NOT_FOUND");
     }
 
-    return NextResponse.json({ success: true, data: banner });
+    const headerList = await headers();
+    const traceId = headerList.get("x-request-id") || "unknown";
+
+    return NextResponse.json({ success: true, data: banner, traceId });
   } catch (error: any) {
-    return NextResponse.json(
-      { success: false, error: error.message },
-      { status: 500 },
-    );
+    return await handleError(error);
   }
 }
 
@@ -37,10 +37,7 @@ export async function PUT(
 
     const existing = await BannerService.getById(id);
     if (!existing) {
-      return NextResponse.json(
-        { success: false, message: "Banner tidak ditemukan" },
-        { status: 404 },
-      );
+      throw new AppError("Banner tidak ditemukan", 404, "NOT_FOUND");
     }
 
     const formData = await req.formData();
@@ -72,17 +69,20 @@ export async function PUT(
       }
     }
 
-    const banner = await BannerService.update(id, updateData);
+    const headerList = await headers();
+    const traceId = headerList.get("x-request-id") || "unknown";
+    const operatorId = req.headers.get("x-user-id") || undefined;
+
+    const banner = await BannerService.update(id, { ...updateData, updatedById: operatorId });
+
+    logger.info({ traceId, bannerId: id, operatorId }, "Banner updated successfully");
 
     return NextResponse.json(
-      { success: true, message: "Banner berhasil diupdate", data: banner },
+      { success: true, message: "Banner berhasil diupdate", data: banner, traceId },
       { status: 200 },
     );
   } catch (error: any) {
-    return NextResponse.json(
-      { success: false, error: error.message },
-      { status: 500 },
-    );
+    return await handleError(error);
   }
 }
 
@@ -96,10 +96,7 @@ export async function DELETE(
 
     const existing = await BannerService.getById(id);
     if (!existing) {
-      return NextResponse.json(
-        { success: false, message: "Banner tidak ditemukan" },
-        { status: 404 },
-      );
+      throw new AppError("Banner tidak ditemukan", 404, "NOT_FOUND");
     }
 
     // Hapus gambar dari S3
@@ -107,16 +104,19 @@ export async function DELETE(
       await deleteFileFromS3(existing.imageKey);
     }
 
+    const headerList = await headers();
+    const traceId = headerList.get("x-request-id") || "unknown";
+    const operatorId = req.headers.get("x-user-id") || undefined;
+
     await BannerService.delete(id);
 
+    logger.info({ traceId, bannerId: id, operatorId }, "Banner deleted successfully");
+
     return NextResponse.json(
-      { success: true, message: "Banner berhasil dihapus" },
+      { success: true, message: "Banner berhasil dihapus", traceId },
       { status: 200 },
     );
   } catch (error: any) {
-    return NextResponse.json(
-      { success: false, error: error.message },
-      { status: 500 },
-    );
+    return await handleError(error);
   }
 }

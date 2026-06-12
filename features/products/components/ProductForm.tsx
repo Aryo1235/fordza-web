@@ -21,7 +21,7 @@ import { Loader2 } from "lucide-react";
 import { formatNumber, parseNumber } from "@/lib/utils";
 
 // Import hooks dari feature lain
-import { useAllCategoriesAdmin } from "@/features/categories";
+import { useCategoriesForPromo } from "@/features/categories";
 import { useSizeTemplatesAdmin } from "@/features/admin/size-templates";
 
 // Import schema & types dari feature sendiri
@@ -53,6 +53,7 @@ export function ProductForm({ initialData, onSubmit, isLoading, submitLabel }: P
       gender: "Unisex",
       material: "",
       outsole: "",
+      insole: "",
       closureType: "",
       origin: "",
       notes: "",
@@ -66,7 +67,7 @@ export function ProductForm({ initialData, onSubmit, isLoading, submitLabel }: P
   });
 
   // Fetch Kategori & Templates menggunakan hooks resmi
-  const { data: categoriesData } = useAllCategoriesAdmin();
+  const { data: categoriesData } = useCategoriesForPromo();
   const { data: templatesData } = useSizeTemplatesAdmin();
 
   const categories = categoriesData?.data || [];
@@ -220,6 +221,10 @@ export function ProductForm({ initialData, onSubmit, isLoading, submitLabel }: P
             <div className="space-y-1.5">
               <Label>Material Sol (Outsole)</Label>
               <Input {...register("outsole")} placeholder="Cth: Rubber / TPR / Leather" />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Insole (Alas Dalam)</Label>
+              <Input {...register("insole")} placeholder="Cth: Memory Foam / EVA" />
             </div>
           </div>
 

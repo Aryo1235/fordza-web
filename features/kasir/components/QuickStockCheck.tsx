@@ -8,10 +8,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Search, Loader2, Package } from "lucide-react";
-import { useKasirProducts } from "../hooks";
+import { Search, Loader2, Package, AlertTriangle } from "lucide-react";
+import { useKasirStockCheck } from "../hooks";
 import { useDebounce } from "@/hooks/useDebounce";
-import { cn } from "@/lib/utils";
+import { cn, sanitizeSearch } from "@/lib/utils";
 
 interface QuickStockCheckProps {
   isOpen: boolean;
@@ -23,17 +23,14 @@ export default function QuickStockCheck({
   onClose,
 }: QuickStockCheckProps) {
   const [search, setSearch] = useState("");
-  const debouncedSearch = useDebounce(search, 300);
+  
+  // Sanitasi input pencarian dan trim whitespace ganda sebelum debouncing/API call
+  const sanitizedSearch = sanitizeSearch(search).trim();
+  const debouncedSearch = useDebounce(sanitizedSearch, 300);
 
-  // Ambil data produk menggunakan hook yang sudah ada
-  const {
-    data: productsData,
-    isLoading,
-    isFetching,
-  } = useKasirProducts(debouncedSearch, isOpen);
-
-  // Ratakan data dari infinite query
-  const products = productsData?.pages.flatMap((page) => page.data) || [];
+  // Gunakan hook ringan khusus stock-check — tidak membawa variants/skus/promo
+  const { data, isLoading, isFetching, isError, error } = useKasirStockCheck(debouncedSearch, isOpen);
+  const products = data?.data || [];
 
   useEffect(() => {
     if (!isOpen) {
@@ -59,6 +56,7 @@ export default function QuickStockCheck({
               className="pl-10 h-11 bg-white border-stone-200 focus-visible:ring-stone-400"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              maxLength={50}
               autoFocus
             />
             {isFetching && (
@@ -68,7 +66,22 @@ export default function QuickStockCheck({
         </div>
 
         <div className="relative max-h-87.5 overflow-y-auto">
-          {isLoading && products.length === 0 ? (
+          {isError ? (
+            <div className="p-12 text-center text-red-500 flex flex-col items-center gap-2 bg-stone-50/50">
+              <div className="h-10 w-10 rounded-full bg-red-50 flex items-center justify-center">
+                <AlertTriangle className="w-5 h-5 text-red-500" />
+              </div>
+              <p className="text-sm font-semibold">Gagal mengambil data stok</p>
+              <p className="text-xs text-stone-500 max-w-xs mx-auto">
+                {error instanceof Error ? error.message : "Terjadi kesalahan pada server"}
+              </p>
+              {(error as any)?.traceId && (
+                <p className="text-[10px] font-mono text-stone-400 mt-2 bg-stone-100 py-1 px-2 rounded inline-block select-all">
+                  Trace ID: {(error as any).traceId}
+                </p>
+              )}
+            </div>
+          ) : isLoading && products.length === 0 ? (
             <div className="p-12 text-center text-stone-400 flex flex-col items-center gap-2">
               <Loader2 className="w-5 h-5 animate-spin text-stone-500" />
               <p className="text-sm">Memuat stok...</p>
@@ -76,12 +89,12 @@ export default function QuickStockCheck({
           ) : products.length === 0 ? (
             <div className="p-12 text-center text-stone-400">
               <p className="text-sm">
-                Tidak ada produk ditemukan untuk "{search}"
+                Tidak ada produk ditemukan untuk &ldquo;{search}&rdquo;
               </p>
             </div>
           ) : (
             <div className="divide-y divide-stone-100">
-              {products.map((product) => (
+              {products.map((product: { id: string; productCode: string | null; name: string; category: string | null; stock: number }) => (
                 <div
                   key={product.id}
                   className="p-4 flex items-center justify-between hover:bg-stone-50 transition-colors"
@@ -93,7 +106,9 @@ export default function QuickStockCheck({
                     <p className="text-sm font-semibold text-stone-800">
                       {product.name}
                     </p>
-                    <p className="text-xs text-stone-500">{product.category}</p>
+                    {product.category && (
+                      <p className="text-xs text-stone-500">{product.category}</p>
+                    )}
                   </div>
                   <div className="text-right">
                     <p className="text-xs text-stone-500 mb-1">Stok Fisik</p>

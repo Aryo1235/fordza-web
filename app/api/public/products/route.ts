@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { ProductService } from "@/backend/services/products.service";
+import { handleError } from "@/lib/error-handler";
 
 // GET /api/public/products — Customer: lihat produk aktif
 export async function GET(req: Request) {
@@ -36,9 +37,6 @@ export async function GET(req: Request) {
       { status: 200 },
     );
   } catch (error: any) {
-    return NextResponse.json(
-      { success: false, message: "Gagal mengambil data produk", error: error.message },
-      { status: 500 },
-    );
+    return await handleError(error);
   }
 }

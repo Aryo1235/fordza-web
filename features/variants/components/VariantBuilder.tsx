@@ -1,8 +1,7 @@
-"use client";
+'use client';
 
 // features/variants/components/VariantBuilder.tsx
-// Komponen untuk input varian + stok SEBELUM produk disimpan
-// Pure local state — tidak memanggil API sampai parent submit
+// Komponen untuk input varian + stok SEBELUM produk disimpan - Pure local state
 
 import { useEffect, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
@@ -24,7 +23,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { cn, formatNumber, parseNumber } from "@/lib/utils";
+import { cn, formatNumber, parseNumber, formatRupiah } from "@/lib/utils";
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -74,13 +73,6 @@ const variantFormSchema = z.object({
 
 type VariantFormValues = z.infer<typeof variantFormSchema>;
 
-const fmt = (n: number) =>
-  n.toLocaleString("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    maximumFractionDigits: 0,
-  });
-
 // ─── Komponen: Stock Grid per Ukuran ───────────────────────────────────────
 
 export function StockGrid({
@@ -89,12 +81,16 @@ export function StockGrid({
   bigsizeSizes,
   onChange,
   onToggleBigsize,
+  onDelete,
+  deletingSize,
 }: {
   sizes: string[];
   stockPerSize: Record<string, number>;
   bigsizeSizes: string[];
   onChange: (size: string, val: number) => void;
   onToggleBigsize: (size: string) => void;
+  onDelete?: (size: string) => void;
+  deletingSize?: string | null;
 }) {
   if (sizes.length === 0) {
     return (
@@ -123,8 +119,28 @@ export function StockGrid({
           return (
             <div
               key={size}
-              className="flex flex-col items-center gap-1 p-2 rounded-lg border border-stone-100 bg-white shadow-sm"
+              className={cn(
+                "flex flex-col items-center gap-1 p-2 rounded-lg border border-stone-100 bg-white shadow-sm relative group/item",
+                deletingSize === size && "opacity-50 pointer-events-none"
+              )}
             >
+              {deletingSize === size && (
+                <div className="absolute inset-0 flex items-center justify-center bg-white/50 z-10 rounded-lg">
+                  <Loader2 className="w-4 h-4 animate-spin text-red-600" />
+                </div>
+              )}
+              {onDelete && !deletingSize && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete(size);
+                  }}
+                  className="absolute -top-1.5 -right-1.5 bg-red-100 text-red-600 rounded-full p-0.5 opacity-0 group-hover/item:opacity-100 transition-opacity hover:bg-red-200"
+                >
+                  <X className="w-2.5 h-2.5" />
+                </button>
+              )}
               <span
                 className={`text-xs font-mono px-1.5 py-0.5 rounded ${
                   isBig
@@ -138,8 +154,12 @@ export function StockGrid({
               <Input
                 type="number"
                 min={0}
-                value={stockPerSize[size] ?? 0}
-                onChange={(e) => onChange(size, parseInt(e.target.value) || 0)}
+                value={stockPerSize[size] === 0 ? "" : (stockPerSize[size] ?? "")}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  onChange(size, val === "" ? 0 : parseInt(val) || 0);
+                }}
+                placeholder="0"
                 className="w-14 h-8 text-center text-sm p-1"
               />
               <label className="text-[10px] flex items-center gap-1 mt-0.5 text-amber-700 cursor-pointer select-none">
@@ -311,13 +331,15 @@ function AddVariantInlineForm({
     }
   };
 
-  const handleStockChange = (size: string, val: number) => {
-    setStockPerSize((prev) => ({ ...prev, [size]: val }));
+  const handleStockChange = (size: string, value: number) => {
+    setStockPerSize((currentStocks) => ({ ...currentStocks, [size]: value }));
   };
 
   const handleToggleBigsize = (size: string) => {
-    setBigsizeSizes((prev) =>
-      prev.includes(size) ? prev.filter((s) => s !== size) : [...prev, size],
+    setBigsizeSizes((currentBigsizeList) =>
+      currentBigsizeList.includes(size)
+        ? currentBigsizeList.filter((s) => s !== size)
+        : [...currentBigsizeList, size],
     );
   };
 
@@ -604,13 +626,13 @@ function PendingVariantCard({
           </div>
           <div className="flex items-center gap-2 mt-0.5">
             <span className="text-sm font-bold text-green-700">
-              Rp {variant.basePrice.toLocaleString()}
+              {formatRupiah(variant.basePrice)}
             </span>
             {variant.comparisonPrice &&
               variant.comparisonPrice > variant.basePrice && (
                 <>
                   <span className="text-[10px] text-stone-400 line-through">
-                    Rp {variant.comparisonPrice.toLocaleString()}
+                    {formatRupiah(variant.comparisonPrice)}
                   </span>
                   <span className="text-[9px] font-bold text-amber-600 bg-amber-50 px-1 rounded">
                     -{variant.discountPercent}%
@@ -707,24 +729,31 @@ export function VariantBuilder({
   const [showForm, setShowForm] = useState(false);
   const [editingLocalId, setEditingLocalId] = useState<string | null>(null);
 
-  const addVariant = (v: PendingVariant) => {
-    // Kalau sedang edit, replace. Kalau baru, tambah.
-    const updated = editingLocalId
-      ? variants.map((existing) =>
-          existing.localId === v.localId ? v : existing,
-        )
-      : [...variants, v];
+  const addVariant = (newVariant: PendingVariant) => {
+    setVariants((currentVariants) => {
+      const updatedVariants = editingLocalId
+        ? currentVariants.map((existing) =>
+            existing.localId === newVariant.localId ? newVariant : existing,
+          )
+        : [...currentVariants, newVariant];
 
-    setVariants(updated);
-    onChange(updated);
+      // Kirim hasil update terbaru ke parent (page.tsx)
+      onChange(updatedVariants);
+      return updatedVariants;
+    });
+
     setShowForm(false);
     setEditingLocalId(null);
   };
 
-  const removeVariant = (localId: string) => {
-    const updated = variants.filter((v) => v.localId !== localId);
-    setVariants(updated);
-    onChange(updated);
+  const removeVariant = (targetLocalId: string) => {
+    setVariants((currentVariants) => {
+      const updatedVariants = currentVariants.filter(
+        (v) => v.localId !== targetLocalId,
+      );
+      onChange(updatedVariants);
+      return updatedVariants;
+    });
   };
 
   const startEdit = (localId: string) => {

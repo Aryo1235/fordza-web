@@ -17,7 +17,7 @@ export const prisma =
   globalForPrisma.prisma ||
   new PrismaClient({
     adapter, // Wajib ada di Prisma 7
-    log: ["query"],
+    log: ["error", "warn"],
   });
 
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;

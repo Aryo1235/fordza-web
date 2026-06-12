@@ -51,7 +51,7 @@ async function backfill() {
       }
 
       aggregation[key].totalQty += item.quantity;
-      aggregation[key].totalRevenue += Number(item.priceAtSale) * item.quantity;
+      aggregation[key].totalRevenue += Number(item.basePriceAtSale) * item.quantity;
       aggregation[key].invoiceIds.add(trx.id);
     }
   }

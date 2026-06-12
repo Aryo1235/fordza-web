@@ -5,7 +5,34 @@ import Link from "next/link";
 import { use } from "react";
 import { RelatedProducts, ProductTestimonials, usePublicProduct, type Product } from "@/features/products";
 import { cn } from "@/lib/utils";
+import { motion, type Variants } from "framer-motion";
+import { FadeUpSection } from "@/components/shared/animations";
 
+/* ── Animation variants ── */
+const galleryVariants: Variants = {
+  hidden: { opacity: 0, scale: 0.97 },
+  show: {
+    opacity: 1,
+    scale: 1,
+    transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] },
+  },
+};
+
+const infoVariants: Variants = {
+  hidden: {},
+  show: {
+    transition: { staggerChildren: 0.09, delayChildren: 0.15 },
+  },
+};
+
+const infoItem: Variants = {
+  hidden: { opacity: 0, y: 20 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] },
+  },
+};
 
 export default function ProductDetailPage({
   params,
@@ -17,6 +44,62 @@ export default function ProductDetailPage({
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
+
+  const getMeasurementText = (size: string, sizeTemplate: any, customMeasurements?: any) => {
+    // Cek customMeasurements dulu (ukuran kustom per-produk)
+    const measSource = (customMeasurements?.[size]) || (sizeTemplate?.measurements?.[size]);
+    if (!measSource) return null;
+    const meas = measSource;
+
+    const tType = (sizeTemplate?.type || "").toLowerCase();
+    if (tType === "sepatu") {
+      const length = meas.insoleLength || meas.insole || "";
+      const width = meas.insoleWidth || "";
+      if (length && width) return `${length}x${width} cm`;
+      if (length) return `${length} cm`;
+      return null;
+    }
+    if (tType === "apparel" || tType === "pakaian") {
+      const ld = meas.ld || "";
+      const pb = meas.pb || "";
+      if (ld && pb) return `LD:${ld} PB:${pb}`;
+      if (ld) return `LD:${ld}`;
+      if (pb) return `PB:${pb}`;
+      return null;
+    }
+    if (tType === "aksesoris" || tType === "gelang") {
+      return meas.lingkar ? `${meas.lingkar} cm` : null;
+    }
+    return meas.detail || null;
+  };
+
+  const getDetailedMeasurementSentence = (size: string, sizeTemplate: any, customMeasurements?: any) => {
+    // Cek customMeasurements dulu (ukuran kustom per-produk)
+    const measSource = (customMeasurements?.[size]) || (sizeTemplate?.measurements?.[size]);
+    if (!measSource) return null;
+    const meas = measSource;
+
+    const tType = (sizeTemplate?.type || "").toLowerCase();
+    if (tType === "sepatu") {
+      const length = meas.insoleLength || meas.insole || "";
+      const width = meas.insoleWidth || "";
+      if (length && width) return `Panjang Insole: ${length} cm, Lebar Insole: ${width} cm`;
+      if (length) return `Panjang Insole: ${length} cm`;
+      return null;
+    }
+    if (tType === "apparel" || tType === "pakaian") {
+      const ld = meas.ld || "";
+      const pb = meas.pb || "";
+      if (ld && pb) return `Lebar Dada (LD): ${ld} cm, Panjang Badan (PB): ${pb} cm`;
+      if (ld) return `Lebar Dada (LD): ${ld} cm`;
+      if (pb) return `Panjang Badan (PB): ${pb} cm`;
+      return null;
+    }
+    if (tType === "aksesoris" || tType === "gelang") {
+      return meas.lingkar ? `Lingkar Pergelangan: ${meas.lingkar} cm` : null;
+    }
+    return meas.detail ? `Keterangan: ${meas.detail}` : null;
+  };
 
   // Set default variant saat data pertama kali tiba
   useEffect(() => {
@@ -31,34 +114,46 @@ export default function ProductDetailPage({
   // Derived Gallery Images (General + Selected Variant Images)
   const galleryImages = useMemo(() => {
     if (!product) return [];
-
-    // Start with general product images
     const images = [...product.images];
-
-    // Jika ada varian yang dipilih DAN varian itu punya gambar sendiri, kita utamakan muncul di depan
     if (selectedVariant && selectedVariant.images && selectedVariant.images.length > 0) {
-      const variantImgs = selectedVariant.images;
-      // Prepend or replace? The user said: "muncul gambar ittuh tergantung ia klik warna hitam atau coklat"
-      // Let's prepend them so they appear first
-      return [...variantImgs, ...images];
+      return [...selectedVariant.images, ...images];
     }
-
     return images;
   }, [product, selectedVariant]);
 
-  // When variant changes, reset gallery to first image (which will be the variant image)
+  // When variant changes, reset gallery to first image
   useEffect(() => {
     if (selectedVariantId) {
       setSelectedImage(0);
-      setSelectedSize(null); // Reset ukuran saat ganti warna
+      setSelectedSize(null);
     }
   }, [selectedVariantId]);
 
-  // Hitung stok untuk ukuran yang dipilih
   const selectedSizeInfo = useMemo(() => {
     if (!selectedVariant || !selectedSize) return null;
     return selectedVariant.skus.find(s => s.size === selectedSize) || null;
   }, [selectedVariant, selectedSize]);
+
+  // Ukuran unik yang benar-benar punya SKU di produk ini
+  // Gabungkan sizes dari template + customSizes, lalu filter hanya yang ada di SKU
+  const uniqueSizes = useMemo(() => {
+    if (!product?.variants) return [];
+    const templateSizes: string[] = product.detail?.sizeTemplate?.sizes || [];
+    const customSizes: string[] = product.detail?.customSizes || [];
+    const allSizes = Array.from(new Set([...templateSizes, ...customSizes]));
+    // Tampilkan hanya ukuran yang punya SKU di setidaknya 1 varian
+    const sizesWithSkus = new Set<string>();
+    product.variants.forEach((v: any) => {
+      v.skus?.forEach((s: any) => sizesWithSkus.add(s.size));
+    });
+    return allSizes
+      .filter(s => sizesWithSkus.has(s))
+      .sort((a, b) => {
+        const numA = Number(a), numB = Number(b);
+        if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+        return a.localeCompare(b);
+      });
+  }, [product]);
 
   const formatRupiah = (price: string | number) => {
     return new Intl.NumberFormat("id-ID", {
@@ -70,7 +165,7 @@ export default function ProductDetailPage({
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-zinc-50 py-10">
+      <div className="min-h-screen bg-zinc-50 py-10 pt-20">
         <main className="mx-auto max-w-7xl px-6">
           <div className="animate-pulse">
             <div className="grid gap-10 lg:grid-cols-2">
@@ -102,32 +197,47 @@ export default function ProductDetailPage({
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 selection:bg-[#4A3B2E] selection:text-white">
+    <div className="min-h-screen bg-zinc-50 selection:bg-[#4A3B2E] selection:text-white pt-20">
       <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-10 py-8 md:py-12">
 
-        {/* Breadcrumb / Back Navigation */}
-        <div className="mb-8">
+        {/* Breadcrumb — fade in cepat */}
+        <motion.div
+          className="mb-8"
+          initial={{ opacity: 0, x: -12 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.4, ease: "easeOut" }}
+        >
           <Link href="/products" className="inline-flex items-center text-xs font-bold uppercase tracking-widest text-[#4A3B2E]/60 hover:text-[#4A3B2E] transition-colors">
             <span className="mr-2">←</span> Kembali ke Katalog
           </Link>
-        </div>
+        </motion.div>
 
-        {/* Product Detail */}
+        {/* Product Detail Grid */}
         <div className="grid gap-12 lg:grid-cols-2 items-start">
-          {/* Gallery */}
-          <div className="space-y-4 lg:sticky lg:top-18">
+
+          {/* Gallery — fade-in + scale */}
+          <motion.div
+            className="space-y-4 lg:sticky lg:top-18"
+            variants={galleryVariants}
+            initial="hidden"
+            animate="show"
+          >
             <div className="relative overflow-hidden rounded-2xl bg-[#FEF4E8] shadow-sm ring-1 ring-amber-200/50 group">
-              {/* Ornamen Segitiga Khas Fordza (Di dalam frame) */}
+              {/* Ornamen Segitiga Khas Fordza */}
               <div
                 className="absolute top-0 left-0 w-32 h-32 md:w-48 md:h-48 bg-[#4A3B2E] z-0 opacity-[0.03]"
                 style={{ clipPath: "polygon(0 0, 100% 0, 0 100%)" }}
               />
               <div className="relative aspect-square z-10">
                 {galleryImages[selectedImage] ? (
-                  <img
+                  <motion.img
+                    key={selectedImage}
                     src={galleryImages[selectedImage].url}
                     alt={product.name}
-                    className="h-full w-full object-cover mix-blend-darken transition-transform duration-700 ease-out group-hover:scale-105"
+                    className="h-full w-full object-cover mix-blend-darken group-hover:scale-105 transition-transform duration-700 ease-out"
+                    initial={{ opacity: 0, scale: 1.03 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.4, ease: "easeOut" }}
                   />
                 ) : (
                   <div className="flex h-full items-center justify-center bg-[#FEF4E8] text-amber-200">
@@ -139,12 +249,18 @@ export default function ProductDetailPage({
               </div>
             </div>
 
-            {/* Thumbnails */}
+            {/* Thumbnails — stagger fade-in */}
             {galleryImages.length > 1 && (
-              <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+              <motion.div
+                className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide"
+                initial="hidden"
+                animate="show"
+                variants={{ hidden: {}, show: { transition: { staggerChildren: 0.06, delayChildren: 0.35 } } }}
+              >
                 {galleryImages.map((img: any, idx: number) => (
-                  <button
+                  <motion.button
                     key={img.id || idx}
+                    variants={{ hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0, transition: { duration: 0.35 } } }}
                     onClick={() => setSelectedImage(idx)}
                     className={cn(
                       "flex-shrink-0 overflow-hidden rounded-xl border-2 transition-all duration-300 relative bg-[#FEF4E8]",
@@ -161,15 +277,21 @@ export default function ProductDetailPage({
                     {idx === selectedImage && (
                       <div className="absolute inset-0 bg-[#4A3B2E]/5" />
                     )}
-                  </button>
+                  </motion.button>
                 ))}
-              </div>
+              </motion.div>
             )}
-          </div>
+          </motion.div>
 
-          {/* Product Info */}
-          <div className="space-y-8 pb-10">
-            <div>
+          {/* Product Info — stagger children */}
+          <motion.div
+            className="space-y-8 pb-10"
+            variants={infoVariants}
+            initial="hidden"
+            animate="show"
+          >
+            {/* Badges + Nama + Rating */}
+            <motion.div variants={infoItem}>
               {/* Badges */}
               <div className="flex flex-wrap gap-2 mb-4">
                 {product.isNew && (
@@ -209,9 +331,7 @@ export default function ProductDetailPage({
                 <div className="flex items-center gap-2 mt-4">
                   <div className="flex text-amber-500">
                     {Array.from({ length: 5 }).map((_, i) => (
-                      <span key={i} className={i < Math.round(product.avgRating) ? "" : "opacity-30"}>
-                        ★
-                      </span>
+                      <span key={i} className={i < Math.round(product.avgRating) ? "" : "opacity-30"}>★</span>
                     ))}
                   </div>
                   <span className="text-sm font-bold text-[#4A3B2E]">
@@ -219,23 +339,19 @@ export default function ProductDetailPage({
                   </span>
                 </div>
               )}
-            </div>
+            </motion.div>
+
             {/* Price */}
-            <div className="flex flex-col gap-1 py-6 border-y border-amber-200/50">
+            <motion.div variants={infoItem} className="flex flex-col gap-1 py-6 border-y border-amber-200/50">
               {(() => {
-                // Prioritaskan harga akhir (setelah diskon) dari ukuran (Bigsize) jika ada
                 const currentFinalPrice = selectedSizeInfo?.finalPrice
                   ? Number(selectedSizeInfo.finalPrice)
                   : Number(selectedVariant?.finalPrice || product.finalPrice || product.price);
-
                 const highestPrice = Number(selectedVariant?.highestPrice || product.highestPrice || product.price);
-
-                // Hitung total diskon (Gimmick + Promo) secara reaktif untuk ukuran yang dipilih
                 let totalDiscountPercent = selectedVariant?.totalDiscountPercent || product.totalDiscountPercent || 0;
                 if (selectedSizeInfo?.finalPrice && highestPrice > currentFinalPrice) {
                   totalDiscountPercent = Math.round(((highestPrice - currentFinalPrice) / highestPrice) * 100);
                 }
-
                 return (
                   <>
                     <div className="flex items-baseline gap-4 flex-wrap">
@@ -246,7 +362,6 @@ export default function ProductDetailPage({
                         </span>
                       )}
                     </div>
-
                     {highestPrice > currentFinalPrice && (
                       <div className="flex items-center gap-3 mt-1">
                         <span className="text-base font-bold text-[#4A3B2E]/40 line-through decoration-[#4A3B2E]/30">
@@ -262,11 +377,11 @@ export default function ProductDetailPage({
                   </>
                 );
               })()}
-            </div>
+            </motion.div>
 
             {/* Variant Selection (Colors) */}
             {(product.variants?.length ?? 0) > 0 && (
-              <div className="space-y-4">
+              <motion.div variants={infoItem} className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-xs font-black uppercase tracking-widest text-[#4A3B2E]/60">
                     Warna Terpilih: <span className="text-[#4A3B2E]">{selectedVariant?.color}</span>
@@ -282,12 +397,10 @@ export default function ProductDetailPage({
                         selectedVariantId === v.id ? "scale-105" : "opacity-70 hover:opacity-100 hover:scale-105"
                       )}
                     >
-                      <div
-                        className={cn(
-                          "h-12 w-12 rounded-full border-[3px] transition-all p-[2px]",
-                          selectedVariantId === v.id ? "border-[#4A3B2E]" : "border-transparent"
-                        )}
-                      >
+                      <div className={cn(
+                        "h-12 w-12 rounded-full border-[3px] transition-all p-[2px]",
+                        selectedVariantId === v.id ? "border-[#4A3B2E]" : "border-transparent"
+                      )}>
                         <div className="h-full w-full rounded-full border border-amber-200 bg-white overflow-hidden shadow-sm">
                           {v.images && v.images.length > 0 ? (
                             <img src={v.images[0].url} className="h-full w-full object-cover" alt={v.color} />
@@ -299,12 +412,12 @@ export default function ProductDetailPage({
                     </button>
                   ))}
                 </div>
-              </div>
+              </motion.div>
             )}
 
-            {/* Size Template */}
+            {/* Size Selection */}
             {product.detail?.sizeTemplate && (
-              <div className="space-y-4">
+              <motion.div variants={infoItem} className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-xs font-black uppercase tracking-widest text-[#4A3B2E]/60">
                     Pilih Ukuran ({product.detail.sizeTemplate.name})
@@ -328,17 +441,16 @@ export default function ProductDetailPage({
                 </div>
 
                 <div className="flex flex-wrap gap-2.5">
-                  {product.detail?.sizeTemplate && product.detail.sizeTemplate.sizes.map((size) => {
+                  {uniqueSizes.map((size) => {
                     const sku = selectedVariant?.skus?.find(s => s.size === size);
                     const isOutOfStock = !sku || sku.stock === 0;
-
                     return (
                       <button
                         key={size}
                         onClick={() => setSelectedSize(size)}
                         disabled={isOutOfStock}
                         className={cn(
-                          "min-w-[3.5rem] rounded-lg border-2 px-3 py-2.5 text-sm font-black transition-all outline-none",
+                          "min-w-[4rem] rounded-lg border-2 px-3 py-2 text-sm font-black transition-all outline-none flex flex-col items-center justify-center",
                           selectedSize === size
                             ? "border-[#4A3B2E] bg-[#4A3B2E] text-white shadow-md scale-105"
                             : isOutOfStock
@@ -346,43 +458,39 @@ export default function ProductDetailPage({
                               : "border-amber-200 bg-white text-[#4A3B2E] hover:border-[#4A3B2E]/50 hover:bg-amber-50 hover:-translate-y-0.5"
                         )}
                       >
-                        {size}
+                        <span>{size}</span>
                       </button>
                     );
                   })}
                 </div>
 
-                {!selectedSize && (
+                {selectedSize ? (
+                  (() => {
+                    const detailedMeas = getDetailedMeasurementSentence(
+                      selectedSize,
+                      product.detail?.sizeTemplate,
+                      product.detail?.customMeasurements
+                    );
+                    if (!detailedMeas) return null;
+                    return (
+                      <div className="text-xs text-amber-900 bg-amber-50/50 p-3 rounded-xl border border-amber-200/50 animate-in fade-in slide-in-from-top-1 duration-200">
+                        <span className="font-bold uppercase tracking-wider text-[10px] text-amber-700 block mb-1">Rincian Ukuran {selectedSize}</span>
+                        <span className="font-medium text-[#4A3B2E]">{detailedMeas}</span>
+                      </div>
+                    );
+                  })()
+                ) : (
                   <p className="text-[10px] text-amber-700/60 font-bold italic">
                     * Silakan pilih ukuran untuk melihat ketersediaan stok
                   </p>
                 )}
-              </div>
+              </motion.div>
             )}
 
-            {/* Action Buttons
-            <div className="pt-6">
-              <button
-                disabled={!selectedSize || (selectedSizeInfo?.stock || 0) === 0}
-                className={cn(
-                  "w-full py-4 px-8 rounded-xl font-black uppercase tracking-widest text-sm transition-all duration-300",
-                  (!selectedSize || (selectedSizeInfo?.stock || 0) === 0)
-                    ? "bg-amber-200/50 text-[#4A3B2E]/40 cursor-not-allowed"
-                    : "bg-[#4A3B2E] text-white hover:bg-[#342920] shadow-lg hover:shadow-xl hover:-translate-y-1"
-                )}
-              >
-                {!selectedSize
-                  ? "Pilih Ukuran Dulu"
-                  : (selectedSizeInfo?.stock || 0) === 0
-                    ? "Stok Habis"
-                    : "Beli Sekarang"}
-              </button>
-            </div> */}
-
-            {/* Specs & Info Accordion (Stylized as blocks) */}
-            <div className="pt-8 space-y-8">
+            {/* Specs & Description — fade-up saat scroll */}
+            <motion.div variants={infoItem} className=" space-y-8">
               {product.detail && (
-                <div>
+                <FadeUpSection>
                   <h3 className="mb-4 text-xs font-black uppercase tracking-widest text-[#4A3B2E]/60 border-b border-amber-200 pb-2">
                     Spesifikasi Produk
                   </h3>
@@ -399,6 +507,12 @@ export default function ProductDetailPage({
                         <dd className="font-bold text-[#4A3B2E]">{product.detail.outsole}</dd>
                       </div>
                     )}
+                    {product.detail.insole && (
+                      <div className="space-y-1">
+                        <dt className="text-[10px] font-bold uppercase tracking-widest text-amber-700/70">Insole</dt>
+                        <dd className="font-bold text-[#4A3B2E]">{product.detail.insole}</dd>
+                      </div>
+                    )}
                     {product.detail.origin && (
                       <div className="space-y-1">
                         <dt className="text-[10px] font-bold uppercase tracking-widest text-amber-700/70">Asal Produksi</dt>
@@ -410,12 +524,11 @@ export default function ProductDetailPage({
                       <dd className="font-bold text-[#4A3B2E]">{product.gender}</dd>
                     </div>
                   </dl>
-                </div>
+                </FadeUpSection>
               )}
 
-              {/* Description */}
               {product.detail?.description && (
-                <div>
+                <FadeUpSection delay={0.1}>
                   <h3 className="mb-4 text-xs font-black uppercase tracking-widest text-[#4A3B2E]/60 border-b border-amber-200 pb-2">
                     Cerita Produk
                   </h3>
@@ -423,33 +536,37 @@ export default function ProductDetailPage({
                     className="prose prose-stone prose-sm max-w-none text-[#4A3B2E]/80 leading-relaxed font-medium"
                     dangerouslySetInnerHTML={{ __html: product.detail.description }}
                   />
-                </div>
+                </FadeUpSection>
               )}
 
-              {/* Product Notes for End User */}
               {product.detail?.notes && (
-                <div className="rounded-2xl bg-white p-6 border border-amber-200 shadow-sm relative overflow-hidden">
-                  <div className="absolute top-0 right-0 w-16 h-16 bg-amber-100 rounded-bl-full opacity-50 -z-0" />
-                  <h3 className="mb-2 text-[10px] font-black uppercase tracking-widest text-amber-700 flex items-center gap-2 relative z-10">
-                    <span className="w-2 h-2 bg-amber-500 rounded-sm inline-block" />
-                    Catatan Khas Fordza
-                  </h3>
-                  <p className="text-sm font-bold leading-relaxed text-[#4A3B2E] relative z-10">
-                    &ldquo;{product.detail.notes}&rdquo;
-                  </p>
-                </div>
+                <FadeUpSection delay={0.15}>
+                  <div className="rounded-2xl bg-white p-6 border border-amber-200 shadow-sm relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-16 h-16 bg-amber-100 rounded-bl-full opacity-50 -z-0" />
+                    <h3 className="mb-2 text-[10px] font-black uppercase tracking-widest text-amber-700 flex items-center gap-2 relative z-10">
+                      <span className="w-2 h-2 bg-amber-500 rounded-sm inline-block" />
+                      Catatan Khas Fordza
+                    </h3>
+                    <p className="text-sm font-bold leading-relaxed text-[#4A3B2E] relative z-10">
+                      &ldquo;{product.detail.notes}&rdquo;
+                    </p>
+                  </div>
+                </FadeUpSection>
               )}
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </div>
 
-        {/* Testimonials (Lazy Loaded) */}
-        <ProductTestimonials productId={id} />
+        {/* Testimonials */}
+        <FadeUpSection className="mt-16">
+          <ProductTestimonials productId={id} />
+        </FadeUpSection>
 
-        {/* Related Products (KNN) */}
-        <section className="mt-16">
+        {/* Related Products */}
+        <FadeUpSection className="mt-16">
           <RelatedProducts productId={id} />
-        </section>
+        </FadeUpSection>
+
       </main>
     </div>
   );

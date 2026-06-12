@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { ShiftService } from "@/backend/services/shift.service";
 import { verifyToken, ACCESS_COOKIE_NAME } from "@/lib/auth";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
+import { handleError, AppError } from "@/lib/error-handler";
+import { logger } from "@/lib/logger";
 
 export async function POST(req: Request) {
   try {
@@ -13,31 +15,32 @@ export async function POST(req: Request) {
     }
 
     if (!token) {
-      return NextResponse.json({ success: false, message: "Tidak ada session" }, { status: 401 });
+      throw new AppError("Tidak ada session", 401, "UNAUTHORIZED");
     }
 
     const payload = await verifyToken(token);
     if (!payload || payload.type !== "access") {
-      return NextResponse.json({ success: false, message: "Token tidak valid" }, { status: 401 });
+      throw new AppError("Token tidak valid", 401, "UNAUTHORIZED");
     }
 
     const body = await req.json();
     const { actualEndingCash } = body;
 
     if (actualEndingCash === undefined || isNaN(Number(actualEndingCash))) {
-      return NextResponse.json({ success: false, message: "Uang Fisik nominal tidak valid" }, { status: 400 });
+      throw new AppError("Uang Fisik nominal tidak valid", 400, "INVALID_INPUT");
     }
 
     const closedShift = await ShiftService.closeShift(payload.id, Number(actualEndingCash));
+
+    const headerList = await headers();
+    const traceId = headerList.get("x-request-id") || "unknown";
+    logger.info({ traceId, shiftId: closedShift.id, adminId: payload.id }, "Shift closed successfully");
 
     return NextResponse.json({
       success: true,
       data: closedShift,
     });
   } catch (error: any) {
-    return NextResponse.json(
-      { success: false, message: error.message },
-      { status: 500 }
-    );
+    return await handleError(error);
   }
 }

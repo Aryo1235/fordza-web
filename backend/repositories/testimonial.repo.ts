@@ -86,7 +86,7 @@ export const TestimonialRepository = {
         take: limit,
         include: {
           product: {
-            select: { name: true },
+            select: { name: true, productCode: true },
           },
         },
       }),
@@ -110,7 +110,26 @@ export const TestimonialRepository = {
   },
 
   async findById(id: string) {
-    return await prisma.testimonial.findUnique({ where: { id } });
+    return await prisma.testimonial.findUnique({
+      where: { id },
+      include: {
+        product: {
+          select: {
+            id: true,
+            name: true,
+            productCode: true,
+            images: { take: 1, select: { url: true } },
+            categories: {
+              select: {
+                category: {
+                  select: { name: true }
+                }
+              }
+            }
+          }
+        }
+      }
+    });
   },
 
   async update(id: string, data: any) {
@@ -171,5 +190,23 @@ export const TestimonialRepository = {
       totalReviews: aggregations._count.rating || 0,
       distribution: distMap,
     };
+  },
+
+  async getProductsForTestimonialSelection(search?: string) {
+    const where: any = {
+      isActive: true,
+      deletedAt: null,
+    };
+    if (search) {
+      where.name = { contains: search, mode: "insensitive" };
+    }
+    return await prisma.product.findMany({
+      where,
+      select: {
+        id: true,
+        name: true,
+      },
+      orderBy: { createdAt: "desc" },
+    });
   },
 };

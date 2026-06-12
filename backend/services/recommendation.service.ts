@@ -55,7 +55,7 @@ export const RecommendationService = {
             category: { select: { id: true, name: true } },
           },
         },
-        detail: { select: { material: true } },
+        detail: { select: { material: true, insole: true } },
         // Ambil material & basePrice varian aktif (untuk hitung harga terendah + material override)
           variants: {
             where: { isActive: true },
@@ -107,11 +107,13 @@ export const RecommendationService = {
       const priceForFeature = product.price ? Number(product.price) : variantMinPrice;
 
       const materialForFeature = product.detail?.material || "unknown";
+      const insoleForFeature = product.detail?.insole || "unknown";
 
       return {
         id: product.id,
         categoryIds: product.categories.map((c) => c.categoryId),
         material: materialForFeature,
+        insole: insoleForFeature,
         gender: product.gender || "unknown",
         productType: product.productType || "unknown",
         price: priceForFeature,

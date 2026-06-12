@@ -31,15 +31,14 @@ export const ProductService = {
     return await ProductRepository.update(id, data, operatorId);
   },
 
-  async delete(id: string) {
+  async delete(id: string, operatorId?: string) {
     // Bisa tambahkan validasi "Apakah produk ada di transaksi aktif?"
-    return await ProductRepository.delete(id);
+    return await ProductRepository.delete(id, operatorId);
   },
 
-  async bulkUpdateStock(
-    items: { id: string; stock: number }[],
-    operatorId?: string,
-  ) {
-    return await ProductRepository.bulkUpdateStock(items, operatorId);
+
+
+  async bulkImport(products: any[], operatorId?: string) {
+    return await ProductRepository.bulkImport(products, operatorId);
   },
 };

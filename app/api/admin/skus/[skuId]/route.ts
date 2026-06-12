@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
+import { handleError, AppError } from "@/lib/error-handler";
+import { logger } from "@/lib/logger";
+import { headers } from "next/headers";
 
 const updateSkuSchema = z.object({
   stock: z.coerce.number().int().min(0).optional(),
@@ -11,7 +14,7 @@ const updateSkuSchema = z.object({
 // PATCH /api/admin/skus/[skuId] — Update stok atau harga override 1 SKU
 export async function PATCH(
   req: Request,
-  { params }: { params: Promise<{ skuId: string }> }
+  { params }: { params: Promise<{ skuId: string }> },
 ) {
   try {
     const { skuId } = await params;
@@ -19,20 +22,42 @@ export async function PATCH(
 
     const validation = updateSkuSchema.safeParse(body);
     if (!validation.success) {
-      return NextResponse.json(
-        { success: false, errors: validation.error.flatten().fieldErrors },
-        { status: 400 }
-      );
+      throw validation.error;
     }
 
     const sku = await prisma.$transaction(async (tx) => {
       const existing = await tx.productSku.findUnique({
         where: { id: skuId },
-        include: { variant: { select: { productId: true, color: true } } },
+        include: {
+          variant: {
+            select: {
+              productId: true,
+              color: true,
+              isActive: true,
+              deletedAt: true,
+            },
+          },
+        },
       });
-      if (!existing) throw new Error("SKU tidak ditemukan");
+      if (!existing) throw new AppError("SKU tidak ditemukan", 404, "NOT_FOUND");
 
-      const delta = validation.data.stock !== undefined ? (validation.data.stock - existing.stock) : 0;
+      const nextStock = validation.data.stock ?? existing.stock;
+      const nextSkuIsActive = validation.data.isActive ?? existing.isActive;
+      const oldEffectiveStock =
+        existing.isActive &&
+        existing.variant.isActive &&
+        !existing.deletedAt &&
+        !existing.variant.deletedAt
+          ? existing.stock
+          : 0;
+      const newEffectiveStock =
+        nextSkuIsActive &&
+        existing.variant.isActive &&
+        !existing.deletedAt &&
+        !existing.variant.deletedAt
+          ? nextStock
+          : 0;
+      const delta = newEffectiveStock - oldEffectiveStock;
 
       const updated = await tx.productSku.update({
         where: { id: skuId },
@@ -40,12 +65,24 @@ export async function PATCH(
         include: { variant: { select: { productId: true } } },
       });
 
-      // Rekalkulasi cached stock
+      // Rekalkulasi cached stock (hanya dari hierarki yang AKTIF)
       const totalStock = await tx.productSku.aggregate({
-        where: { variant: { productId: updated.variant.productId } },
+        where: {
+          isActive: true,
+          deletedAt: null,
+          variant: {
+            isActive: true,
+            deletedAt: null,
+            product: {
+              id: updated.variant.productId,
+              isActive: true,
+              deletedAt: null,
+            },
+          },
+        },
         _sum: { stock: true },
       });
-      
+
       const newTotalStock = totalStock._sum.stock ?? 0;
       await tx.product.update({
         where: { id: updated.variant.productId },
@@ -65,11 +102,13 @@ export async function PATCH(
           data: {
             skuId: updated.id,
             delta,
-            currentStock: updated.stock,
+            currentStock: newEffectiveStock,
             size: updated.size,
             color: existing.variant.color,
             type: delta > 0 ? "RESTOCK" : "ADJUSTMENT",
-            notes: "Penyesuaian Stok Manual (Admin)",
+            notes: validation.data.isActive !== undefined 
+                ? (validation.data.isActive ? "Ukuran Diaktifkan Kembali" : "Ukuran Dinonaktifkan")
+                : "Penyesuaian Stok Manual (Admin)",
             operatorId: effectiveOperatorId,
           },
         });
@@ -81,7 +120,9 @@ export async function PATCH(
             delta,
             currentStock: newTotalStock,
             type: delta > 0 ? "RESTOCK" : "ADJUSTMENT",
-            notes: `Adjustment Ukuran ${updated.size} (${existing.variant.color})`,
+            notes: validation.data.isActive !== undefined
+                ? (validation.data.isActive ? `Aktifkan Ukuran ${updated.size} (${existing.variant.color})` : `Nonaktifkan Ukuran ${updated.size} (${existing.variant.color})`)
+                : `Adjustment Ukuran ${updated.size} (${existing.variant.color})`,
             operatorId: effectiveOperatorId,
           },
         });
@@ -90,16 +131,22 @@ export async function PATCH(
       return updated;
     });
 
+    const headerList = await headers();
+    const traceId = headerList.get("x-request-id") || "unknown";
+    const operatorId = req.headers.get("x-user-id") || undefined;
+    
+    logger.info({ traceId, skuId, productId: sku.variant.productId, operatorId }, "SKU updated successfully");
+
     return NextResponse.json({ success: true, data: sku });
   } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    return await handleError(error);
   }
 }
 
 // DELETE /api/admin/skus/[skuId] — Hapus 1 SKU
 export async function DELETE(
   req: Request,
-  { params }: { params: Promise<{ skuId: string }> }
+  { params }: { params: Promise<{ skuId: string }> },
 ) {
   try {
     const { skuId } = await params;
@@ -108,16 +155,43 @@ export async function DELETE(
       // Ambil info SKU lengkap SEBELUM dihapus (untuk log)
       const sku = await tx.productSku.findUnique({
         where: { id: skuId },
-        include: { variant: { select: { productId: true, color: true } } },
+        include: {
+          variant: {
+            select: {
+              productId: true,
+              color: true,
+              isActive: true,
+              deletedAt: true,
+            },
+          },
+        },
       });
-      if (!sku) throw new Error("SKU tidak ditemukan");
+      if (!sku) throw new AppError("SKU tidak ditemukan", 404, "NOT_FOUND");
 
-      const stockSebelumHapus = sku.stock;
+      const stockSebelumHapus =
+        sku.isActive &&
+        sku.variant.isActive &&
+        !sku.deletedAt &&
+        !sku.variant.deletedAt
+          ? sku.stock
+          : 0;
 
       await tx.productSku.delete({ where: { id: skuId } });
 
       const totalStock = await tx.productSku.aggregate({
-        where: { variant: { productId: sku.variant.productId } },
+        where: {
+          isActive: true,
+          deletedAt: null,
+          variant: {
+            isActive: true,
+            deletedAt: null,
+            product: {
+              id: sku.variant.productId,
+              isActive: true,
+              deletedAt: null,
+            },
+          },
+        },
         _sum: { stock: true },
       });
       const newTotalStock = totalStock._sum.stock ?? 0;
@@ -128,8 +202,10 @@ export async function DELETE(
 
       // ─── Log penghapusan SKU (stok hilang) ───────────────────────────────────
       if (stockSebelumHapus > 0) {
-        const operatorId = req.headers.get("x-user-id") ??
-          (await tx.admin.findFirst({ select: { id: true } }))?.id ?? null;
+        const operatorId =
+          req.headers.get("x-user-id") ??
+          (await tx.admin.findFirst({ select: { id: true } }))?.id ??
+          null;
 
         await tx.stockLog.create({
           data: {
@@ -144,8 +220,17 @@ export async function DELETE(
       }
     });
 
-    return NextResponse.json({ success: true, message: "SKU berhasil dihapus" });
+    const headerList = await headers();
+    const traceId = headerList.get("x-request-id") || "unknown";
+    const operatorId = req.headers.get("x-user-id") || undefined;
+
+    logger.info({ traceId, skuId, operatorId }, "SKU deleted successfully");
+
+    return NextResponse.json({
+      success: true,
+      message: "SKU berhasil dihapus",
+    });
   } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    return await handleError(error);
   }
 }

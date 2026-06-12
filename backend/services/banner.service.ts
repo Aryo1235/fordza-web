@@ -21,6 +21,8 @@ export const BannerService = {
     imageUrl: string;
     imageKey: string;
     linkUrl?: string;
+    createdById?: string;
+    updatedById?: string;
   }) {
     // Jika besok ada aturan bisnis "Maksimal 5 banner aktif",
     // logika pengecekan jumlah banner akan ditambahkan di SINI, bukan di Repo.

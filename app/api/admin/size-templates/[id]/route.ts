@@ -8,7 +8,11 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const template = await SizeTemplateService.getById(id);
+    const { searchParams } = new URL(req.url);
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "10");
+
+    const template = await SizeTemplateService.getById(id, page, limit);
 
     if (!template) {
       return NextResponse.json(
@@ -17,7 +21,19 @@ export async function GET(
       );
     }
 
-    return NextResponse.json({ success: true, data: template });
+    const totalItems = await SizeTemplateService.countProducts(id);
+    const totalPage = Math.ceil(totalItems / limit);
+
+    return NextResponse.json({
+      success: true,
+      data: template,
+      meta: {
+        totalItems,
+        totalPage,
+        currentPage: page,
+        limit,
+      }
+    });
   } catch (error: any) {
     return NextResponse.json(
       { success: false, error: error.message },

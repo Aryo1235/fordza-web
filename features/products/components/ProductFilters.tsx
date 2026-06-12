@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { useCallback } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { Filter, X, SlidersHorizontal, Banknote } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -23,12 +23,38 @@ export function ProductFilters({ categories }: ProductFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  // === Optimistic state: langsung update UI tanpa tunggu server ===
+  const getServerCategories = () => searchParams.getAll("categoryId");
+  const getServerGender = () => searchParams.get("gender");
+  const getServerPriceRange = () => {
+    const minP = searchParams.get("minPrice") || "0";
+    const maxP = searchParams.get("maxPrice") || "";
+    return maxP ? `${minP}-${maxP}` : minP === "800000" ? "800000-" : "all";
+  };
+
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(getServerCategories);
+  const [currentGender, setCurrentGender] = useState<string | null>(getServerGender);
+  const [currentPriceRange, setCurrentPriceRange] = useState<string>(getServerPriceRange);
+
+  // Sync kembali jika navigasi selesai (misal back button / clear filter)
+  useEffect(() => {
+    setSelectedCategories(getServerCategories());
+    setCurrentGender(getServerGender());
+    setCurrentPriceRange(getServerPriceRange());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
   const pushParams = useCallback((newParams: URLSearchParams) => {
     newParams.set("page", "1");
     router.push(`/products?${newParams.toString()}`);
   }, [router]);
 
   const toggleCategory = (catId: string) => {
+    // 1. Update UI langsung (optimistic)
+    setSelectedCategories(prev =>
+      prev.includes(catId) ? prev.filter(id => id !== catId) : [...prev, catId]
+    );
+    // 2. Push ke URL
     const params = new URLSearchParams(searchParams.toString());
     const existing = params.getAll("categoryId");
     params.delete("categoryId");
@@ -41,6 +67,8 @@ export function ProductFilters({ categories }: ProductFiltersProps) {
   };
 
   const updateParam = (name: string, value: string | null) => {
+    // Optimistic untuk gender
+    if (name === "gender") setCurrentGender(value);
     const params = new URLSearchParams(searchParams.toString());
     if (value) params.set(name, value);
     else params.delete(name);
@@ -48,6 +76,8 @@ export function ProductFilters({ categories }: ProductFiltersProps) {
   };
 
   const handlePriceSelect = (val: string) => {
+    // Optimistic untuk price
+    setCurrentPriceRange(val);
     const params = new URLSearchParams(searchParams.toString());
     if (val === "all") {
       params.delete("minPrice");
@@ -60,15 +90,14 @@ export function ProductFilters({ categories }: ProductFiltersProps) {
     pushParams(params);
   };
 
-  const clearFilters = () => router.push("/products");
-  const hasFilters = searchParams.size > 0 && !(searchParams.size === 1 && searchParams.has("page"));
+  const clearFilters = () => {
+    setSelectedCategories([]);
+    setCurrentGender(null);
+    setCurrentPriceRange("all");
+    router.push("/products");
+  };
 
-  const currentGender = searchParams.get("gender");
-  const selectedCategories = searchParams.getAll("categoryId");
-  
-  const minP = searchParams.get("minPrice") || "0";
-  const maxP = searchParams.get("maxPrice") || "";
-  const currentPriceRange = maxP ? `${minP}-${maxP}` : minP === "800000" ? "800000-" : "all";
+  const hasFilters = searchParams.size > 0 && !(searchParams.size === 1 && searchParams.has("page"));
 
   // Gunakan fungsi biasa, bukan komponen React (agar tidak re-create component type)
   const renderFilterContent = () => (

@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "";
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://fordza-web.vercel.app";
 
 // Simpan access token di memory (bukan localStorage — lebih aman dari XSS)
 let accessToken: string | null = null;

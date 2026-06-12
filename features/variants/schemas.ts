@@ -10,7 +10,8 @@ export const variantSchema = z.object({
   colorCode: z
     .string()
     .max(5, "Kode warna maks 5 karakter")
-    .regex(/^[A-Z0-9]*$/, "Hanya huruf kapital dan angka")
+    .transform((v) => (v ? v.toUpperCase() : v))
+    .pipe(z.string().regex(/^[A-Z0-9]*$/, "Hanya huruf kapital dan angka"))
     .optional()
     .nullable(),
   basePrice: z.coerce
@@ -24,7 +25,7 @@ export const variantSchema = z.object({
     .nullable(),
   isActive: z.boolean().default(true),
   images: z.array(z.object({ url: z.string(), key: z.string() })).optional(),
-});
+}).strict();
 
 export type VariantSchemaValues = z.infer<typeof variantSchema>;
 
@@ -37,7 +38,7 @@ export const skuSchema = z.object({
   // diisi = override harga (misal bigsize ≥ 45)
   priceOverride: z.coerce.number().min(1000).optional().nullable(),
   isActive: z.boolean().default(true),
-});
+}).strict();
 
 export type SkuSchemaValues = z.infer<typeof skuSchema>;
 
@@ -45,6 +46,6 @@ export type SkuSchemaValues = z.infer<typeof skuSchema>;
 
 export const bulkSkuSchema = z.object({
   skus: z.array(skuSchema).min(1, "Tambahkan minimal 1 ukuran"),
-});
+}).strict();
 
 export type BulkSkuSchemaValues = z.infer<typeof bulkSkuSchema>;

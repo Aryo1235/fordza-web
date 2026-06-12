@@ -8,6 +8,7 @@ import {
   createCategory,
   updateCategory,
   deleteCategory,
+  getCategoriesForPromo,
 } from "./api";
 
 export const categoryKeys = {
@@ -16,6 +17,7 @@ export const categoryKeys = {
   adminList: (page: number) => ["admin-categories", page] as const,
   adminListAll: ["admin-categories-all"] as const,
   detail: (id: string) => ["category", id] as const,
+  promoCategoriesSelection: ["categories", "promo-selection"] as const,
 };
 
 export function useCategoriesAdmin(page = 1, limit = 10) {
@@ -80,5 +82,14 @@ export function useDeleteCategory() {
       queryClient.invalidateQueries({ queryKey: ["admin-categories"] });
       queryClient.invalidateQueries({ queryKey: categoryKeys.adminListAll });
     },
+  });
+}
+
+export function useCategoriesForPromo(enabled: boolean = true) {
+  return useQuery({
+    queryKey: categoryKeys.promoCategoriesSelection,
+    queryFn: () => getCategoriesForPromo(),
+    placeholderData: (prev) => prev,
+    enabled,
   });
 }

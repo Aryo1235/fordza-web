@@ -21,6 +21,8 @@ export interface ProductVariantForKasir {
   // Data promo otomatis dari backend
   additionalDiscount?: number;
   promoName?: string | null;
+  promoMinPurchase?: number | null; // ✅ Min purchase untuk promo conditional
+  promoDiscountPercent?: number | null; // ✅ Persentase diskon promo
   finalPrice?: number;
 }
 
@@ -52,7 +54,9 @@ export interface CartItem {
   quantity: number;
   discountAmount: number;  // Diskon nominal per item (Rp) - Sekarang otomatis dari Admin
   promoName: string | null; // Nama promo yang aktif
-  comparisonPriceAtSale: number | null; // Harga gimmick (coretan) saat transaksi
+  promoMinPurchase: number | null; // ✅ Min purchase untuk promo conditional
+  promoDiscountPercent?: number | null; // ✅ Persentase diskon promo
+  gimmickPriceAtSale: number | null; // Harga gimmick (coretan) saat transaksi
 
   // Referensi varian & SKU
   variantId: string | null;
@@ -69,6 +73,7 @@ export interface Transaction {
   amountPaid: number;
   change: number;
   status: "PAID" | "VOID";
+  paymentMethod?: string;
   customerName?: string;
   customerPhone?: string;
   createdAt: string;
@@ -80,10 +85,10 @@ export interface Transaction {
     id: string;
     productName: string;
     quantity: number;
-    priceAtSale: number;
+    basePriceAtSale: number;
     discountAmount: number;
     promoName?: string | null;
-    comparisonPriceAtSale?: number | null;
+    gimmickPriceAtSale?: number | null;
     variantColor?: string | null;
     skuSize?: string | null;
   }[];
@@ -95,7 +100,7 @@ export interface CheckoutItem {
   quantity: number;
   discountAmount: number;
   promoName?: string | null;
-  comparisonPriceAtSale?: number | null;
+  gimmickPriceAtSale?: number | null;
   variantId?: string | null;
   skuId?: string | null;
 }
@@ -105,4 +110,5 @@ export interface CheckoutPayload {
   amountPaid: number;
   customerName?: string;
   customerPhone?: string;
+  paymentMethod?: "CASH" | "DEBIT" | "QRIS";
 }

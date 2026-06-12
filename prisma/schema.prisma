@@ -23,24 +23,28 @@ enum TransactionStatus {
 
 // --- 1. PRODUCT (Lightweight untuk Katalog/Card) ---
 model Product {
-  id               String            @id @default(cuid())
-  productCode      String            @unique @map("product_code")
+  id               String   @id @default(cuid())
+  productCode      String   @unique @map("product_code")
   name             String
-  shortDescription String            @map("short_description")
-  price            Decimal?          @db.Decimal(12, 2) // Nullable: harga terendah dari varian (cached untuk display katalog)
-  stock            Int               @default(0)         // Cached: total stok semua SKU semua varian
-  productType      String            @map("product_type")
-  gender           String            @default("Unisex")
+  shortDescription String   @map("short_description")
+  price            Decimal? @db.Decimal(12, 2) // Nullable: harga terendah dari varian (cached untuk display katalog)
+  stock            Int      @default(0) // Cached: total stok semua SKU semua varian
+  productType      String   @map("product_type")
+  gender           String   @default("Unisex")
 
   // Status Flags
-  isPopular        Boolean           @default(false) @map("is_popular")
-  isBestseller     Boolean           @default(false) @map("is_bestseller")
-  isNew            Boolean           @default(true) @map("is_new")
-  isActive         Boolean           @default(true) @map("is_active")
+  isPopular    Boolean @default(false) @map("is_popular")
+  isBestseller Boolean @default(false) @map("is_bestseller")
+  isNew        Boolean @default(true) @map("is_new")
+  isActive     Boolean @default(true) @map("is_active")
 
   // Cached Rating
-  avgRating        Float             @default(0) @map("avg_rating")
-  totalReviews     Int               @default(0) @map("total_reviews")
+  avgRating    Float @default(0) @map("avg_rating")
+  totalReviews Int   @default(0) @map("total_reviews")
+
+  // Audit fields
+  createdById String? @map("created_by_id")
+  updatedById String? @map("updated_by_id")
 
   // Relasi
   detail           ProductDetail?
@@ -52,71 +56,86 @@ model Product {
   stockLogs        StockLog[]
   salesSummaries   SkuSalesSummary[]
 
-  createdAt        DateTime          @default(now()) @map("created_at")
-  updatedAt        DateTime          @updatedAt @map("updated_at")
+  createdBy Admin? @relation("ProductCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy Admin? @relation("ProductUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
 
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  @@index([isActive])
+  @@index([gender])
+  @@index([createdAt])
   @@map("products")
 }
 
 // --- TABEL PRODUCT DETAIL (Data Berat) ---
 model ProductDetail {
-  id               String        @id @default(cuid())
-  productId        String        @unique @map("product_id")
-  product          Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  id        String  @id @default(cuid())
+  productId String  @unique @map("product_id")
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
-  description      String        @db.Text
-  notes            String?       @db.Text
+  description String  @db.Text
+  notes       String? @db.Text
 
-  material         String?       @map("material")
-  outsole          String?       @map("outsole")
-  closureType      String?       @map("closure_type")
-  origin           String?       @map("origin")
+  material    String? @map("material")
+  outsole     String? @map("outsole")
+  insole      String? @map("insole")
+  closureType String? @map("closure_type")
+  origin      String? @map("origin")
 
-  sizeTemplateId   String?       @map("size_template_id")
-  sizeTemplate     SizeTemplate? @relation(fields: [sizeTemplateId], references: [id])
+  sizeTemplateId     String?       @map("size_template_id")
+  sizeTemplate       SizeTemplate? @relation(fields: [sizeTemplateId], references: [id])
+
+  // Ukuran kustom khusus produk ini — tidak mempengaruhi template bersama
+  customSizes        String[]      @default([]) @map("custom_sizes")
+  // Dimensi fisik untuk customSizes (cth: {45: {insoleLength: "29", insoleWidth: "10"}})
+  customMeasurements Json?         @map("custom_measurements")
 
   @@map("product_details")
 }
 
 // --- PRODUCT VARIANT (Per Warna) ---
 model ProductVariant {
-  id              String                 @id @default(cuid())
-  variantCode     String                 @unique @map("variant_code")
-  color           String                 // Nama warna, cth: "Hitam", "Coklat", "Hitam Bigsize"
-  basePrice       Decimal                @db.Decimal(12, 2) @map("base_price") // Harga Jual
-  comparisonPrice Decimal?               @db.Decimal(12, 2) @map("comparison_price") // Harga Gimmick (Coret)
-  discountPercent Float?                 @map("discount_percent")
-  isActive        Boolean                @default(true) @map("is_active")
+  id              String   @id @default(cuid())
+  variantCode     String   @unique @map("variant_code")
+  color           String // Nama warna, cth: "Hitam", "Coklat", "Hitam Bigsize"
+  basePrice       Decimal  @map("base_price") @db.Decimal(12, 2) // Harga Jual
+  comparisonPrice Decimal? @map("comparison_price") @db.Decimal(12, 2) // Harga Gimmick (Coret)
+  discountPercent Float?   @map("discount_percent")
+  isActive        Boolean  @default(true) @map("is_active")
 
-  productId       String                 @map("product_id")
-  product         Product                @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId String  @map("product_id")
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
-  skus            ProductSku[]           // Level 3: Ukuran per varian ini
-  images          ProductVariantImage[]
-  transactionItems TransactionItem[]      // Relasi balik dari TransactionItem
-  createdAt       DateTime               @default(now()) @map("created_at")
-  updatedAt       DateTime               @updatedAt @map("updated_at")
+  skus             ProductSku[] // Level 3: Ukuran per varian ini
+  images           ProductVariantImage[]
+  transactionItems TransactionItem[] // Relasi balik dari TransactionItem
+  createdAt        DateTime              @default(now()) @map("created_at")
+  updatedAt        DateTime              @updatedAt @map("updated_at")
+  deletedAt        DateTime?             @map("deleted_at")
 
   @@map("product_variants")
 }
 
 // --- PRODUCT SKU (Per Ukuran — Level Terkecil yang Dijual) ---
 model ProductSku {
-  id            String         @id @default(cuid())
-  size          String         // Ukuran: "39", "40", "41", ... "45", "46"
-  stock         Int            @default(0)
-  priceOverride Decimal?       @db.Decimal(12, 2) @map("price_override") // null = pakai basePrice variant
-  isActive      Boolean        @default(true) @map("is_active")
+  id            String   @id @default(cuid())
+  size          String // Ukuran: "39", "40", "41", ... "45", "46"
+  stock         Int      @default(0)
+  priceOverride Decimal? @map("price_override") @db.Decimal(12, 2) // null = pakai basePrice variant
+  isActive      Boolean  @default(true) @map("is_active")
 
-  variantId     String         @map("variant_id")
-  variant       ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  variantId String         @map("variant_id")
+  variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
 
   transactionItems TransactionItem[]
   stockLogs        SkuStockLog[]
   salesSummaries   SkuSalesSummary[]
 
-  createdAt     DateTime       @default(now()) @map("created_at")
-  updatedAt     DateTime       @updatedAt @map("updated_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
 
   @@unique([variantId, size]) // 1 varian tidak boleh punya 2 SKU ukuran yang sama
   @@map("product_skus")
@@ -135,11 +154,11 @@ model ProductVariantImage {
 
 // --- 3. PRODUCT CATEGORY (Pivot Table Eksplisit) ---
 model ProductCategory {
-  productId  String   @map("product_id")
-  categoryId String   @map("category_id")
+  productId  String @map("product_id")
+  categoryId String @map("category_id")
 
-  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  product  Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
   assignedAt DateTime @default(now()) @map("assigned_at")
 
@@ -149,16 +168,28 @@ model ProductCategory {
 
 // --- 4. CATEGORY ---
 model Category {
-  id               String            @id @default(cuid())
+  id               String  @id @default(cuid())
   name             String
-  shortDescription String?           @map("short_description")
-  imageUrl         String            @map("image_url")
-  imageKey         String?           @map("image_key")
-  isActive         Boolean           @default(true) @map("is_active")
-  order            Int               @default(0)
+  shortDescription String? @map("short_description")
+  imageUrl         String  @map("image_url")
+  imageKey         String? @map("image_key")
+  isActive         Boolean @default(true) @map("is_active")
+  order            Int     @default(0)
 
-  products         ProductCategory[]
+  // Audit fields
+  createdById String? @map("created_by_id")
+  updatedById String? @map("updated_by_id")
 
+  products ProductCategory[]
+
+  createdBy Admin? @relation("CategoryCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy Admin? @relation("CategoryUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  @@index([isActive])
   @@map("categories")
 }
 
@@ -179,187 +210,220 @@ model SizeTemplate {
   name           String
   type           String
   sizes          String[]
+  measurements   Json?
   productDetails ProductDetail[]
 
-  createdAt      DateTime        @default(now()) @map("created_at")
-  updatedAt      DateTime        @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("size_templates")
 }
 
 // --- 7. TESTIMONIAL ---
 model Testimonial {
-  id           String   @id @default(cuid())
-  productId    String   @map("product_id")
-  product      Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  customerName String   @map("customer_name")
-  rating       Int      @default(5)
-  content      String   @db.Text
-  isActive     Boolean  @default(true) @map("is_active")
+  id           String  @id @default(cuid())
+  productId    String  @map("product_id")
+  product      Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  customerName String  @map("customer_name")
+  rating       Int     @default(5)
+  content      String  @db.Text
+  isActive     Boolean @default(true) @map("is_active")
 
-  createdAt    DateTime @default(now()) @map("created_at")
+  createdAt DateTime @default(now()) @map("created_at")
 
   @@map("testimonials")
 }
 
 // --- 8. BANNER ---
 model Banner {
-  id        String   @id @default(cuid())
-  title     String?
-  imageUrl  String   @map("image_url")
-  imageKey  String   @map("image_key")
-  linkUrl   String?  @map("link_url")
-  isActive  Boolean  @default(true) @map("is_active")
+  id       String  @id @default(cuid())
+  title    String?
+  imageUrl String  @map("image_url")
+  imageKey String  @map("image_key")
+  linkUrl  String? @map("link_url")
+  isActive Boolean @default(true) @map("is_active")
 
-  createdAt DateTime @default(now()) @map("created_at")
+  // Audit fields
+  createdById String? @map("created_by_id")
+  updatedById String? @map("updated_by_id")
+
+  createdBy Admin? @relation("BannerCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy Admin? @relation("BannerUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
 
   @@map("banners")
 }
 
 // --- 9. ADMIN / USER ---
 model Admin {
-  id        String   @id @default(cuid())
-  username  String   @unique
-  password  String
-  name      String?
-  role      Role     @default(ADMIN)
-  pin       String?
+  id       String  @id @default(cuid())
+  username String  @unique
+  password String
+  name     String?
+  role     Role    @default(ADMIN)
+  pin      String?
 
   transactions Transaction[]
   shifts       CashierShift[]
   stockLogs    StockLog[]
   skuStockLogs SkuStockLog[]
 
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  // Audit trail relations
+  productsCreated   Product[]  @relation("ProductCreatedBy")
+  productsUpdated   Product[]  @relation("ProductUpdatedBy")
+  categoriesCreated Category[] @relation("CategoryCreatedBy")
+  categoriesUpdated Category[] @relation("CategoryUpdatedBy")
+  promosCreated     Promo[]    @relation("PromoCreatedBy")
+  promosUpdated     Promo[]    @relation("PromoUpdatedBy")
+  bannersCreated    Banner[]   @relation("BannerCreatedBy")
+  bannersUpdated    Banner[]   @relation("BannerUpdatedBy")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
 
   @@map("admins")
 }
 
 // --- 10. TRANSACTION (POS) ---
 model Transaction {
-  id          String            @id @default(cuid())
-  invoiceNo   String            @unique @map("invoice_no")
-  totalPrice  Decimal           @db.Decimal(12, 2) @map("total_price")
-  amountPaid  Decimal           @db.Decimal(12, 2) @map("amount_paid")
-  change      Decimal           @db.Decimal(12, 2)
-  status      TransactionStatus @default(PAID)
-  notes       String?           @db.Text
-  cancelReason String?          @db.Text @map("cancel_reason")
+  id           String            @id @default(cuid())
+  invoiceNo    String            @unique @map("invoice_no")
+  totalPrice   Decimal           @map("total_price") @db.Decimal(12, 2)
+  amountPaid   Decimal           @map("amount_paid") @db.Decimal(12, 2)
+  change       Decimal           @db.Decimal(12, 2)
+  status       TransactionStatus @default(PAID)
+  paymentMethod String            @default("CASH") @map("payment_method")
+  notes        String?           @db.Text
+  cancelReason String?           @map("cancel_reason") @db.Text
 
-  shiftId     String?           @map("shift_id")
-  shift       CashierShift?     @relation(fields: [shiftId], references: [id])
+  shiftId String?       @map("shift_id")
+  shift   CashierShift? @relation(fields: [shiftId], references: [id])
 
-  kasirId     String            @map("kasir_id")
-  kasir       Admin             @relation(fields: [kasirId], references: [id])
+  kasirId String @map("kasir_id")
+  kasir   Admin  @relation(fields: [kasirId], references: [id])
 
   // Data Pelanggan (CRM Lite)
-  customerName   String?         @map("customer_name")
-  customerPhone  String?         @map("customer_phone")
+  customerName  String? @map("customer_name")
+  customerPhone String? @map("customer_phone")
 
-  items       TransactionItem[]
+  items TransactionItem[]
 
-  createdAt   DateTime          @default(now()) @map("created_at")
+  createdAt DateTime @default(now()) @map("created_at")
 
+  @@index([createdAt])
+  @@index([kasirId, createdAt])
+  @@index([status, createdAt])
+  @@index([shiftId])
   @@map("transactions")
 }
 
 // --- 11. TRANSACTION ITEM ---
 model TransactionItem {
-  id           String      @id @default(cuid())
-  quantity     Int
-  priceAtSale  Decimal     @db.Decimal(12, 2) @map("price_at_sale")
-  productName  String      @map("product_name")
-  productCode  String?     @map("product_code")
+  id          String  @id @default(cuid())
+  quantity    Int
+  basePriceAtSale Decimal @map("price_at_sale") @db.Decimal(12, 2)
+  productName String  @map("product_name")
+  productCode String? @map("product_code")
 
   // Diskon per item (Nominal Rp)
-  discountAmount Decimal   @default(0) @db.Decimal(12, 2) @map("discount_amount")
+  discountAmount Decimal @default(0) @map("discount_amount") @db.Decimal(12, 2)
 
   // Snapshot varian & SKU saat dijual (null jika produk tanpa varian)
-  variantId    String?     @map("variant_id")
-  variantColor String?     @map("variant_color")  // Snapshot warna
-  skuId        String?     @map("sku_id")
-  skuSize      String?     @map("sku_size")        // Snapshot ukuran
+  variantId    String? @map("variant_id")
+  variantColor String? @map("variant_color") // Snapshot warna
+  skuId        String? @map("sku_id")
+  skuSize      String? @map("sku_size") // Snapshot ukuran
 
   // Snapshot harga gimmick & nama promo (untuk struk belanja)
-  comparisonPriceAtSale Decimal? @db.Decimal(12, 2) @map("comparison_price_at_sale")
+  gimmickPriceAtSale Decimal? @map("comparison_price_at_sale") @db.Decimal(12, 2)
   promoName             String?  @map("promo_name")
 
-  variant      ProductVariant? @relation(fields: [variantId], references: [id])
-  sku          ProductSku?     @relation(fields: [skuId], references: [id])
+  variant ProductVariant? @relation(fields: [variantId], references: [id])
+  sku     ProductSku?     @relation(fields: [skuId], references: [id])
 
-  transactionId String     @map("transaction_id")
+  transactionId String      @map("transaction_id")
   transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
 
-  productId    String      @map("product_id")
-  product      Product     @relation(fields: [productId], references: [id])
+  productId String?  @map("product_id")
+  product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
 
   @@map("transaction_items")
 }
 
 // --- 12. STOCK LEDGER — Level Produk (Cached Total) ---
 model StockLog {
-  id           String      @id @default(cuid())
-  productId    String      @map("product_id")
-  product      Product     @relation(fields: [productId], references: [id])
+  id        String  @id @default(cuid())
+  productId String  @map("product_id")
+  product   Product @relation(fields: [productId], references: [id])
 
-  delta        Int         // + untuk masuk, - untuk keluar
-  currentStock Int         @map("current_stock")
+  delta        Int // + untuk masuk, - untuk keluar
+  currentStock Int @map("current_stock")
 
-  type         String      // SALE, VOID, RESTOCK, ADJUSTMENT
-  notes        String?     @db.Text
+  type  String // SALE, VOID, RESTOCK, ADJUSTMENT
+  notes String? @db.Text
 
-  operatorId   String?     @map("operator_id")
-  operator     Admin?      @relation(fields: [operatorId], references: [id])
-  createdAt    DateTime    @default(now()) @map("created_at")
+  operatorId String?  @map("operator_id")
+  operator   Admin?   @relation(fields: [operatorId], references: [id])
+  createdAt  DateTime @default(now()) @map("created_at")
 
+  @@index([productId, createdAt])
+  @@index([type, createdAt])
+  @@index([operatorId])
   @@map("stock_logs")
 }
 
 // --- 13. SKU STOCK LEDGER — Level SKU (Per Ukuran) ---
 model SkuStockLog {
-  id           String     @id @default(cuid())
-  skuId        String     @map("sku_id")
-  sku          ProductSku @relation(fields: [skuId], references: [id])
+  id    String      @id @default(cuid())
+  skuId String?     @map("sku_id")
+  sku   ProductSku? @relation(fields: [skuId], references: [id], onDelete: SetNull)
 
-  delta        Int        // + untuk masuk, - untuk keluar
-  currentStock Int        @map("current_stock")
-  size         String     // Snapshot ukuran saat log dibuat
-  color        String     // Snapshot warna saat log dibuat
+  delta        Int // + untuk masuk, - untuk keluar
+  currentStock Int    @map("current_stock")
+  size         String // Snapshot ukuran saat log dibuat
+  color        String // Snapshot warna saat log dibuat
 
-  type         String     // SALE, VOID, RESTOCK, ADJUSTMENT
-  notes        String?    @db.Text
+  type  String // SALE, VOID, RESTOCK, ADJUSTMENT
+  notes String? @db.Text
 
-  operatorId   String?    @map("operator_id")
-  operator     Admin?     @relation(fields: [operatorId], references: [id])
-  createdAt    DateTime   @default(now()) @map("created_at")
+  operatorId String?  @map("operator_id")
+  operator   Admin?   @relation(fields: [operatorId], references: [id])
+  createdAt  DateTime @default(now()) @map("created_at")
 
+  @@index([skuId, createdAt])
+  @@index([type, createdAt])
+  @@index([operatorId])
   @@map("sku_stock_logs")
 }
 
 // --- 14. SKU SALES SUMMARY (OLAP Table untuk Dashboard Cepat) ---
 model SkuSalesSummary {
-  id           String     @id @default(cuid())
-  date         DateTime   @map("date") // Dimulai dari 00:00:00 (WIB)
+  id   String   @id @default(cuid())
+  date DateTime @map("date") // Dimulai dari 00:00:00 (WIB)
 
-  skuId        String?    @map("sku_id")
-  sku          ProductSku? @relation(fields: [skuId], references: [id], onDelete: SetNull)
-  
-  productId    String      @map("product_id")
-  product      Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
-  
+  skuId String?     @map("sku_id")
+  sku   ProductSku? @relation(fields: [skuId], references: [id], onDelete: SetNull)
+
+  productId String  @map("product_id")
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
   // Snapshots (agar laporan tetap valid walau produk berubah/hapus)
-  productName  String      @map("product_name")
-  productCode  String      @map("product_code")
-  variantColor String      @default("-") @map("variant_color")
-  skuSize      String      @default("-") @map("sku_size")
+  productName  String @map("product_name")
+  productCode  String @map("product_code")
+  variantColor String @default("-") @map("variant_color")
+  skuSize      String @default("-") @map("sku_size")
 
-  totalQty     Int         @default(0) @map("total_qty")
-  totalRevenue Decimal     @db.Decimal(12, 2) @default(0) @map("total_revenue")
-  totalOrders  Int         @default(0) @map("total_orders")
+  totalQty      Int     @default(0) @map("total_qty")
+  totalRevenue  Decimal @default(0) @map("total_revenue") @db.Decimal(12, 2)
+  totalDiscount Decimal @default(0) @map("total_discount") @db.Decimal(12, 2)
+  totalOrders   Int     @default(0) @map("total_orders")
 
-  createdAt    DateTime    @default(now()) @map("created_at")
-  updatedAt    DateTime    @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@unique([date, productId, variantColor, skuSize])
   @@index([date])
@@ -368,24 +432,34 @@ model SkuSalesSummary {
 
 // --- 15. PROMO & DISCOUNT ENGINE ---
 model Promo {
-  id          String      @id @default(cuid())
+  id          String    @id @default(cuid())
   name        String
-  description String?     @db.Text
+  description String?   @db.Text
   type        PromoType
-  value       Decimal     @db.Decimal(12, 2)
-  
-  targetType  PromoTarget @map("target_type")
-  targetIds   String[]    @map("target_ids") // IDs of products or categories
+  value       Decimal   @db.Decimal(12, 2)
 
-  minPurchase Decimal     @default(0) @db.Decimal(12, 2) @map("min_purchase")
-  isActive    Boolean     @default(true) @map("is_active")
-  
-  startDate   DateTime    @map("start_date")
-  endDate     DateTime    @map("end_date")
+  targetType PromoTarget @map("target_type")
+  targetIds  String[]    @map("target_ids") // IDs of products or categories
 
-  createdAt   DateTime    @default(now()) @map("created_at")
-  updatedAt   DateTime    @updatedAt @map("updated_at")
+  minPurchase Decimal @default(0) @map("min_purchase") @db.Decimal(12, 2)
+  isActive    Boolean @default(true) @map("is_active")
 
+  startDate DateTime @map("start_date")
+  endDate   DateTime @map("end_date")
+
+  // Audit fields
+  createdById String? @map("created_by_id")
+  updatedById String? @map("updated_by_id")
+
+  createdBy Admin? @relation("PromoCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy Admin? @relation("PromoUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([isActive])
+  @@index([startDate])
+  @@index([endDate])
   @@map("promos")
 }
 
@@ -403,30 +477,33 @@ enum PromoTarget {
 
 // --- 16. CASHIER SHIFT (Siklus Kerja Kasir & Modal Laci) ---
 model CashierShift {
-  id               String            @id @default(cuid())
-  
-  // Relasi ke Kasir
-  adminId          String            @map("admin_id")
-  admin            Admin             @relation(fields: [adminId], references: [id])
-  
-  // Waktu Operasional
-  startTime        DateTime          @default(now()) @map("start_time")
-  endTime          DateTime?         @map("end_time") // Null jika shift masih buka
-  
-  // Catatan Uang (Menggunakan Decimal untuk tipe uang berdasarkan best-practices prisma)
-  startingCash     Decimal           @db.Decimal(12, 2) @map("starting_cash")
-  expectedEndingCash Decimal?        @db.Decimal(12, 2) @map("expected_ending_cash")
-  actualEndingCash   Decimal?        @db.Decimal(12, 2) @map("actual_ending_cash") 
-  
-  status           ShiftStatus       @default(OPEN)
-  notes            String?           @db.Text
-  
-  // Relasi (Filter Nested Kueri seperti yang kita bahas)
-  transactions     Transaction[]
-  
-  createdAt        DateTime          @default(now()) @map("created_at")
-  updatedAt        DateTime          @updatedAt @map("updated_at")
+  id String @id @default(cuid())
 
+  // Relasi ke Kasir
+  adminId String @map("admin_id")
+  admin   Admin  @relation(fields: [adminId], references: [id])
+
+  // Waktu Operasional
+  startTime DateTime  @default(now()) @map("start_time")
+  endTime   DateTime? @map("end_time") // Null jika shift masih buka
+
+  // Catatan Uang (Menggunakan Decimal untuk tipe uang berdasarkan best-practices prisma)
+  startingCash       Decimal  @map("starting_cash") @db.Decimal(12, 2)
+  expectedEndingCash Decimal? @map("expected_ending_cash") @db.Decimal(12, 2)
+  actualEndingCash   Decimal? @map("actual_ending_cash") @db.Decimal(12, 2)
+
+  status ShiftStatus @default(OPEN)
+  notes  String?     @db.Text
+
+  // Relasi (Filter Nested Kueri seperti yang kita bahas)
+  transactions Transaction[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([adminId])
+  @@index([status])
+  @@index([startTime])
   @@map("cashier_shifts")
 }
 

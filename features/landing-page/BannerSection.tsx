@@ -7,6 +7,7 @@ import { usePublicBanners } from "./hooks";
 import type { Banner } from "@/features/banners/types";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import { FadeUpSection, ScaleOnHover } from "@/components/shared/animations";
 
 const AUTOPLAY_MS = 7000;
 const TRANSITION_MS = 700; // durasi cross-fade sama seperti HeroSection
@@ -16,7 +17,7 @@ function BannerSkeleton() {
   return (
     <div
       className="relative w-full overflow-hidden rounded-2xl"
-      style={{ height: "clamp(160px, 35vw, 420px)" }}
+      style={{ height: "clamp(145px, 22vw, 420px)" }}
     >
       <Skeleton className="h-full w-full rounded-2xl" />
       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
@@ -175,7 +176,7 @@ export default function BannerSection() {
       className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10"
     >
       {/* Label */}
-      <div className="mb-4 flex items-center gap-3">
+      <FadeUpSection className="mb-4 flex items-center gap-3">
         <span
           className="text-xs font-semibold tracking-[0.18em] uppercase"
           style={{ color: "var(--fordza-brown-light)" }}
@@ -186,14 +187,18 @@ export default function BannerSection() {
           className="flex-1 h-px"
           style={{ background: "var(--fordza-cream-dark)" }}
         />
-      </div>
+      </FadeUpSection>
 
       {/* States */}
       {isLoading && <BannerSkeleton />}
       {isError && <BannerEmpty />}
       {!isLoading && !isError && banners.length === 0 && <BannerEmpty />}
       {!isLoading && !isError && banners.length > 0 && (
-        <BannerCarousel banners={banners} />
+        <FadeUpSection delay={0.1}>
+          <ScaleOnHover scale={1.01}>
+            <BannerCarousel banners={banners} />
+          </ScaleOnHover>
+        </FadeUpSection>
       )}
     </section>
   );

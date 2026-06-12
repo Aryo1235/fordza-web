@@ -80,8 +80,13 @@ export default function UsersManagementPage() {
       return toast.error("Username dan Password wajib diisi");
     }
 
+    const payload = { ...formData };
+    if (payload.role !== "ADMIN") {
+      payload.pin = ""; // Kasir tidak butuh PIN
+    }
+
     if (editingUser) {
-      updateUser.mutate({ id: editingUser.id, ...formData }, {
+      updateUser.mutate({ id: editingUser.id, ...payload }, {
         onSuccess: () => {
           toast.success("User berhasil diperbarui");
           setIsModalOpen(false);
@@ -89,7 +94,7 @@ export default function UsersManagementPage() {
         onError: (err: any) => toast.error(err.response?.data?.message || "Gagal memperbarui user")
       });
     } else {
-      createUser.mutate(formData, {
+      createUser.mutate(payload, {
         onSuccess: () => {
           toast.success("User berhasil dibuat");
           setIsModalOpen(false);
@@ -142,7 +147,7 @@ export default function UsersManagementPage() {
       header: "PIN Otorisasi",
       cell: (u: any) => (
         <code className="text-[11px] px-1.5 py-0.5 bg-stone-100 rounded font-bold border border-stone-200">
-          {u.pin || "BELUM DISESET"}
+          {u.role === "KASIR" ? "-" : (u.pin || "BELUM DISESET")}
         </code>
       ),
     },
@@ -273,7 +278,7 @@ export default function UsersManagementPage() {
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
+                <div className={cn("grid gap-2", formData.role !== "ADMIN" && "col-span-2")}>
                   <Label htmlFor="password">{editingUser ? "Password Baru (Opsional)" : "Password"}</Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
@@ -286,19 +291,21 @@ export default function UsersManagementPage() {
                     />
                   </div>
                 </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="pin" className="flex items-center gap-1.5 underline decoration-stone-300">
-                    <Key className="w-3.5 h-3.5" /> PIN Otorisasi (6 Digit)
-                  </Label>
-                  <Input
-                    id="pin"
-                    value={formData.pin}
-                    onChange={(e) => setFormData({ ...formData, pin: e.target.value })}
-                    placeholder="123456"
-                    maxLength={6}
-                    className="font-mono"
-                  />
-                </div>
+                {formData.role === "ADMIN" && (
+                  <div className="grid gap-2">
+                    <Label htmlFor="pin" className="flex items-center gap-1.5 underline decoration-stone-300">
+                      <Key className="w-3.5 h-3.5" /> PIN Otorisasi (6 Digit)
+                    </Label>
+                    <Input
+                      id="pin"
+                      value={formData.pin}
+                      onChange={(e) => setFormData({ ...formData, pin: e.target.value })}
+                      placeholder="123456"
+                      maxLength={6}
+                      className="font-mono"
+                    />
+                  </div>
+                )}
               </div>
             </div>
 

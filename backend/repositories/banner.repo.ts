@@ -39,6 +39,7 @@ export const BannerRepository = {
     imageUrl: string;
     imageKey: string;
     linkUrl?: string;
+    createdById?: string;
   }) {
     return await prisma.banner.create({ data });
   },
@@ -54,6 +55,7 @@ export const BannerRepository = {
     if (data.imageUrl !== undefined) updateData.imageUrl = data.imageUrl;
     if (data.imageKey !== undefined) updateData.imageKey = data.imageKey;
     if (data.isActive !== undefined) updateData.isActive = data.isActive;
+    if (data.updatedById !== undefined) updateData.updatedById = data.updatedById;
 
     return await prisma.banner.update({ where: { id }, data: updateData });
   },

@@ -12,17 +12,25 @@ export async function getTransactionHistory(
     search?: string;
   }
 ) {
-  const res = await api.get("/api/admin/transactions", {
-    params,
-  });
-  return res.data;
+  try {
+    const res = await api.get("/api/admin/transactions", {
+      params,
+    });
+    return res.data;
+  } catch (error: any) {
+    throw new Error(error?.response?.data?.message || "Gagal mengambil riwayat transaksi");
+  }
 }
 
 /** 
  * GET /api/[role]/transactions/[id] — Ambil detail 1 transaksi
  */
 export async function getTransactionById(id: string, isAdmin = true) {
-  const role = isAdmin ? "admin" : "kasir";
-  const res = await api.get(`/api/${role}/transactions/${id}`);
-  return res.data.data;
+  try {
+    const role = isAdmin ? "admin" : "kasir";
+    const res = await api.get(`/api/${role}/transactions/${id}`);
+    return res.data.data;
+  } catch (error: any) {
+    throw new Error(error?.response?.data?.message || "Gagal mengambil detail transaksi");
+  }
 }

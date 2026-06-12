@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 import { TransactionService } from "@/backend/services/transaction.service";
+import { handleError } from "@/lib/error-handler";
+import { logger } from "@/lib/logger";
+import { headers } from "next/headers";
 
 // GET: Riwayat transaksi
 export async function GET(request: Request) {
@@ -14,17 +17,17 @@ export async function GET(request: Request) {
 
     const result = await TransactionService.getAll({ page, limit, search, dateFrom, dateTo, kasirId });
 
+    const headerList = await headers();
+    const traceId = headerList.get("x-request-id") || "unknown";
+
     return NextResponse.json({
       success: true,
       data: result.transactions,
       meta: { total: result.total, page, limit, totalPages: Math.ceil(result.total / limit) },
+      traceId,
     });
   } catch (error: any) {
-    console.error("GET /api/kasir/transactions error:", error.message);
-    return NextResponse.json(
-      { success: false, message: "Gagal mengambil riwayat transaksi" },
-      { status: 500 }
-    );
+    return await handleError(error);
   }
 }
 
@@ -32,7 +35,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { items, amountPaid, customerName, customerPhone, adminPin } = body;
+    const { items, amountPaid, customerName, customerPhone, adminPin, paymentMethod } = body;
 
     // Kasir ID diambil dari header (diset oleh middleware auth)
     const kasirId = request.headers.get("x-user-id");
@@ -52,7 +55,8 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!amountPaid || amountPaid <= 0) {
+    const method = paymentMethod || "CASH";
+    if (method === "CASH" && (!amountPaid || amountPaid <= 0)) {
       return NextResponse.json(
         { success: false, message: "Nominal pembayaran tidak valid" },
         { status: 400 }
@@ -63,33 +67,31 @@ export async function POST(request: Request) {
     const transaction = await TransactionService.checkout({ 
       kasirId, 
       items, 
-      amountPaid,
+      amountPaid: amountPaid || 0,
       customerName,
       customerPhone,
       adminPin,
+      paymentMethod: method,
     });
+
+    const headerList = await headers();
+    const traceId = headerList.get("x-request-id") || "unknown";
+
+    logger.info({ 
+      traceId,
+      invoiceNo: transaction.invoiceNo, 
+      totalPrice: transaction.totalPrice, 
+      kasirId,
+      customerName 
+    }, "Transaction completed successfully");
 
     return NextResponse.json({
       success: true,
       message: "Transaksi berhasil",
       data: transaction,
+      traceId,
     });
   } catch (error: any) {
-    console.error("POST /api/kasir/transactions error:", error.message);
-
-    // Error dari Service (validasi stok, pembayaran kurang, dll)
-    const isClientError = [
-      "tidak cukup",
-      "tidak ditemukan",
-      "kurang dari",
-      "tidak boleh",
-      "membutuhkan otorisasi",
-      "PIN Admin salah",
-    ].some((msg) => error.message?.includes(msg));
-
-    return NextResponse.json(
-      { success: false, message: error.message || "Gagal memproses transaksi" },
-      { status: isClientError ? 400 : 500 }
-    );
+    return await handleError(error);
   }
 }

@@ -270,6 +270,9 @@ export default function RiwayatPage() {
                 <th className="text-left px-4 py-3 text-xs font-semibold text-stone-600 uppercase tracking-wider">
                   Kasir
                 </th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-stone-600 uppercase tracking-wider">
+                  Pembayaran
+                </th>
                 <th className="text-right px-4 py-3 text-xs font-semibold text-stone-600 uppercase tracking-wider">
                   Total
                 </th>
@@ -285,7 +288,7 @@ export default function RiwayatPage() {
               {loading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <tr key={i} className="border-b border-stone-100">
-                    {Array.from({ length: 6 }).map((_, j) => (
+                    {Array.from({ length: 7 }).map((_, j) => (
                       <td key={j} className="px-4 py-3">
                         <div className="h-4 bg-stone-200 animate-pulse rounded" />
                       </td>
@@ -295,7 +298,7 @@ export default function RiwayatPage() {
               ) : transactions.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={6}
+                    colSpan={7}
                     className="text-center py-12 text-stone-400 text-sm"
                   >
                     Tidak ada transaksi ditemukan
@@ -324,6 +327,20 @@ export default function RiwayatPage() {
                     </td>
                     <td className="px-4 py-3 text-stone-600 text-xs">
                       {tx.kasir?.name || tx.kasir?.username || "-"}
+                    </td>
+                    <td className="px-4 py-3 text-xs">
+                      <span
+                        className={cn(
+                          "inline-flex items-center px-1.5 py-0.5 rounded-sm font-black text-[9px] uppercase tracking-wide border",
+                          tx.paymentMethod === "DEBIT"
+                            ? "bg-blue-50 text-blue-700 border-blue-200"
+                            : tx.paymentMethod === "QRIS"
+                              ? "bg-purple-50 text-purple-700 border-purple-200"
+                              : "bg-stone-50 text-stone-600 border-stone-200"
+                        )}
+                      >
+                        {tx.paymentMethod || "CASH"}
+                      </span>
                     </td>
                     <td className="px-4 py-3 text-right font-semibold text-stone-800">
                       Rp {tx.totalPrice.toLocaleString("id-ID")}

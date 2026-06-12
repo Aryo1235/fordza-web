@@ -5,6 +5,7 @@ import api, { setAccessToken } from "@/lib/api";
 import { useRouter } from "next/navigation";
 import { login, logout, getMe } from "./api";
 import type { LoginCredentials } from "./types";
+import { showErrorToast, showSuccessToast } from "@/lib/toast";
 
 export const authKeys = {
   all: ["auth"] as const,
@@ -19,18 +20,21 @@ export function useLogin() {
   return useMutation({
     mutationFn: (credentials: LoginCredentials) => login(credentials),
     onSuccess: (data) => {
-      // Simpan access token di memory
       if (data.data?.accessToken) {
         setAccessToken(data.data.accessToken);
       }
       queryClient.invalidateQueries({ queryKey: authKeys.me });
       
-      // Redirect sesuai role
+      showSuccessToast("Login berhasil!");
+      
       if (data.data?.role === "KASIR") {
         router.push("/pos");
       } else {
         router.push("/dashboard");
       }
+    },
+    onError: (error) => {
+      showErrorToast(error, "Login gagal. Periksa username dan password Anda.");
     },
   });
 }
@@ -41,7 +45,7 @@ export function useMe() {
     queryKey: authKeys.me,
     queryFn: getMe,
     retry: false,
-    staleTime: 5 * 60 * 1000, // cache 5 menit
+    staleTime: 5 * 60 * 1000,
   });
 }
 
@@ -58,7 +62,10 @@ export function useLogout() {
 
   return useMutation({
     mutationFn: logout,
-    onSuccess: performLogout,
+    onSuccess: () => {
+      showSuccessToast("Logout berhasil");
+      performLogout();
+    },
     onError: performLogout,
   });
 }

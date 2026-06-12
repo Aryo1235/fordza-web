@@ -2,7 +2,7 @@
 
 import { use } from "react";
 import { useProduct } from "@/features/products";
-import { PageHeader } from "@/components/layout/admin/PageHeader";
+import { BreadcrumbsHeader } from "@/components/layout/admin/BreadcrumbsHeader";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { 
@@ -15,7 +15,9 @@ import {
   Star, 
   ChevronRight,
   ShieldCheck,
-  Zap
+  Zap,
+  User,
+  Tag
 } from "lucide-react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,6 +27,33 @@ import { formatRupiah } from "@/lib/utils";
 export default function ProductDetailAdminPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { data: product, isLoading } = useProduct(id);
+
+  const getMeasurementText = (size: string, sizeTemplate: any) => {
+    if (!sizeTemplate || !sizeTemplate.measurements) return null;
+    const meas = sizeTemplate.measurements[size];
+    if (!meas) return null;
+
+    const tType = (sizeTemplate.type || "").toLowerCase();
+    if (tType === "sepatu") {
+      const length = meas.insoleLength || meas.insole || "";
+      const width = meas.insoleWidth || "";
+      if (length && width) return `${length}x${width} cm`;
+      if (length) return `${length} cm`;
+      return null;
+    }
+    if (tType === "apparel" || tType === "pakaian") {
+      const ld = meas.ld || "";
+      const pb = meas.pb || "";
+      if (ld && pb) return `LD:${ld} PB:${pb}`;
+      if (ld) return `LD:${ld}`;
+      if (pb) return `PB:${pb}`;
+      return null;
+    }
+    if (tType === "aksesoris" || tType === "gelang") {
+      return meas.lingkar ? `${meas.lingkar} cm` : null;
+    }
+    return meas.detail || null;
+  };
 
   if (isLoading) {
     return (
@@ -47,30 +76,40 @@ export default function ProductDetailAdminPage({ params }: { params: Promise<{ i
 
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-8 pb-20">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link href="/dashboard/products">
-            <Button variant="outline" size="icon" className="rounded-full">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-          </Link>
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <Link href="/dashboard/products" className="text-xs text-stone-400 hover:text-stone-600">Produk</Link>
-              <ChevronRight className="h-3 w-3 text-stone-300" />
-              <span className="text-xs text-stone-600 font-medium">Detail Produk</span>
-            </div>
-            <h1 className="text-2xl font-bold text-[#3C3025]">{product.name}</h1>
-          </div>
-        </div>
-        <div className="flex gap-2">
+      <BreadcrumbsHeader
+        title={product.name}
+        breadcrumbs={[
+          { label: "Produk", href: "/dashboard/products" },
+          { label: "Detail Produk" },
+        ]}
+        backUrl="/dashboard/products"
+        action={
           <Link href={`/dashboard/products/${id}`}>
             <Button className="bg-[#3C3025] hover:bg-[#5a4a38] text-white">
               <Edit className="h-4 w-4 mr-2" /> Edit Produk
             </Button>
           </Link>
-        </div>
-      </div>
+        }
+        subtitle={
+          <div className="flex items-center gap-4 mt-2 text-stone-500 font-medium">
+            <div className="flex items-center gap-1.5">
+              <Tag className="h-3.5 w-3.5 text-stone-300" />
+              <span className="text-xs uppercase tracking-wider">{product.productType || "Shoes"}</span>
+            </div>
+            <div className="w-px h-3 bg-stone-200" />
+            <div className="flex items-center gap-1.5">
+              <User className="h-3.5 w-3.5 text-stone-300" />
+              <span className="text-xs">{product.gender || "Unisex"}</span>
+            </div>
+            <div className="w-px h-3 bg-stone-200" />
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] bg-stone-100 px-1.5 py-0.5 rounded text-stone-400 font-mono">
+                {product.productCode}
+              </span>
+            </div>
+          </div>
+        }
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left Column: Visuals & Quick Stats */}
@@ -168,7 +207,7 @@ export default function ProductDetailAdminPage({ params }: { params: Promise<{ i
                 <CardTitle className="text-sm font-bold uppercase tracking-wider text-stone-800">Spesifikasi Teknis</CardTitle>
               </div>
             </CardHeader>
-            <CardContent className="pt-6 grid grid-cols-2 md:grid-cols-4 gap-6">
+            <CardContent className="pt-6 grid grid-cols-2 md:grid-cols-5 gap-6">
                 <div>
                   <h4 className="text-[10px] font-bold text-stone-400 uppercase mb-1 tracking-widest">Material Atas</h4>
                   <p className="text-sm text-stone-800 font-bold">{product.detail?.material || "-"}</p>
@@ -176,6 +215,10 @@ export default function ProductDetailAdminPage({ params }: { params: Promise<{ i
                 <div>
                   <h4 className="text-[10px] font-bold text-stone-400 uppercase mb-1 tracking-widest">Sol (Outsole)</h4>
                   <p className="text-sm text-stone-800 font-bold">{product.detail?.outsole || "-"}</p>
+                </div>
+                <div>
+                  <h4 className="text-[10px] font-bold text-stone-400 uppercase mb-1 tracking-widest">Insole</h4>
+                  <p className="text-sm text-stone-800 font-bold">{product.detail?.insole || "-"}</p>
                 </div>
                 <div>
                   <h4 className="text-[10px] font-bold text-stone-400 uppercase mb-1 tracking-widest">Konstruksi</h4>
@@ -230,12 +273,16 @@ export default function ProductDetailAdminPage({ params }: { params: Promise<{ i
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-2.5">
-                    {variant.skus?.map((sku: any) => (
-                        <div key={sku.id} className={`px-4 py-3 border rounded-xl text-center min-w-[70px] transition-all ${sku.stock > 0 ? 'bg-white border-stone-200 hover:border-stone-400 shadow-sm' : 'bg-red-50 border-red-100 opacity-60'}`}>
-                            <p className="text-[10px] text-stone-400 font-black mb-1">{sku.size}</p>
-                            <p className={`text-sm font-bold ${sku.stock === 0 ? 'text-red-500' : 'text-[#3C3025]'}`}>{sku.stock}</p>
-                        </div>
-                    ))}
+                    {variant.skus?.map((sku: any) => {
+                        const measText = getMeasurementText(sku.size, product.detail?.sizeTemplate);
+                        return (
+                          <div key={sku.id} className={`px-4 py-3 border rounded-xl text-center min-w-[75px] transition-all ${sku.stock > 0 ? 'bg-white border-stone-200 hover:border-stone-400 shadow-sm' : 'bg-red-50 border-red-100 opacity-60'}`}>
+                              <p className="text-[10px] text-stone-400 font-black mb-0.5">{sku.size}</p>
+                              {measText && <p className="text-[9px] text-stone-500 font-bold leading-tight mb-1">{measText}</p>}
+                              <p className={`text-sm font-bold ${sku.stock === 0 ? 'text-red-500' : 'text-[#3C3025]'}`}>{sku.stock}</p>
+                          </div>
+                        );
+                    })}
                     {(!variant.skus || variant.skus.length === 0) && <p className="text-xs text-stone-400 italic font-medium p-2 bg-stone-50 rounded italic">Belum ada data ukuran untuk varian ini.</p>}
                   </div>
                 </div>

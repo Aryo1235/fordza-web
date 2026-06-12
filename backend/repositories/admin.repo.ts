@@ -14,12 +14,12 @@ import { Role } from "@/app/generated/prisma/client";
 export const AdminRepository = {
   async findByUsername(username: string) {
     // Mengambil seluruh data termasuk password (untuk proses verifikasi di Service)
-    return await prisma.admin.findUnique({ where: { username } });
+    return await prisma.admin.findFirst({ where: { username, deletedAt: null } });
   },
 
   async findById(id: string) {
-    return await prisma.admin.findUnique({
-      where: { id },
+    return await prisma.admin.findFirst({
+      where: { id, deletedAt: null },
       select: {
         id: true,
         username: true,
@@ -45,7 +45,7 @@ export const AdminRepository = {
 
   async findAllCashiers() {
     return await prisma.admin.findMany({
-      where: { role: "KASIR" },
+      where: { role: "KASIR", deletedAt: null },
       select: {
         id: true,
         name: true,
@@ -57,7 +57,7 @@ export const AdminRepository = {
 
   async findAdminPinCandidates() {
     return await prisma.admin.findMany({
-      where: { role: "ADMIN", pin: { not: null } },
+      where: { role: "ADMIN", pin: { not: null }, deletedAt: null },
       select: {
         id: true,
         name: true,
@@ -69,6 +69,7 @@ export const AdminRepository = {
 
   async findAll() {
     return await prisma.admin.findMany({
+      where: { deletedAt: null },
       select: {
         id: true,
         username: true,
@@ -88,6 +89,6 @@ export const AdminRepository = {
   },
 
   async delete(id: string) {
-    return await prisma.admin.delete({ where: { id } });
+    return await prisma.admin.update({ where: { id }, data: { deletedAt: new Date() } });
   },
 };

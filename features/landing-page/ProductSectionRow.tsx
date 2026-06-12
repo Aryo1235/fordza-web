@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Product } from "@/features/products/types";
 import { ProductCard } from "./ProductCard";
 import { ProductCardSkeleton } from "@/components/products/ProductCardSkeleton";
+import { FadeUpSection, StaggerList, StaggerItem } from "@/components/shared/animations";
 
 interface ProductSectionRowProps {
   title: string;
@@ -10,7 +11,7 @@ interface ProductSectionRowProps {
   href: string;
   products: Product[];
   isLoading: boolean;
-  /** Berapa card yang ditampilkan (default 5) */
+  /** Berapa card yang ditampilkan (default 6) */
   limit?: number;
 }
 
@@ -26,8 +27,8 @@ export function ProductSectionRow({
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Header */}
-      <div className="flex items-start justify-between">
+      {/* Header — fade up saat masuk viewport */}
+      <FadeUpSection className="flex items-start justify-between">
         <div>
           <h2
             className="text-lg sm:text-xl font-black text-[var(--fordza-brown)]"
@@ -45,26 +46,28 @@ export function ProductSectionRow({
         >
           Lihat semua <span aria-hidden>›</span>
         </Link>
-      </div>
+      </FadeUpSection>
 
       {/* ── Carousel Produk (Horizontal Scroll) ── */}
-      {/* Menggunakan flex + overflow-x-auto dengan scrollbar tipis (custom-scrollbar).
-          Lebar card diatur responsif agar sebagian card berikutnya (peek) mengintip di pinggir layar. */}
-      <div 
-        className="flex overflow-x-auto snap-x snap-mandatory gap-4 sm:gap-5 pb-4 custom-scrollbar"
+      <div
+        className="flex overflow-x-auto  overflow-y-hidden py-1 snap-x snap-mandatory gap-4 sm:gap-4.5 pb-4 custom-scrollbar"
         style={{ scrollPaddingLeft: "0px" }}
       >
         {isLoading
           ? skeletons.map((_, i) => (
-              <div key={i} className="snap-start shrink-0 w-[65%] sm:w-[45%] md:w-[31%] lg:w-[31%] xl:w-[23.5%]">
-                <ProductCardSkeleton />
-              </div>
-            ))
-          : products.slice(0, limit).map((p) => (
-              <div key={p.id} className="snap-start shrink-0 w-[65%] sm:w-[45%] md:w-[31%] lg:w-[31%] xl:w-[23.5%]">
-                <ProductCard product={p} />
-              </div>
-            ))}
+            <div key={i} className="snap-start shrink-0 w-[65%] sm:w-[45%] md:w-[31%] lg:w-[31%] xl:w-[23.5%]">
+              <ProductCardSkeleton />
+            </div>
+          ))
+          : products.slice(0, limit).map((p, i) => (
+            <FadeUpSection
+              key={p.id}
+              delay={i * 0.07}
+              className="snap-start shrink-0 w-[65%] sm:w-[45%] md:w-[31%] lg:w-[31%] xl:w-[23.5%]"
+            >
+              <ProductCard product={p} />
+            </FadeUpSection>
+          ))}
       </div>
     </div>
   );

@@ -16,6 +16,7 @@
 import { TestimonialRepository } from "@/backend/repositories/testimonial.repo";
 import { ProductRepository } from "@/backend/repositories/products.repo";
 import { Prisma } from "@/app/generated/prisma/client";
+import { AppError } from "@/lib/error-handler";
 export const TestimonialService = {
   async getAll(filters: {
     productId?: string;
@@ -36,40 +37,35 @@ export const TestimonialService = {
     return await TestimonialRepository.getAllAdmin(filters);
   },
 
+  async getById(id: string) {
+    return await TestimonialRepository.findById(id);
+  },
+
   // 🧠 LOGIKA BISNIS: Create + hitung ulang rating
   async create(data: Prisma.TestimonialCreateInput) {
-    try {
-      // LANGKAH 1: Suruh Repo buat review baru
-      const newReview = await TestimonialRepository.create(data);
+    // LANGKAH 1: Suruh Repo buat review baru
+    const newReview = await TestimonialRepository.create(data);
 
-      // LANGKAH 2: Service menghitung ulang statistik rating
-      // (ini business logic, bukan tugas Repo)
-      const productId = data.product.connect?.id;
-      if (productId) {
-        const stats =
-          await TestimonialRepository.calculateRatingStats(productId);
-        await ProductRepository.updateRating(productId, {
-          avgRating: stats._avg.rating || 0,
-          totalReviews: stats._count.rating || 0,
-        });
-      }
-
-      return newReview;
-    } catch (error: any) {
-      if (error.code === "P2025") {
-        throw new Error(
-          "Product ID tidak valid. Produk tidak ditemukan di database.",
-        );
-      }
-      throw error;
+    // LANGKAH 2: Service menghitung ulang statistik rating
+    // (ini business logic, bukan tugas Repo)
+    const productId = data.product.connect?.id;
+    if (productId) {
+      const stats =
+        await TestimonialRepository.calculateRatingStats(productId);
+      await ProductRepository.updateRating(productId, {
+        avgRating: stats._avg.rating || 0,
+        totalReviews: stats._count.rating || 0,
+      });
     }
+
+    return newReview;
   },
 
   // 🧠 LOGIKA BISNIS: Update testimoni + hitung ulang rating
   async update(id: string, data: any) {
     // LANGKAH 1: Cek dulu testimoni ada
     const testimonial = await TestimonialRepository.findById(id);
-    if (!testimonial) throw new Error("Testimoni tidak ditemukan");
+    if (!testimonial) throw new AppError("Testimoni tidak ditemukan", 404, "NOT_FOUND");
 
     // LANGKAH 2: Update
     const updated = await TestimonialRepository.update(id, data);
@@ -90,7 +86,7 @@ export const TestimonialService = {
   async delete(id: string) {
     // LANGKAH 1: Cek dulu testimoni ada (dan simpan productId-nya)
     const testimonial = await TestimonialRepository.findById(id);
-    if (!testimonial) throw new Error("Testimoni tidak ditemukan");
+    if (!testimonial) throw new AppError("Testimoni tidak ditemukan", 404, "NOT_FOUND");
 
     // LANGKAH 2: Hapus dari database
     await TestimonialRepository.delete(id);
@@ -109,5 +105,9 @@ export const TestimonialService = {
 
   async getStats(productId?: string) {
     return await TestimonialRepository.getStats(productId);
+  },
+
+  async getProductsForTestimonialSelection(search?: string) {
+    return await TestimonialRepository.getProductsForTestimonialSelection(search);
   },
 };

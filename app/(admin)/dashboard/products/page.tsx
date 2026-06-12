@@ -16,6 +16,7 @@ import {
   Eye,
   ImageIcon,
   Package,
+  Upload,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -59,7 +60,7 @@ export default function ProductsPage() {
           {item.categories?.map((c: any) => (
             <span
               key={c.categoryId}
-              className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800"
+              className="px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800 whitespace-nowrap"
             >
               {c.category?.name}
             </span>
@@ -86,13 +87,19 @@ export default function ProductsPage() {
           >
             Sol: {item.detail?.outsole || "-"}
           </span>
+          <span
+            className="text-[10px] text-stone-500 truncate"
+            title={item.detail?.insole}
+          >
+            Ins: {item.detail?.insole || "-"}
+          </span>
         </div>
       ),
     },
     {
       header: "Varian & Stok",
       cell: (item: any) => {
-        const variantCount = item.variants?.length || 0;
+        const variantCount = item.variantCount ?? (item.variants?.length || 0);
         return (
           <div className="flex flex-col gap-1">
             <span className="text-xs font-semibold text-[#3C3025]">
@@ -122,17 +129,13 @@ export default function ProductsPage() {
         const hasPromo = finalPrice < basePrice;
 
         return (
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-1 items-center">
             {/* Harga Jual Final */}
             <div className="flex items-center gap-2">
               <span className="font-bold whitespace-nowrap text-[#3C3025]">
                 Rp {finalPrice.toLocaleString("id-ID")}
               </span>
-              {hasPromo && (
-                <span className="text-[9px] font-black bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded">
-                  PROMO
-                </span>
-              )}
+
             </div>
 
             {/* Tampilkan Harga Asli (Coret) Jika Ada Promo Aktif */}
@@ -145,9 +148,9 @@ export default function ProductsPage() {
             {/* Nama Promo Aktif */}
             {promoName && (
               <div className="mt-1">
-                 <span className="text-[9px] font-bold bg-amber-50 text-amber-600 px-1.5 py-0.5 rounded border border-amber-100 truncate inline-block max-w-[120px]">
-                    🏷️ {promoName}
-                 </span>
+                <span className="text-[9px] font-bold bg-amber-50 text-amber-600 px-1.5 py-0.5 rounded border border-amber-100 truncate inline-block max-w-[120px]">
+                  🏷️ {promoName}
+                </span>
               </div>
             )}
           </div>
@@ -164,13 +167,23 @@ export default function ProductsPage() {
       cell: (item: any) => (
         <div className="flex justify-end gap-2">
           <Link href={`/dashboard/products/${item.id}/detail`}>
-            <Button variant="ghost" size="icon" title="Lihat Detail Admin">
+            <Button
+              variant="ghost"
+              size="icon"
+              title="Lihat Detail Admin"
+              className="text-stone-600 hover:text-amber-600 hover:bg-stone-50 rounded-lg"
+            >
               <Eye className="h-4 w-4" />
             </Button>
           </Link>
           <Link href={`/dashboard/products/${item.id}`}>
-            <Button variant="ghost" size="icon" title="Edit">
-              <Edit className="h-4 w-4 text-blue-600" />
+            <Button
+              variant="ghost"
+              size="icon"
+              title="Edit"
+              className="text-stone-600 hover:text-blue-600 hover:bg-stone-50 rounded-lg"
+            >
+              <Edit className="h-4 w-4" />
             </Button>
           </Link>
           <Button
@@ -178,7 +191,7 @@ export default function ProductsPage() {
             size="icon"
             title="Hapus"
             onClick={() => setDeleteId(item.id)}
-            className="hover:text-red-600"
+            className="text-stone-600 hover:text-red-600 hover:bg-stone-50 rounded-lg"
           >
             <Trash2 className="h-4 w-4" />
           </Button>
@@ -193,11 +206,18 @@ export default function ProductsPage() {
         title="Daftar Produk"
         description="Kelola semua produk toko Anda di sini."
         action={
-          <Link href="/dashboard/products/new">
-            <Button className="bg-[#3C3025] hover:bg-[#5a4a38] text-white">
-              <Plus className="mr-2 h-4 w-4" /> Tambah Produk
-            </Button>
-          </Link>
+          <div className="flex gap-2">
+            <Link href="/dashboard/products/bulk-import">
+              <Button variant="outline" className="border-stone-200 hover:bg-stone-50">
+                <Upload className="mr-2 h-4 w-4" /> Bulk Import
+              </Button>
+            </Link>
+            <Link href="/dashboard/products/new">
+              <Button className="bg-[#3C3025] hover:bg-[#5a4a38] text-white">
+                <Plus className="mr-2 h-4 w-4" /> Tambah Produk
+              </Button>
+            </Link>
+          </div>
         }
       />
 
@@ -229,7 +249,7 @@ export default function ProductsPage() {
         <div className="bg-stone-50 border-b border-stone-100 py-3 px-6">
           <p className="text-[10px] font-bold text-stone-500 uppercase tracking-tight flex items-center gap-2">
             <Package className="w-3 h-3 text-stone-400" />
-            Product Master List Management ({data?.meta?.total || 0} Items)
+            Product Master List Management ({data?.meta?.totalItems || 0} Items)
           </p>
         </div>
         <DataTable

@@ -6,6 +6,7 @@ import {
 } from "@tanstack/react-query";
 import {
   getKasirProducts,
+  getKasirStockCheck,
   checkoutTransaction,
   getKasirTransactions,
   checkInvoice,
@@ -36,6 +37,16 @@ export function useKasirProducts(search = "", enabled = true) {
       return page < totalPages ? page + 1 : undefined;
     },
     enabled,
+  });
+}
+
+/** Hook ringan untuk dialog "Cek Stok Cepat" — hanya memuat id, productCode, name, category, stock */
+export function useKasirStockCheck(search = "", enabled = true) {
+  return useQuery({
+    queryKey: ["kasir-stock-check", search],
+    queryFn: () => getKasirStockCheck(search),
+    enabled,
+    placeholderData: (prev) => prev,
   });
 }
 

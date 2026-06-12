@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="Electron" modified="2026-05-18T10:00:00.000Z" agent="5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/24.4.0 Electron/30.0.9 Chrome/124.0.6367.243 Electron/30.0.9 Safari/537.36" version="24.4.0" type="device">
+  <diagram id="pos_p1" name="Transaksi POS &amp; Shift">
+    <mxGraphModel dx="1422" dy="798" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="1600" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="100" parent="1" style="swimlane;html=1;startSize=30;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;align=center;verticalAlign=top;fontSize=12;" value="Kasir POS" vertex="1">
+          <mxGeometry height="1800" width="280" x="60" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="101" parent="1" style="swimlane;html=1;startSize=30;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;align=center;verticalAlign=top;fontSize=12;" value="Sistem POS" vertex="1">
+          <mxGeometry height="1800" width="280" x="340" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="102" parent="1" style="swimlane;html=1;startSize=30;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;align=center;verticalAlign=top;fontSize=12;" value="Database POS" vertex="1">
+          <mxGeometry height="1800" width="280" x="620" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_start" parent="100" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;" value="" vertex="1">
+          <mxGeometry height="40" width="40" x="120" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_login" parent="100" style="rounded=1;whiteSpace=wrap;html=1;arcSize=20;fillColor=#ffffff;strokeColor=#333333;fontSize=11;" value="Login ke POS" vertex="1">
+          <mxGeometry height="50" width="180" x="50" y="160" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_auth" parent="101" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;fontStyle=1;" value="Kredensial Valid?" vertex="1">
+          <mxGeometry height="60" width="90" x="95" y="260" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_check_shift" parent="101" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;fontStyle=1;" value="Ada Shift OPEN?" vertex="1">
+          <mxGeometry height="60" width="90" x="95" y="360" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_modal" parent="100" style="rounded=1;whiteSpace=wrap;html=1;arcSize=20;fillColor=#ffffff;strokeColor=#333333;fontSize=11;" value="Input Modal Awal Laci" vertex="1">
+          <mxGeometry height="50" width="180" x="50" y="460" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_save_shift" parent="102" style="rounded=1;whiteSpace=wrap;html=1;arcSize=20;fillColor=#ffffff;strokeColor=#333333;fontSize=11;" value="Simpan Shift (OPEN)" vertex="1">
+          <mxGeometry height="50" width="180" x="50" y="560" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_cart" parent="100" style="rounded=1;whiteSpace=wrap;html=1;arcSize=20;fillColor=#ffffff;strokeColor=#333333;fontSize=11;" value="Pilih Varian &amp; SKU Sepatu" vertex="1">
+          <mxGeometry height="50" width="180" x="50" y="660" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_check_stock" parent="101" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;fontStyle=1;" value="Stok SKU Cukup?" vertex="1">
+          <mxGeometry height="60" width="90" x="95" y="760" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_promo" parent="101" style="rounded=1;whiteSpace=wrap;html=1;arcSize=20;fillColor=#ffffff;strokeColor=#333333;fontSize=11;" value="Auto-Apply Promo" vertex="1">
+          <mxGeometry height="50" width="180" x="50" y="860" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_pay" parent="100" style="rounded=1;whiteSpace=wrap;html=1;arcSize=20;fillColor=#ffffff;strokeColor=#333333;fontSize=11;" value="Input Pembayaran &amp; Klik Bayar" vertex="1">
+          <mxGeometry height="50" width="180" x="50" y="960" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_check_pay" parent="101" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;fontStyle=1;" value="Uang &gt;= Grand Total?" vertex="1">
+          <mxGeometry height="60" width="90" x="95" y="1060" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_tx" parent="102" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;" value="Prisma $transaction:
+Simpan &amp; Potong Stok" vertex="1">
+          <mxGeometry height="60" width="120" x="80" y="1160" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_print" parent="100" style="rounded=1;whiteSpace=wrap;html=1;arcSize=20;fillColor=#ffffff;strokeColor=#333333;fontSize=11;" value="Cetak Struk Thermal" vertex="1">
+          <mxGeometry height="50" width="180" x="50" y="1260" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_next" parent="100" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;fontStyle=1;" value="Lanjut Transaksi?" vertex="1">
+          <mxGeometry height="60" width="90" x="95" y="1360" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_close_shift" parent="100" style="rounded=1;whiteSpace=wrap;html=1;arcSize=20;fillColor=#ffffff;strokeColor=#333333;fontSize=11;" value="Input Total Uang Fisik &amp;
+Tutup Shift" vertex="1">
+          <mxGeometry height="50" width="180" x="50" y="1460" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_save_close" parent="102" style="rounded=1;whiteSpace=wrap;html=1;arcSize=20;fillColor=#ffffff;strokeColor=#333333;fontSize=11;" value="Simpan Shift (CLOSED)
+&amp; Catat Selisih" vertex="1">
+          <mxGeometry height="50" width="180" x="50" y="1560" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_end" parent="100" style="ellipse;html=1;shape=endState;fillColor=#f8cecc;strokeColor=#b85450;" value="" vertex="1">
+          <mxGeometry height="40" width="40" x="120" y="1660" as="geometry" />
+        </mxCell>
+        <mxCell id="e1_1" edge="1" parent="1" source="p1_start" target="p1_login" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=10;" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e1_2" edge="1" parent="1" source="p1_login" target="p1_auth" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=10;" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e1_3" edge="1" parent="1" source="p1_auth" target="p1_check_shift" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=10;" value="Ya">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e1_3_no" edge="1" parent="1" source="p1_auth" target="p1_login" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=10;entryX=1;entryY=0.5;exitX=0;exitY=0.5;" value="Tidak">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e1_4" edge="1" parent="1" source="p1_check_shift" target="p1_modal" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=10;" value="Tidak Ada">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e1_4_yes" edge="1" parent="1" source="p1_check_shift" target="p1_cart" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=10;entryX=1;entryY=0.5;exitX=1;exitY=0.5;" value="Ada">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e1_5" edge="1" parent="1" source="p1_modal" target="p1_save_shift" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=10;" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e1_6" edge="1" parent="1" source="p1_save_shift" target="p1_cart" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=10;entryX=0.5;entryY=0;exitX=0.5;exitY=0;" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e1_7" edge="1" parent="1" source="p1_cart" target="p1_check_stock" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=10;" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e1_8" edge="1" parent="1" source="p1_check_stock" target="p1_promo" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=10;" value="Ya">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e1_8_no" edge="1" parent="1" source="p1_check_stock" target="p1_cart" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=10;entryX=0;entryY=0.5;exitX=0;exitY=0.5;" value="Tidak">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e1_9" edge="1" parent="1" source="p1_promo" target="p1_pay" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=10;" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e1_10" edge="1" parent="1" source="p1_pay" target="p1_check_pay" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=10;" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e1_11" edge="1" parent="1" source="p1_check_pay" target="p1_tx" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=10;" value="Ya">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e1_11_no" edge="1" parent="1" source="p1_check_pay" target="p1_pay" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=10;entryX=1;entryY=0.5;exitX=1;exitY=0.5;" value="Tidak">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e1_12" edge="1" parent="1" source="p1_tx" target="p1_print" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=10;" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e1_13" edge="1" parent="1" source="p1_print" target="p1_next" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=10;" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e1_14_yes" edge="1" parent="1" source="p1_next" target="p1_cart" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=10;entryX=0;entryY=0.5;exitX=0;exitY=0.5;" value="Ya">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e1_14_no" edge="1" parent="1" source="p1_next" target="p1_close_shift" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=10;" value="Tidak">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e1_15" edge="1" parent="1" source="p1_close_shift" target="p1_save_close" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=10;" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e1_16" edge="1" parent="1" source="p1_save_close" target="p1_end" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=10;" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

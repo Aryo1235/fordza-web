@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { X, Trash2, Minus, Plus } from "lucide-react";
-import { formatNumber, parseNumber } from "@/lib/utils";
+import { cn, formatNumber, parseNumber } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,6 +24,8 @@ interface CartDrawerProps {
   onCheckout: () => void;
   isLoading: boolean;
   highlightedProductId?: string | null;
+  paymentMethod?: "CASH" | "DEBIT" | "QRIS";
+  onPaymentMethodChange?: (method: "CASH" | "DEBIT" | "QRIS") => void;
 }
 
 export default function CartDrawer({
@@ -41,11 +43,54 @@ export default function CartDrawer({
   onCheckout,
   isLoading,
   highlightedProductId = null,
+  paymentMethod = "CASH",
+  onPaymentMethodChange,
 }: CartDrawerProps) {
-  const total = items.reduce(
-    (sum, item) => sum + (item.price * item.quantity - item.discountAmount),
-    0
-  );
+  // ✅ FIX: Hitung subtotal dulu untuk cek minPurchase dengan konversi tipe yang aman
+  const subtotal = items.reduce((sum, item) => sum + Number(item.price ?? 0) * item.quantity, 0);
+  
+  console.log("🛒 [CartDrawer] Subtotal:", subtotal);
+  console.log("🛒 [CartDrawer] Items:", items.map(item => ({
+    name: item.name,
+    price: Number(item.price ?? 0),
+    qty: item.quantity,
+    discountAmount: Number(item.discountAmount ?? 0),
+    promoName: item.promoName,
+    promoMinPurchase: Number(item.promoMinPurchase ?? 0),
+  })));
+  
+  // ✅ Hitung diskon item langsung (non-conditional fixed + percentage)
+  const itemDiscountTotal = items.reduce((sum, item) => {
+    const discountAmt = Number(item.discountAmount ?? 0);
+    const minP = Number(item.promoMinPurchase ?? 0);
+    const isPercentage = Number(item.promoDiscountPercent ?? 0) > 0;
+    const isConditionalFixed = minP > 0 && !isPercentage;
+    
+    if (discountAmt > 0 && !isConditionalFixed) {
+      return sum + discountAmt * item.quantity;
+    }
+    return sum;
+  }, 0);
+
+  // ✅ Hitung diskon promo bersyarat (conditional fixed)
+  const promoDiscountTotal = items.reduce((sum, item) => {
+    const discountAmt = Number(item.discountAmount ?? 0);
+    const minP = Number(item.promoMinPurchase ?? 0);
+    const isPercentage = Number(item.promoDiscountPercent ?? 0) > 0;
+    const isConditionalFixed = minP > 0 && !isPercentage;
+    const meetsRequirement = minP > 0 ? subtotal >= minP : true;
+    
+    if (discountAmt > 0 && isConditionalFixed && meetsRequirement) {
+      return sum + discountAmt;
+    }
+    return sum;
+  }, 0);
+
+  // ✅ FIX: Hitung total dengan validasi minPurchase
+  const total = subtotal - itemDiscountTotal - promoDiscountTotal;
+  
+  console.log("🛒 [CartDrawer] Total setelah discount:", total);
+  
   const change = amountPaid - total;
   const remainingPayment = Math.max(total - amountPaid, 0);
   const hasInvalidDiscount = items.some((item) => item.discountAmount > item.price * item.quantity || item.discountAmount < 0);
@@ -89,6 +134,29 @@ export default function CartDrawer({
           ) : (
             items.map((item) => {
               const itemKey = item.skuId ? `${item.id}-${item.skuId}` : item.id;
+              
+              // Hitung diskon aktif berdasarkan minPurchase dengan konversi tipe yang aman
+              const itemPrice = Number(item.price ?? 0);
+              const discountAmt = Number(item.discountAmount ?? 0);
+              const minP = Number(item.promoMinPurchase ?? 0);
+              const meetsRequirement = minP > 0 ? subtotal >= minP : true;
+              
+              const isPercentage = Number(item.promoDiscountPercent ?? 0) > 0;
+              const isConditionalFixed = minP > 0 && !isPercentage;
+              
+              let lineDiscount = 0;
+              let lineDiscountAmt = 0;
+              
+              if (discountAmt > 0) {
+                if (isConditionalFixed) {
+                  lineDiscountAmt = discountAmt;
+                  lineDiscount = meetsRequirement ? discountAmt : 0;
+                } else {
+                  lineDiscountAmt = discountAmt * item.quantity;
+                  lineDiscount = meetsRequirement ? discountAmt * item.quantity : 0;
+                }
+              }
+
               return (
               <div
                 key={itemKey}
@@ -105,7 +173,7 @@ export default function CartDrawer({
                           <span className="text-[10px] text-stone-400">{item.variantColor} / {item.skuSize}</span>
                        </div>
                     )}
-                    <p className="text-xs text-stone-500 font-semibold">Rp {item.price.toLocaleString("id-ID")}</p>
+                    <p className="text-xs text-stone-500 font-semibold">Rp {itemPrice.toLocaleString("id-ID")}</p>
                   </div>
                   
                   <div className="flex items-center gap-2">
@@ -129,10 +197,12 @@ export default function CartDrawer({
                   </div>
                   
                   <div className="text-sm font-bold w-24 text-right text-[#3C3025]">
-                    <p>Rp {(item.price * item.quantity).toLocaleString("id-ID")}</p>
-                    {item.discountAmount > 0 && (
-                      <p className="text-[11px] text-red-500">- Rp {item.discountAmount.toLocaleString("id-ID")}</p>
-                    )}
+                    <p>Rp {(itemPrice * item.quantity).toLocaleString("id-ID")}</p>
+                    {!isConditionalFixed && lineDiscount > 0 ? (
+                      <p className="text-[11px] text-red-500">- Rp {lineDiscount.toLocaleString("id-ID")}</p>
+                    ) : !isConditionalFixed && lineDiscountAmt > 0 ? (
+                      <p className="text-[11px] text-stone-400 line-through">- Rp {lineDiscountAmt.toLocaleString("id-ID")}</p>
+                    ) : null}
                   </div>
                   
                   <button
@@ -143,10 +213,28 @@ export default function CartDrawer({
                   </button>
                 </div>
 
-                {item.discountAmount > 0 && (
+                {discountAmt > 0 && (
                   <div className="flex items-center gap-2 pl-1">
-                    <div className="bg-red-50 text-red-600 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tight">
-                      {item.promoName || "Promo Admin"}
+                    <div className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tight ${
+                      lineDiscount > 0
+                        ? "bg-red-50 text-red-600"
+                        : "bg-stone-100 text-stone-400"
+                    }`}>
+                      {item.promoName || "Promo Admin"}{" - "}
+                      {isPercentage 
+                        ? `Diskon ${Math.round(Number(item.promoDiscountPercent ?? 0))}% ` 
+                        : isConditionalFixed
+                          ? `Potongan Flat Rp ${discountAmt.toLocaleString("id-ID")} `
+                          : `Potongan Rp ${discountAmt.toLocaleString("id-ID")} `
+                      }
+                      {isConditionalFixed
+                        ? lineDiscount > 0
+                          ? `(Aktif di Total)`
+                          : `(Min. Rp ${minP.toLocaleString("id-ID")} - Belum Terpenuhi)`
+                        : lineDiscount > 0
+                          ? `(-Rp ${lineDiscount.toLocaleString("id-ID")})`
+                          : `(Min. Rp ${minP.toLocaleString("id-ID")} - Belum Terpenuhi)`
+                      }
                     </div>
                   </div>
                 )}
@@ -177,14 +265,60 @@ export default function CartDrawer({
             </div>
           </div>
 
-          <div className="space-y-2 pt-2 border-t border-stone-200">
-            <div className="flex justify-between font-bold text-base">
-              <span>Total</span>
-              <span className="text-[#3C3025] text-xl font-black">Rp {total.toLocaleString("id-ID")}</span>
+          <div className="space-y-3 pt-2 border-t border-stone-200">
+            {/* Breakdown */}
+            <div className="space-y-1.5 text-xs">
+              <div className="flex justify-between text-stone-500 font-medium">
+                <span>Subtotal</span>
+                <span>Rp {subtotal.toLocaleString("id-ID")}</span>
+              </div>
+              {itemDiscountTotal > 0 && (
+                <div className="flex justify-between text-stone-400 font-medium">
+                  <span>Diskon Produk</span>
+                  <span>- Rp {itemDiscountTotal.toLocaleString("id-ID")}</span>
+                </div>
+              )}
+              {promoDiscountTotal > 0 && (
+                <div className="flex justify-between text-red-500 font-semibold bg-red-50/50 px-1.5 py-1 rounded">
+                  <span>Promo Bersyarat</span>
+                  <span>- Rp {promoDiscountTotal.toLocaleString("id-ID")}</span>
+                </div>
+              )}
+              
+              <div className="flex justify-between font-bold text-sm pt-2 border-t border-stone-150">
+                <span className="text-stone-500">Total Akhir</span>
+                <span className="text-[#3C3025] text-base font-black">Rp {total.toLocaleString("id-ID")}</span>
+              </div>
             </div>
             
+            {/* Metode Pembayaran */}
             <div className="space-y-1.5">
-              <Label className="text-[10px] text-stone-500 uppercase font-black">Bayar Tunai</Label>
+              <Label className="text-[10px] text-stone-500 uppercase font-black">Metode Pembayaran</Label>
+              <div className="grid grid-cols-3 gap-2">
+                {(["CASH", "DEBIT", "QRIS"] as const).map((method) => (
+                  <Button
+                    key={method}
+                    type="button"
+                    variant="outline"
+                    onClick={() => onPaymentMethodChange?.(method)}
+                    className={cn(
+                      "h-9 text-xs font-bold transition-all rounded-lg",
+                      paymentMethod === method
+                        ? "bg-[#3C3025] text-white hover:bg-[#3C3025] border-transparent"
+                        : "bg-white border-stone-200 text-stone-600 hover:bg-stone-50"
+                    )}
+                  >
+                    {method}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {/* Bayar Tunai */}
+            <div className="space-y-1.5">
+              <Label className="text-[10px] text-stone-500 uppercase font-black">
+                {paymentMethod === "CASH" ? "Bayar Tunai (Rp)" : `Uang Diterima (${paymentMethod})`}
+              </Label>
               <Input
                 type="text"
                 value={formatNumber(amountPaid)}
@@ -194,16 +328,20 @@ export default function CartDrawer({
                     onAmountPaidChange(parseNumber(val));
                   }
                 }}
+                disabled={paymentMethod !== "CASH"}
                 placeholder="0"
-                className="bg-white h-10 text-lg font-bold"
+                className={cn(
+                  "bg-white h-10 text-lg font-bold",
+                  paymentMethod !== "CASH" && "bg-stone-50 text-stone-400 border-stone-200"
+                )}
               />
-              {amountPaid >= total && total > 0 && (
+              {paymentMethod === "CASH" && amountPaid >= total && total > 0 && (
                 <div className="flex justify-between items-center text-xs text-green-700 font-bold bg-green-50 px-2 py-1.5 rounded">
                   <span>Kembalian:</span>
                   <span>Rp {change.toLocaleString("id-ID")}</span>
                 </div>
               )}
-              {amountPaid > 0 && amountPaid < total && (
+              {paymentMethod === "CASH" && amountPaid > 0 && amountPaid < total && (
                 <p className="text-[10px] text-red-500 font-bold">Kurang: Rp {remainingPayment.toLocaleString("id-ID")}</p>
               )}
             </div>

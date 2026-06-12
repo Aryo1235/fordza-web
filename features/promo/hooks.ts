@@ -38,6 +38,9 @@ export function useCreatePromo() {
     mutationFn: (data: CreatePromoInput) => createPromo(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: promoKeys.adminList });
+      // ✅ FIX: Invalidate products cache agar promo baru muncul
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-products"] });
     },
   });
 }
@@ -50,6 +53,9 @@ export function useUpdatePromo() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: promoKeys.adminList });
       queryClient.invalidateQueries({ queryKey: promoKeys.detail(variables.id) });
+      // ✅ FIX: Invalidate products cache agar perubahan promo muncul
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-products"] });
     },
   });
 }
@@ -60,6 +66,9 @@ export function useDeletePromo() {
     mutationFn: (id: string) => deletePromo(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: promoKeys.adminList });
+      // ✅ FIX: Invalidate products cache agar promo yang dihapus hilang dari produk
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-products"] });
     },
   });
 }

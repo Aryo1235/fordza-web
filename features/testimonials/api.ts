@@ -28,3 +28,8 @@ export async function deleteTestimonial(id: string) {
   const res = await api.delete(`/api/admin/testimonials/${id}`);
   return res.data;
 }
+
+export async function getAdminTestimonialDetail(id: string) {
+  const res = await api.get(`/api/admin/testimonials/${id}`);
+  return res.data?.data;
+}

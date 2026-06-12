@@ -1,11 +1,13 @@
 "use client";
 
 import { use } from "react";
-import { PageHeader } from "@/components/layout/admin/PageHeader";
+import { BreadcrumbsHeader } from "@/components/layout/admin/BreadcrumbsHeader";
 import { CategoryForm, type CategoryFormValues, useCategory, useUpdateCategory } from "@/features/categories";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 export default function EditCategoryPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -31,7 +33,7 @@ export default function EditCategoryPage({ params }: { params: Promise<{ id: str
         router.push("/dashboard/categories");
       },
       onError: (err: any) => {
-        toast.error(err?.response?.data?.message || "Gagal mengupdate kategori");
+        toast.error(err?.response?.data?.message || err?.message || "Gagal mengupdate kategori");
       }
     });
   };
@@ -53,10 +55,14 @@ export default function EditCategoryPage({ params }: { params: Promise<{ id: str
   };
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
-      <PageHeader 
-        title="Edit Kategori" 
-        description={`Mengubah data kategori ${category.name}`}
+    <div className="p-6 max-w-5xl mx-auto space-y-6">
+      <BreadcrumbsHeader
+        title="Edit Kategori"
+        breadcrumbs={[
+          { label: "Kategori", href: "/dashboard/categories" },
+          { label: category?.name || "", href: `/dashboard/categories/${id}/detail` },
+          { label: "Edit Kategori" },
+        ]}
       />
       
       <div className="bg-white p-6 rounded-xl border border-border shadow-sm">

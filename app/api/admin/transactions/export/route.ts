@@ -18,6 +18,7 @@ function getTransactionExportParams(req: Request) {
     search: searchParams.get("search") || undefined,
     dateFrom: searchParams.get("from") || undefined,
     dateTo: searchParams.get("to") || undefined,
+    kasirId: searchParams.get("kasirId") || undefined,
     format: (searchParams.get("format") || "excel").toLowerCase(),
   };
 }
@@ -70,7 +71,7 @@ export async function GET(req: NextRequest) {
         // --- Item Rows ---
         (tx.items || []).forEach((item: any) => {
           const quantity = Number(item.quantity || 0);
-          const price = Number(item.priceAtSale || 0);
+          const price = Number(item.basePriceAtSale || 0);
           const discount = Number(item.discountAmount || 0);
           const subtotal = quantity * price - discount;
 
@@ -81,7 +82,7 @@ export async function GET(req: NextRequest) {
             item.skuSize || "-",
             { content: quantity.toString(), styles: { halign: 'center' } },
             { content: toCurrency(price), styles: { halign: 'right' } },
-            { content: discount > 0 ? `-${toCurrency(discount)}` : "-", styles: { halign: 'right', textColor: [200, 0, 0] } },
+            { content: discount > 0 ? `-${toCurrency(discount)}\n(${item.promoName || 'Promo'})` : "-", styles: { halign: 'right', textColor: [200, 0, 0] } },
             { content: toCurrency(subtotal), styles: { halign: 'right', fontStyle: 'bold' } }
           ]);
         });
@@ -197,7 +198,7 @@ export async function GET(req: NextRequest) {
     const detailRows = transactions.flatMap((tx) =>
       (tx.items || []).map((item: any) => {
         const quantity = Number(item.quantity || 0);
-        const price = Number(item.priceAtSale || 0);
+        const price = Number(item.basePriceAtSale || 0);
         const discount = Number(item.discountAmount || 0);
 
         return {
@@ -210,6 +211,7 @@ export async function GET(req: NextRequest) {
           Ukuran: item.skuSize || "-",
           Qty: quantity,
           "Harga Satuan": price,
+          Promo: item.promoName || "-",
           Diskon: discount,
           Subtotal: quantity * price - discount,
         };
