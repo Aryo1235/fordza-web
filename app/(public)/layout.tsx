@@ -13,9 +13,11 @@ export default function PublicLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="relative ">
+    <>
       <PublicNavbar />
-      {children}
-    </div>
+      <div className="min-h-screen bg-zinc-50">
+        {children}
+      </div>
+    </>
   );
 }

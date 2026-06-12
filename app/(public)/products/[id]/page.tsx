@@ -197,7 +197,7 @@ export default function ProductDetailPage({
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 selection:bg-[#4A3B2E] selection:text-white pt-20">
+    <div className="min-h-screen bg-[#FDFCFB] selection:bg-[#4A3B2E] selection:text-white pt-10">
       <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-10 py-8 md:py-12">
 
         {/* Breadcrumb — fade in cepat */}
@@ -217,7 +217,7 @@ export default function ProductDetailPage({
 
           {/* Gallery — fade-in + scale */}
           <motion.div
-            className="space-y-4 lg:sticky lg:top-18"
+            className="space-y-4 lg:sticky lg:top-14.5 py-2 "
             variants={galleryVariants}
             initial="hidden"
             animate="show"
@@ -225,16 +225,16 @@ export default function ProductDetailPage({
             <div className="relative overflow-hidden rounded-2xl bg-[#FEF4E8] shadow-sm ring-1 ring-amber-200/50 group">
               {/* Ornamen Segitiga Khas Fordza */}
               <div
-                className="absolute top-0 left-0 w-32 h-32 md:w-48 md:h-48 bg-[#4A3B2E] z-0 opacity-[0.03]"
+                className="absolute top-0 left-0 w-32 h-32 md:w-32 md:h-32 bg-[#4A3B2E] z-0 opacity-[0.03]"
                 style={{ clipPath: "polygon(0 0, 100% 0, 0 100%)" }}
               />
-              <div className="relative aspect-square z-10">
+              <div className="relative h-120 z-10">
                 {galleryImages[selectedImage] ? (
                   <motion.img
                     key={selectedImage}
                     src={galleryImages[selectedImage].url}
                     alt={product.name}
-                    className="h-full w-full object-cover mix-blend-darken group-hover:scale-105 transition-transform duration-700 ease-out"
+                    className=" w-full h-full object-cover mix-blend-darken group-hover:scale-105 transition-transform duration-700 ease-out"
                     initial={{ opacity: 0, scale: 1.03 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.4, ease: "easeOut" }}
@@ -252,7 +252,7 @@ export default function ProductDetailPage({
             {/* Thumbnails — stagger fade-in */}
             {galleryImages.length > 1 && (
               <motion.div
-                className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide"
+                className="flex gap-3 overflow-x-auto pb-2 "
                 initial="hidden"
                 animate="show"
                 variants={{ hidden: {}, show: { transition: { staggerChildren: 0.06, delayChildren: 0.35 } } }}
@@ -272,7 +272,7 @@ export default function ProductDetailPage({
                     <img
                       src={img.url}
                       alt={`${product.name} ${idx + 1}`}
-                      className="h-16 w-16 md:h-20 md:w-20 object-cover mix-blend-darken"
+                      className="h-16 w-16 md:h-16 md:w-16 object-cover mix-blend-darken"
                     />
                     {idx === selectedImage && (
                       <div className="absolute inset-0 bg-[#4A3B2E]/5" />

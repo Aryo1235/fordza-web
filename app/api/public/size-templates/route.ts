@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { SizeTemplateService } from "@/backend/services/size-template.service";
+import { handleError } from "@/lib/error-handler";
 
 // GET /api/public/size-templates — Customer: lihat semua template ukuran
 export async function GET() {
@@ -12,9 +13,6 @@ export async function GET() {
       data,
     });
   } catch (error: any) {
-    return NextResponse.json(
-      { success: false, message: error.message },
-      { status: 500 },
-    );
+  return await handleError(error);
   }
 }

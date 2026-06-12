@@ -12,6 +12,8 @@ import {
 // Route yang TIDAK perlu auth
 const PUBLIC_ROUTES = ["/api/admin/auth/login", "/api/admin/auth/refresh"];
 
+const PUBLIC_API_PREFIXES = ["/api/public", "/api/recommend" ,"/api/health"];
+
 async function verifyJWT(token: string, type: "access" | "refresh" = "access") {
   return await verifyToken(token, type);
 }
@@ -36,6 +38,21 @@ export async function proxy(request: NextRequest) {
     response.headers.set("x-request-id", requestId);
     return response;
   }
+
+  //Public APi :hanya inject traceid, tanpa auth
+  const isPublicApi = PUBLIC_API_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+  if (isPublicApi) {
+  const requestHeaders = new Headers(request.headers);
+    requestHeaders.set("x-request-id", requestId);
+    const response = NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      }
+    });
+    return response;
+  }
+
+
 
   // Skip auth untuk public API routes
   if (isApiRoute && PUBLIC_ROUTES.includes(pathname)) {
@@ -170,6 +187,9 @@ export const config = {
   matcher: [
     "/api/admin/:path*",
     "/api/kasir/:path*",
+    "/api/public/:path*",
+    "/api/recommend/:path*",
+    "/api/health/:path*",
     "/dashboard/:path*",
     "/pos/:path*",
     "/riwayat/:path*",

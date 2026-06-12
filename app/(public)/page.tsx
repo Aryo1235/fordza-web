@@ -4,7 +4,7 @@ import ProductsSection from "@/features/landing-page/ProductsSection";
 
 export default function PublicHomePage() {
   return (
-    <main className="min-h-screen bg-zinc-50">
+    <main className="min-h-screen bg-[#FDFCFB]">
       {/* ── Hero Carousel ── */}
       <HeroSection />
 

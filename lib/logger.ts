@@ -4,10 +4,15 @@ const isDev = process.env.NODE_ENV === "development";
 
 const logger = pino({
   level: process.env.LOG_LEVEL || "info",
-  formatters: {
-    level: (label) => ({ level: label }), // tampilkan "info" bukan angka 30
-  },
   timestamp: pino.stdTimeFunctions.isoTime,
+  
+  // 💡 Jika dev (lokal), jangan pakai formatter. Jika production, baru pakai formatter.
+  ...(!isDev && {
+    formatters: {
+      level: (label) => ({ level: label }),
+    },
+  }),
+
   ...(isDev && {
     transport: {
       targets: [

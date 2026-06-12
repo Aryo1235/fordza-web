@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { TestimonialService } from "@/backend/services/testimonial.service";
+import { handleError } from "@/lib/error-handler";
 
 // GET /api/public/testimonials — Customer: halaman semua review
 // Query params:
@@ -33,9 +34,6 @@ export async function GET(req: Request) {
       { status: 200 },
     );
   } catch (error: any) {
-    return NextResponse.json(
-      { success: false, message: error.message },
-      { status: 500 },
-    );
+  return await handleError(error);
   }
 }

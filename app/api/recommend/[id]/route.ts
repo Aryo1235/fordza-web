@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { RecommendationService } from "@/backend/services/recommendation.service";
+import { handleError } from "@/lib/error-handler";
+import { AppError } from "@/lib/error-handler";
 
 // GET /api/recommend/:id — Rekomendasi produk serupa (KNN)
 export async function GET(
@@ -12,10 +14,7 @@ export async function GET(
     const result = await RecommendationService.getRecommendations(id, 6);
 
     if (!result) {
-      return NextResponse.json(
-        { success: false, message: "Produk tidak ditemukan" },
-        { status: 404 },
-      );
+   throw new AppError("Produk tidak ditemukan atau tidak memiliki rekomendasi", 404, "NOT_FOUND");
     }
 
     return NextResponse.json(
@@ -27,13 +26,8 @@ export async function GET(
       { status: 200 },
     );
   } catch (error: any) {
-    return NextResponse.json(
-      {
-        success: false,
-        message: "Gagal menghitung rekomendasi",
-        error: error.message,
-      },
-      { status: 500 },
-    );
+    return await handleError(error);
   }
 }
+
+   

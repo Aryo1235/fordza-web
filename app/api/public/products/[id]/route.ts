@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { ProductService } from "@/backend/services/products.service";
+import { AppError, handleError } from "@/lib/error-handler";
 
 // GET /api/public/products/[id] — Customer: detail produk + related
 export async function GET(
@@ -11,12 +12,9 @@ export async function GET(
 
     const product = await ProductService.getById(id);
 
-    if (!product || !product.isActive) {
-      return NextResponse.json(
-        { success: false, message: "Produk tidak ditemukan" },
-        { status: 404 },
-      );
-    }
+    if (!product) {
+        throw new AppError("Produk tidak ditemukan", 404, "NOT_FOUND");
+      }
 
     // Ambil produk terkait
     const relatedProducts = await ProductService.getRelated(id, 4);
@@ -29,9 +27,6 @@ export async function GET(
       },
     });
   } catch (error: any) {
-    return NextResponse.json(
-      { success: false, message: "Gagal mengambil detail produk", error: error.message },
-      { status: 500 },
-    );
+  return await handleError(error);
   }
 }

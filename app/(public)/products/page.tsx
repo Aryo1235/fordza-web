@@ -16,7 +16,7 @@ export default async function ProductsPage(props: {
   const categories = categoriesData.categories;
 
   return (
-    <div className="min-h-screen bg-[#FDFCFB] pt-14">
+    <div className="min-h-screen bg-[#FDFCFB] mt-14">
       <main className="mx-auto max-w-7xl px-4 sm:px-6 py-8 sm:py-12">
         <div className="flex flex-col lg:flex-row gap-5">
 
