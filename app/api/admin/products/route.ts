@@ -78,6 +78,13 @@ export async function POST(req: Request) {
       origin: formData.get("origin"),
       notes: formData.get("notes"),
       sizeTemplateId: formData.get("sizeTemplateId") || undefined,
+      // Ukuran kustom per-produk (tidak mengubah template bersama)
+      customSizes: formData.get("customSizes")
+        ? JSON.parse(formData.get("customSizes") as string)
+        : [],
+      customMeasurements: formData.get("customMeasurements")
+        ? JSON.parse(formData.get("customMeasurements") as string)
+        : undefined,
       isPopular: formData.get("isPopular") === "true",
       isBestseller: formData.get("isBestseller") === "true",
       isNew: formData.get("isNew") !== "false",

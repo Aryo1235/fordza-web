@@ -124,14 +124,27 @@ function AddSkuForm({
   productId,
   sizeTemplates,
   existingSizes = [],
+  sizeTemplateType,
+  productCustomSizes = [],
+  productCustomMeasurements = {},
+  onCustomSizeAdded,
 }: {
   variantId: string;
   basePrice: number;
   productId: string;
   sizeTemplates?: string[];
   existingSizes?: string[];
+  sizeTemplateType?: string;
+  productCustomSizes?: string[];
+  productCustomMeasurements?: Record<string, any>;
+  onCustomSizeAdded?: (newCustomSizes: string[], newCustomMeasurements: Record<string, any>) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [insoleLength, setInsoleLength] = useState("");
+  const [insoleWidth, setInsoleWidth] = useState("");
+  const [ld, setLd] = useState("");
+  const [pb, setPb] = useState("");
+  const [lingkar, setLingkar] = useState("");
   const createSku = useCreateSku(productId);
 
   const {
@@ -139,6 +152,7 @@ function AddSkuForm({
     handleSubmit,
     reset,
     control,
+    watch,
     setValue,
     formState: { errors },
   } = useForm<SkuSchemaValues>({
@@ -146,13 +160,39 @@ function AddSkuForm({
     defaultValues: { size: "", stock: "" as any, priceOverride: null, isActive: true },
   });
 
+  const watchedSize = watch("size") || "";
+  // Deteksi apakah ukuran yang diinput adalah ukuran baru di luar template + customSizes
+  const allKnownSizes = [...(sizeTemplates || []), ...productCustomSizes];
+  const tType = (sizeTemplateType || "").toLowerCase();
+  const isNewCustomSize =
+    watchedSize.trim().length > 0 &&
+    !allKnownSizes.includes(watchedSize.trim());
+
   const onSubmit = (data: SkuSchemaValues) => {
+    const isCustom = !allKnownSizes.includes(data.size.trim());
     createSku.mutate(
       { variantId, payload: data },
       {
-        onSuccess: () => {
+        onSuccess: async () => {
+          // Jika ukuran kustom baru, update ProductDetail
+          if (isCustom && onCustomSizeAdded) {
+            const meas: Record<string, string> = {};
+            if (tType === "sepatu") {
+              if (insoleLength) meas.insoleLength = insoleLength;
+              if (insoleWidth) meas.insoleWidth = insoleWidth;
+            } else if (tType === "apparel" || tType === "pakaian") {
+              if (ld) meas.ld = ld;
+              if (pb) meas.pb = pb;
+            } else {
+              if (lingkar) meas.lingkar = lingkar;
+            }
+            const newCustomSizes = [...productCustomSizes, data.size.trim()];
+            const newCustomMeasurements = { ...productCustomMeasurements, [data.size.trim()]: meas };
+            onCustomSizeAdded(newCustomSizes, newCustomMeasurements);
+          }
           toast.success(`Ukuran ${data.size} ditambahkan`);
           reset();
+          setInsoleLength(""); setInsoleWidth(""); setLd(""); setPb(""); setLingkar("");
           setOpen(false);
         },
         onError: (err) => toast.error(err.message || "Gagal menambah ukuran"),
@@ -271,6 +311,37 @@ function AddSkuForm({
           ))}
         </div>
       )}
+      {/* Input dimensi otomatis muncul jika ukuran baru di luar template */}
+      {isNewCustomSize && (
+        <div className="p-2.5 bg-orange-50 border border-orange-100 rounded-lg space-y-2">
+          <p className="text-[10px] font-bold text-orange-600 uppercase">
+            Ukuran kustom — masukkan dimensi fisik (opsional)
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            {tType === "sepatu" && (
+              <>
+                <div className="space-y-0.5">
+                  <Label className="text-[10px] text-stone-500">Panjang Insole (cm)</Label>
+                  <Input value={insoleLength} onChange={e => setInsoleLength(e.target.value)} placeholder="Cth: 29" type="number" step="0.1" className="h-7 text-xs bg-white border-orange-200" />
+                </div>
+                <div className="space-y-0.5">
+                  <Label className="text-[10px] text-stone-500">Lebar Insole (cm)</Label>
+                  <Input value={insoleWidth} onChange={e => setInsoleWidth(e.target.value)} placeholder="Cth: 10" type="number" step="0.1" className="h-7 text-xs bg-white border-orange-200" />
+                </div>
+              </>
+            )}
+            {["apparel","pakaian"].includes(tType) && (
+              <>
+                <div className="space-y-0.5"><Label className="text-[10px] text-stone-500">LD (cm)</Label><Input value={ld} onChange={e => setLd(e.target.value)} placeholder="52" type="number" step="0.5" className="h-7 text-xs bg-white border-orange-200" /></div>
+                <div className="space-y-0.5"><Label className="text-[10px] text-stone-500">PB (cm)</Label><Input value={pb} onChange={e => setPb(e.target.value)} placeholder="74" type="number" step="0.5" className="h-7 text-xs bg-white border-orange-200" /></div>
+              </>
+            )}
+            {!["sepatu","apparel","pakaian"].includes(tType) && (
+              <div className="space-y-0.5"><Label className="text-[10px] text-stone-500">Lingkar (cm)</Label><Input value={lingkar} onChange={e => setLingkar(e.target.value)} placeholder="18" type="number" step="0.5" className="h-7 text-xs bg-white border-orange-200" /></div>
+            )}
+          </div>
+        </div>
+      )}
       <div className="flex gap-2">
         <Button
           type="button"
@@ -307,14 +378,24 @@ function AddSkuForm({
 
 function VariantCard({
   variant,
+  variants = [],
   productId,
   productCode,
   sizeTemplates,
+  sizeTemplateType,
+  productCustomSizes = [],
+  productCustomMeasurements = {},
+  onCustomSizeAdded,
 }: {
   variant: ProductVariant;
+  variants?: ProductVariant[];
   productId: string;
   productCode?: string;
   sizeTemplates?: string[];
+  sizeTemplateType?: string;
+  productCustomSizes?: string[];
+  productCustomMeasurements?: Record<string, any>;
+  onCustomSizeAdded?: (newSizes: string[], newMeasurements: Record<string, any>) => void;
 }) {
   const [expanded, setExpanded] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
@@ -350,9 +431,14 @@ function VariantCard({
     return (
       <EditVariantForm
         variant={variant}
+        variants={variants}
         productId={productId}
         productCode={productCode}
         sizeTemplates={sizeTemplates}
+        sizeTemplateType={sizeTemplateType}
+        productCustomSizes={productCustomSizes}
+        productCustomMeasurements={productCustomMeasurements}
+        onCustomSizeAdded={onCustomSizeAdded}
         onClose={() => setIsEditing(false)}
       />
     );
@@ -844,16 +930,26 @@ function AddVariantForm({
 
 function EditVariantForm({
   variant,
+  variants = [],
   productId,
   onClose,
   productCode,
   sizeTemplates = [],
+  sizeTemplateType,
+  productCustomSizes: customSizes = [],
+  productCustomMeasurements: customMeasurements = {},
+  onCustomSizeAdded: handleCustomSizeAdded,
 }: {
   variant: ProductVariant;
+  variants?: ProductVariant[];
   productId: string;
   onClose: () => void;
   productCode?: string;
   sizeTemplates?: string[];
+  sizeTemplateType?: string;
+  productCustomSizes?: string[];
+  productCustomMeasurements?: Record<string, any>;
+  onCustomSizeAdded?: (newSizes: string[], newMeasurements: Record<string, any>) => void;
 }) {
   const updateVariant = useUpdateVariant(productId);
 
@@ -957,6 +1053,25 @@ function EditVariantForm({
     setDeletingSize(skuToDelete.size);
     deleteSku.mutate(skuToDelete.id, {
       onSuccess: () => {
+        setStockPerSize((prev) => {
+          const next = { ...prev };
+          delete next[skuToDelete.size];
+          return next;
+        });
+        
+        // Cek apakah ukuran ini kustom dan tidak digunakan di varian lain
+        const isCustom = !sizeTemplates.includes(skuToDelete.size);
+        const isSizeUsedElsewhere = (variants || []).some(
+          (v) => v.id !== variant.id && v.skus.some((s) => s.size === skuToDelete.size)
+        );
+        
+        if (isCustom && !isSizeUsedElsewhere && handleCustomSizeAdded) {
+          const newCustomSizes = customSizes.filter((s) => s !== skuToDelete.size);
+          const newCustomMeasurements = { ...customMeasurements };
+          delete newCustomMeasurements[skuToDelete.size];
+          handleCustomSizeAdded(newCustomSizes, newCustomMeasurements);
+        }
+        
         toast.success(`Ukuran ${skuToDelete.size} berhasil dihapus`);
         setSkuToDelete(null);
         setDeletingSize(null);
@@ -1049,7 +1164,12 @@ function EditVariantForm({
   };
 
   const onSubmit = (data: VariantSchemaValues) => {
-    const skus = allAvailableSizes.map((size) => {
+    // Hanya kirim SKU jika ukurannya ada di template standar atau memiliki stock terdefinisi di state
+    const filteredSizes = allAvailableSizes.filter(
+      (size) => sizeTemplates.includes(size) || stockPerSize[size] !== undefined
+    );
+
+    const skus = filteredSizes.map((size) => {
       const existingSku = variant.skus.find((s) => s.size === size);
       return {
         size,
@@ -1241,6 +1361,10 @@ function EditVariantForm({
             productId={productId}
             sizeTemplates={sizeTemplates}
             existingSizes={variant.skus.map((s) => s.size)}
+            sizeTemplateType={sizeTemplateType}
+            productCustomSizes={customSizes}
+            productCustomMeasurements={customMeasurements}
+            onCustomSizeAdded={handleCustomSizeAdded}
           />
         </div>
       </div>
@@ -1335,15 +1459,55 @@ interface VariantManagerProps {
   productCode?: string; // Untuk generate preview variantCode di form
   /** Ukuran dari SizeTemplate yang dipilih - untuk quick-fill form tambah SKU */
   sizeTemplates?: string[];
+  /** Tipe template (sepatu/apparel/aksesoris) untuk input dimensi kustom */
+  sizeTemplateType?: string;
+  /** Ukuran kustom yang sudah tersimpan di ProductDetail */
+  productCustomSizes?: string[];
+  /** Dimensi fisik ukuran kustom yang sudah tersimpan di ProductDetail */
+  productCustomMeasurements?: Record<string, any>;
+  onCustomSizeAdded?: (newSizes: string[], newMeasurements: Record<string, any>) => void;
 }
 
 export function VariantManager({
   productId,
   productCode,
   sizeTemplates,
+  sizeTemplateType,
+  productCustomSizes = [],
+  productCustomMeasurements = {},
+  onCustomSizeAdded,
 }: VariantManagerProps) {
   const [showAddForm, setShowAddForm] = useState(false);
+  const [customSizes, setCustomSizes] = useState<string[]>(productCustomSizes);
+  const [customMeasurements, setCustomMeasurements] = useState<Record<string, any>>(productCustomMeasurements);
   const { data: variants, isLoading } = useVariants(productId);
+
+  // Sync dengan props ketika data produk dimuat ulang
+  useEffect(() => {
+    setCustomSizes(productCustomSizes);
+    setCustomMeasurements(productCustomMeasurements);
+  }, [JSON.stringify(productCustomSizes), JSON.stringify(productCustomMeasurements)]);
+
+  const handleCustomSizeAdded = async (newSizes: string[], newMeasurements: Record<string, any>) => {
+    setCustomSizes(newSizes);
+    setCustomMeasurements(newMeasurements);
+    if (onCustomSizeAdded) {
+      onCustomSizeAdded(newSizes, newMeasurements);
+    }
+    // Simpan ke backend
+    const fd = new FormData();
+    fd.append("customSizes", JSON.stringify(newSizes));
+    fd.append("customMeasurements", JSON.stringify(newMeasurements));
+    try {
+      await fetch(`/api/admin/products/${productId}`, { method: "PUT", body: fd });
+      toast.success("Ukuran kustom disimpan ke produk");
+    } catch {
+      toast.error("Gagal menyimpan ukuran kustom ke produk");
+    }
+  };
+
+  // Gabungan ukuran template + kustom (untuk saran di AddSkuForm)
+  const allSizesForForm = [...(sizeTemplates || []), ...customSizes.filter(s => !(sizeTemplates || []).includes(s))];
 
   const totalStock = (variants ?? []).reduce(
     (sum: number, v: ProductVariant) =>
@@ -1416,9 +1580,14 @@ export function VariantManager({
           <VariantCard
             key={variant.id}
             variant={variant}
+            variants={variants ?? []}
             productId={productId}
             productCode={productCode}
             sizeTemplates={sizeTemplates}
+            sizeTemplateType={sizeTemplateType}
+            productCustomSizes={customSizes}
+            productCustomMeasurements={customMeasurements}
+            onCustomSizeAdded={handleCustomSizeAdded}
           />
         ))}
       </div>

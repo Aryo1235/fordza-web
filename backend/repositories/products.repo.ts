@@ -375,6 +375,9 @@ export const ProductRepository = {
                 origin: data.origin || null,
                 notes: data.notes || null,
                 sizeTemplateId: data.sizeTemplateId || null,
+                // Ukuran kustom terisolasi per-produk
+                customSizes: data.customSizes || [],
+                customMeasurements: data.customMeasurements || undefined,
               },
             },
             categories: {
@@ -479,6 +482,8 @@ export const ProductRepository = {
             closureType: true,
             origin: true,
             sizeTemplateId: true,
+            customSizes: true,
+            customMeasurements: true,
             sizeTemplate: {
               select: { id: true, name: true, type: true, sizes: true, measurements: true },
             },
@@ -975,6 +980,8 @@ export const ProductRepository = {
         "origin",
         "notes",
         "sizeTemplateId",
+        "customSizes",
+        "customMeasurements",
       ];
       const hasDetailChange = detailFields.some((f) => data[f] !== undefined);
       if (hasDetailChange) {

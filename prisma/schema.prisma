@@ -84,8 +84,13 @@ model ProductDetail {
   closureType String? @map("closure_type")
   origin      String? @map("origin")
 
-  sizeTemplateId String?       @map("size_template_id")
-  sizeTemplate   SizeTemplate? @relation(fields: [sizeTemplateId], references: [id])
+  sizeTemplateId     String?       @map("size_template_id")
+  sizeTemplate       SizeTemplate? @relation(fields: [sizeTemplateId], references: [id])
+
+  // Ukuran kustom khusus produk ini — tidak mempengaruhi template bersama
+  customSizes        String[]      @default([]) @map("custom_sizes")
+  // Dimensi fisik untuk customSizes (cth: {45: {insoleLength: "29", insoleWidth: "10"}})
+  customMeasurements Json?         @map("custom_measurements")
 
   @@map("product_details")
 }

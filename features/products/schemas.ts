@@ -26,6 +26,9 @@ export const productSchema = z.object({
   isNew: z.boolean().default(true),
   isActive: z.boolean().default(true),
 
+  customSizes: z.array(z.string()).default([]).optional(),
+  customMeasurements: z.any().optional(),
+
   images: z.any().optional(),
   variants: z.array(z.any()).optional(), // Mengizinkan data varian masuk ke service
 }).strict().superRefine((data, ctx) => {

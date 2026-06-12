@@ -37,7 +37,7 @@ export default function DashboardLayout({
 
   return (
     <SidebarProvider>
-      <div className="flex h-screen w-full overflow-hidden bg-[#FEF4E8]">
+      <div className="flex  w-full overflow-hidden bg-[#FEF4E8]">
         <AdminSidebar />
         <div className="flex flex-1 flex-col overflow-hidden">
           <Header />

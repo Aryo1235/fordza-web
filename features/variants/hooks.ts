@@ -48,6 +48,7 @@ export function useCreateVariant(productId: string) {
       // Refresh list varian & data produk (cached stock berubah)
       queryClient.invalidateQueries({ queryKey: variantKeys.byProduct(productId) });
       queryClient.invalidateQueries({ queryKey: ["products", "detail", productId] });
+      queryClient.invalidateQueries({ queryKey: ["products", "public-detail", productId] });
     },
   });
 }
@@ -60,6 +61,8 @@ export function useUpdateVariant(productId: string) {
       updateVariant(variantId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: variantKeys.byProduct(productId) });
+      queryClient.invalidateQueries({ queryKey: ["products", "detail", productId] });
+      queryClient.invalidateQueries({ queryKey: ["products", "public-detail", productId] });
     },
   });
 }
@@ -72,6 +75,7 @@ export function useDeleteVariant(productId: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: variantKeys.byProduct(productId) });
       queryClient.invalidateQueries({ queryKey: ["products", "detail", productId] });
+      queryClient.invalidateQueries({ queryKey: ["products", "public-detail", productId] });
     },
   });
 }
@@ -88,6 +92,7 @@ export function useCreateSku(productId: string) {
       queryClient.invalidateQueries({ queryKey: variantKeys.byProduct(productId) });
       // Stok produk induk juga berubah
       queryClient.invalidateQueries({ queryKey: ["products", "detail", productId] });
+      queryClient.invalidateQueries({ queryKey: ["products", "public-detail", productId] });
     },
   });
 }
@@ -101,6 +106,7 @@ export function useUpdateSku(productId: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: variantKeys.byProduct(productId) });
       queryClient.invalidateQueries({ queryKey: ["products", "detail", productId] });
+      queryClient.invalidateQueries({ queryKey: ["products", "public-detail", productId] });
     },
   });
 }
@@ -113,6 +119,7 @@ export function useDeleteSku(productId: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: variantKeys.byProduct(productId) });
       queryClient.invalidateQueries({ queryKey: ["products", "detail", productId] });
+      queryClient.invalidateQueries({ queryKey: ["products", "public-detail", productId] });
     },
   });
 }

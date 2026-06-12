@@ -45,12 +45,13 @@ export default function ProductDetailPage({
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
 
-  const getMeasurementText = (size: string, sizeTemplate: any) => {
-    if (!sizeTemplate || !sizeTemplate.measurements) return null;
-    const meas = sizeTemplate.measurements[size];
-    if (!meas) return null;
+  const getMeasurementText = (size: string, sizeTemplate: any, customMeasurements?: any) => {
+    // Cek customMeasurements dulu (ukuran kustom per-produk)
+    const measSource = (customMeasurements?.[size]) || (sizeTemplate?.measurements?.[size]);
+    if (!measSource) return null;
+    const meas = measSource;
 
-    const tType = (sizeTemplate.type || "").toLowerCase();
+    const tType = (sizeTemplate?.type || "").toLowerCase();
     if (tType === "sepatu") {
       const length = meas.insoleLength || meas.insole || "";
       const width = meas.insoleWidth || "";
@@ -72,12 +73,13 @@ export default function ProductDetailPage({
     return meas.detail || null;
   };
 
-  const getDetailedMeasurementSentence = (size: string, sizeTemplate: any) => {
-    if (!sizeTemplate || !sizeTemplate.measurements) return null;
-    const meas = sizeTemplate.measurements[size];
-    if (!meas) return null;
+  const getDetailedMeasurementSentence = (size: string, sizeTemplate: any, customMeasurements?: any) => {
+    // Cek customMeasurements dulu (ukuran kustom per-produk)
+    const measSource = (customMeasurements?.[size]) || (sizeTemplate?.measurements?.[size]);
+    if (!measSource) return null;
+    const meas = measSource;
 
-    const tType = (sizeTemplate.type || "").toLowerCase();
+    const tType = (sizeTemplate?.type || "").toLowerCase();
     if (tType === "sepatu") {
       const length = meas.insoleLength || meas.insole || "";
       const width = meas.insoleWidth || "";
@@ -131,6 +133,27 @@ export default function ProductDetailPage({
     if (!selectedVariant || !selectedSize) return null;
     return selectedVariant.skus.find(s => s.size === selectedSize) || null;
   }, [selectedVariant, selectedSize]);
+
+  // Ukuran unik yang benar-benar punya SKU di produk ini
+  // Gabungkan sizes dari template + customSizes, lalu filter hanya yang ada di SKU
+  const uniqueSizes = useMemo(() => {
+    if (!product?.variants) return [];
+    const templateSizes: string[] = product.detail?.sizeTemplate?.sizes || [];
+    const customSizes: string[] = product.detail?.customSizes || [];
+    const allSizes = Array.from(new Set([...templateSizes, ...customSizes]));
+    // Tampilkan hanya ukuran yang punya SKU di setidaknya 1 varian
+    const sizesWithSkus = new Set<string>();
+    product.variants.forEach((v: any) => {
+      v.skus?.forEach((s: any) => sizesWithSkus.add(s.size));
+    });
+    return allSizes
+      .filter(s => sizesWithSkus.has(s))
+      .sort((a, b) => {
+        const numA = Number(a), numB = Number(b);
+        if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+        return a.localeCompare(b);
+      });
+  }, [product]);
 
   const formatRupiah = (price: string | number) => {
     return new Intl.NumberFormat("id-ID", {
@@ -418,10 +441,9 @@ export default function ProductDetailPage({
                 </div>
 
                 <div className="flex flex-wrap gap-2.5">
-                  {product.detail?.sizeTemplate && product.detail.sizeTemplate.sizes.map((size) => {
+                  {uniqueSizes.map((size) => {
                     const sku = selectedVariant?.skus?.find(s => s.size === size);
                     const isOutOfStock = !sku || sku.stock === 0;
-                    const measText = getMeasurementText(size, product.detail?.sizeTemplate);
                     return (
                       <button
                         key={size}
@@ -437,7 +459,6 @@ export default function ProductDetailPage({
                         )}
                       >
                         <span>{size}</span>
-
                       </button>
                     );
                   })}
@@ -445,7 +466,11 @@ export default function ProductDetailPage({
 
                 {selectedSize ? (
                   (() => {
-                    const detailedMeas = getDetailedMeasurementSentence(selectedSize, product.detail?.sizeTemplate);
+                    const detailedMeas = getDetailedMeasurementSentence(
+                      selectedSize,
+                      product.detail?.sizeTemplate,
+                      product.detail?.customMeasurements
+                    );
                     if (!detailedMeas) return null;
                     return (
                       <div className="text-xs text-amber-900 bg-amber-50/50 p-3 rounded-xl border border-amber-200/50 animate-in fade-in slide-in-from-top-1 duration-200">

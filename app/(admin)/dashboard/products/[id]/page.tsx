@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect, useMemo } from "react";
+import { use, useEffect, useMemo, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/select";
 import { useCategoriesForPromo } from "@/features/categories";
 import { useSizeTemplatesAdmin } from "@/features/admin/size-templates";
-import { Package, Save, Loader2, ChevronLeft } from "lucide-react";
+import { Package, Save, Loader2, ChevronLeft, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BreadcrumbsHeader } from "@/components/layout/admin/BreadcrumbsHeader";
 import Link from "next/link";
@@ -601,7 +601,13 @@ export default function EditProductPage({
           sizeTemplates={
             selectedTemplate?.sizes || product?.detail?.sizeTemplate?.sizes
           }
+          sizeTemplateType={
+            selectedTemplate?.type || product?.detail?.sizeTemplate?.type
+          }
+          productCustomSizes={product?.detail?.customSizes || []}
+          productCustomMeasurements={product?.detail?.customMeasurements || {}}
         />
+
       </div>
 
       <div className="flex items-center justify-end gap-3 pb-10">

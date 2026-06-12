@@ -3,7 +3,7 @@
 // app/(admin)/dashboard/products/new/page.tsx
 // 1 form, 1 save — product + semua varian + SKU dikirim sekaligus
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { PageHeader } from "@/components/layout/admin/PageHeader";
@@ -30,7 +30,7 @@ import { useSizeTemplatesAdmin } from "@/features/admin/size-templates";
 import { useCreateProduct } from "@/features/products";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Loader2, Plus, Star, Package, Settings, Info } from "lucide-react";
+import { Loader2, Plus, Trash2, Package, X } from "lucide-react";
 import {
   productSchema,
   type ProductSchemaValues,
@@ -84,10 +84,68 @@ export default function NewProductPage() {
 
   const watchProductCode = watch("productCode") || "";
   const watchSizeTemplateId = watch("sizeTemplateId") || "";
+  const watchProductType = watch("productType") || "shoes";
   const selectedTemplate = templates.find(
     (t: any) => t.id === watchSizeTemplateId,
   );
-  const sizes: string[] = selectedTemplate?.sizes || [];
+  const templateSizes: string[] = selectedTemplate?.sizes || [];
+
+  // State ukuran kustom per-produk (tidak mengubah template bersama)
+  const [customSizes, setCustomSizes] = useState<string[]>([]);
+  const [customMeasurements, setCustomMeasurements] = useState<Record<string, any>>({});
+  const [newSizeInput, setNewSizeInput] = useState("");
+  const [insoleLength, setInsoleLength] = useState("");
+  const [insoleWidth, setInsoleWidth] = useState("");
+  const [ld, setLd] = useState("");
+  const [pb, setPb] = useState("");
+  const [lingkar, setLingkar] = useState("");
+  const [showCustomSizeForm, setShowCustomSizeForm] = useState(false);
+
+  // Reset custom sizes ketika template diubah
+  useEffect(() => {
+    setCustomSizes([]);
+    setCustomMeasurements({});
+    setNewSizeInput("");
+  }, [watchSizeTemplateId]);
+
+  // Gabungan ukuran template + kustom → dikirim ke VariantBuilder
+  const sizes: string[] = [
+    ...templateSizes,
+    ...customSizes.filter(s => !templateSizes.includes(s)),
+  ];
+
+  const handleAddCustomSize = () => {
+    const size = newSizeInput.trim();
+    if (!size) { toast.error("Ukuran tidak boleh kosong"); return; }
+    if (templateSizes.includes(size)) { toast.error(`Ukuran ${size} sudah ada di template`); return; }
+    if (customSizes.includes(size)) { toast.error(`Ukuran ${size} sudah ditambahkan`); return; }
+
+    const meas: Record<string, string> = {};
+    const tType = (selectedTemplate?.type || "").toLowerCase();
+    if (tType === "sepatu") {
+      if (insoleLength) meas.insoleLength = insoleLength;
+      if (insoleWidth) meas.insoleWidth = insoleWidth;
+    } else if (tType === "apparel" || tType === "pakaian") {
+      if (ld) meas.ld = ld;
+      if (pb) meas.pb = pb;
+    } else {
+      if (lingkar) meas.lingkar = lingkar;
+    }
+
+    setCustomSizes(prev => [...prev, size]);
+    setCustomMeasurements(prev => ({ ...prev, [size]: meas }));
+    setNewSizeInput(""); setInsoleLength(""); setInsoleWidth("");
+    setLd(""); setPb(""); setLingkar("");
+    setShowCustomSizeForm(false);
+    toast.success(`Ukuran ${size} berhasil ditambahkan`);
+  };
+
+  const handleRemoveCustomSize = (size: string) => {
+    setCustomSizes(prev => prev.filter(s => s !== size));
+    setCustomMeasurements(prev => {
+      const next = { ...prev }; delete next[size]; return next;
+    });
+  };
 
   // Gambar sementara
   const previewImages = files.map((f, i) => ({
@@ -141,6 +199,12 @@ export default function NewProductPage() {
     if (data.notes) formData.append("notes", data.notes);
     if (data.sizeTemplateId)
       formData.append("sizeTemplateId", data.sizeTemplateId);
+
+    // Kirim ukuran kustom per-produk jika ada
+    if (customSizes.length > 0) {
+      formData.append("customSizes", JSON.stringify(customSizes));
+      formData.append("customMeasurements", JSON.stringify(customMeasurements));
+    }
 
     data.categoryIds.forEach((id: string) =>
       formData.append("categoryIds", id),
@@ -404,6 +468,116 @@ export default function NewProductPage() {
                 </p>
               )}
             </div>
+
+            {/* Ukuran Kustom Per-Produk (muncul hanya jika template dipilih) */}
+            {selectedTemplate && (
+              <div className="space-y-3 pt-3 border-t border-stone-100">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs font-bold text-orange-600">
+                    Ukuran Kustom{" "}
+                    <span className="text-[10px] font-normal text-stone-400">
+                      (di luar template — tidak mempengaruhi produk lain)
+                    </span>
+                  </Label>
+                  <button
+                    type="button"
+                    onClick={() => setShowCustomSizeForm(v => !v)}
+                    className="flex items-center gap-1 text-[11px] font-semibold text-orange-600 hover:text-orange-700 transition-colors"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    Tambah Ukuran
+                  </button>
+                </div>
+
+                {customSizes.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {customSizes.map(size => (
+                      <span
+                        key={size}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-orange-50 text-orange-700 border border-orange-200"
+                      >
+                        {size}
+                        {customMeasurements[size]?.insoleLength && (
+                          <span className="text-orange-400 font-normal">
+                            {customMeasurements[size].insoleLength}cm
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveCustomSize(size)}
+                          className="text-orange-400 hover:text-red-500 transition-colors"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {showCustomSizeForm && (
+                  <div className="bg-orange-50/50 border border-orange-100 rounded-xl p-4 space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <Label className="text-[10px] font-bold text-stone-500">
+                          Ukuran Baru <span className="text-red-500">*</span>
+                        </Label>
+                        <Input
+                          value={newSizeInput}
+                          onChange={e => setNewSizeInput(e.target.value)}
+                          placeholder={
+                            (selectedTemplate?.type || "").toLowerCase() === "sepatu"
+                              ? "Cth: 45"
+                              : "Cth: XXXL"
+                          }
+                          className="h-9 bg-white border-orange-200 text-sm"
+                        />
+                      </div>
+
+                      {(selectedTemplate?.type || "").toLowerCase() === "sepatu" && (
+                        <>
+                          <div className="space-y-1">
+                            <Label className="text-[10px] font-bold text-stone-500">Panjang Insole (cm)</Label>
+                            <Input value={insoleLength} onChange={e => setInsoleLength(e.target.value)} placeholder="Cth: 29" type="number" step="0.1" className="h-9 bg-white border-orange-200 text-sm" />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-[10px] font-bold text-stone-500">Lebar Insole (cm)</Label>
+                            <Input value={insoleWidth} onChange={e => setInsoleWidth(e.target.value)} placeholder="Cth: 10" type="number" step="0.1" className="h-9 bg-white border-orange-200 text-sm" />
+                          </div>
+                        </>
+                      )}
+                      {["apparel","pakaian"].includes((selectedTemplate?.type || "").toLowerCase()) && (
+                        <>
+                          <div className="space-y-1">
+                            <Label className="text-[10px] font-bold text-stone-500">LD (cm)</Label>
+                            <Input value={ld} onChange={e => setLd(e.target.value)} placeholder="Cth: 52" type="number" step="0.5" className="h-9 bg-white border-orange-200 text-sm" />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-[10px] font-bold text-stone-500">PB (cm)</Label>
+                            <Input value={pb} onChange={e => setPb(e.target.value)} placeholder="Cth: 74" type="number" step="0.5" className="h-9 bg-white border-orange-200 text-sm" />
+                          </div>
+                        </>
+                      )}
+                      {!["sepatu","apparel","pakaian"].includes((selectedTemplate?.type || "").toLowerCase()) && (
+                        <div className="space-y-1">
+                          <Label className="text-[10px] font-bold text-stone-500">Lingkar (cm)</Label>
+                          <Input value={lingkar} onChange={e => setLingkar(e.target.value)} placeholder="Cth: 18" type="number" step="0.5" className="h-9 bg-white border-orange-200 text-sm" />
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex gap-2 pt-1">
+                      <Button type="button" onClick={handleAddCustomSize} size="sm" className="bg-orange-600 hover:bg-orange-700 text-white h-8 text-xs">
+                        <Plus className="w-3.5 h-3.5 mr-1" />
+                        Tambah
+                      </Button>
+                      <Button type="button" variant="ghost" size="sm" onClick={() => setShowCustomSizeForm(false)} className="h-8 text-xs text-stone-500">
+                        Batal
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="pt-4 border-t border-stone-50 grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="flex items-center justify-between p-2 rounded-lg bg-stone-50/50 border border-stone-100">

@@ -85,7 +85,16 @@ export async function PUT(
     if (formData.get("isNew") !== null) updateData.isNew = formData.get("isNew") === "true";
     if (formData.get("isActive") !== null) updateData.isActive = formData.get("isActive") === "true";
 
+    // Ukuran kustom per-produk (dikirim dari VariantManager saat tambah ukuran baru)
+    if (formData.get("customSizes") !== null) {
+      updateData.customSizes = JSON.parse(formData.get("customSizes") as string);
+    }
+    if (formData.get("customMeasurements") !== null) {
+      updateData.customMeasurements = JSON.parse(formData.get("customMeasurements") as string);
+    }
+
     if (categoryIds.length > 0) updateData.categoryIds = categoryIds;
+
 
     // Upload gambar baru (jika ada)
     const images = formData.getAll("images");
