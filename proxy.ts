@@ -9,10 +9,10 @@ import {
   REFRESH_COOKIE_NAME,
 } from "@/lib/auth";
 
-// Route yang TIDAK perlu auth
+// Route yang TIDAK perlu auth (tapi masih masuk matcher protected)
 const PUBLIC_ROUTES = ["/api/admin/auth/login", "/api/admin/auth/refresh"];
 
-const PUBLIC_API_PREFIXES = ["/api/public", "/api/recommend" ,"/api/health"];
+const PUBLIC_API_PREFIXES = ["/api/public", "/api/recommend", "/api/health"];
 
 async function verifyJWT(token: string, type: "access" | "refresh" = "access") {
   return await verifyToken(token, type);
@@ -42,7 +42,7 @@ export async function proxy(request: NextRequest) {
   //Public APi :hanya inject traceid, tanpa auth
   const isPublicApi = PUBLIC_API_PREFIXES.some((prefix) => pathname.startsWith(prefix));
   if (isPublicApi) {
-  const requestHeaders = new Headers(request.headers);
+    const requestHeaders = new Headers(request.headers);
     requestHeaders.set("x-request-id", requestId);
     const response = NextResponse.next({
       request: {
@@ -88,8 +88,8 @@ export async function proxy(request: NextRequest) {
       if (isApiRoute) {
         console.warn(`[MIDDLEWARE] Sesi habis/Token tidak valid. TraceID: ${requestId}`);
         return NextResponse.json(
-          { 
-            success: false, 
+          {
+            success: false,
             message: "Sesi habis. Silakan login kembali.",
             code: "UNAUTHORIZED",
             traceId: requestId
@@ -126,8 +126,8 @@ export async function proxy(request: NextRequest) {
   if (isKasirApi && role !== "ADMIN" && role !== "KASIR") {
     console.warn(`[MIDDLEWARE] Akses Ditolak (Kasir API). Role: ${role}. TraceID: ${requestId}`);
     return NextResponse.json(
-      { 
-        success: false, 
+      {
+        success: false,
         message: "Akses ditolak.",
         code: "FORBIDDEN",
         traceId: requestId
@@ -154,8 +154,8 @@ export async function proxy(request: NextRequest) {
   if (isAdminApi && role !== "ADMIN" && !isKasirAllowedApi) {
     console.warn(`[MIDDLEWARE] Akses Ditolak (Admin API). Role: ${role}. TraceID: ${requestId}`);
     return NextResponse.json(
-      { 
-        success: false, 
+      {
+        success: false,
         message: "Akses ditolak.",
         code: "FORBIDDEN",
         traceId: requestId
@@ -185,6 +185,7 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
+    // Protected routes (butuh auth)
     "/api/admin/:path*",
     "/api/kasir/:path*",
     "/api/public/:path*",
@@ -194,5 +195,9 @@ export const config = {
     "/pos/:path*",
     "/riwayat/:path*",
     "/cetak-ulang/:path*",
+    // Public API routes (hanya inject traceId)
+    "/api/public/:path*",
+    "/api/recommend/:path*",
+    "/api/health/:path*",
   ],
 };
