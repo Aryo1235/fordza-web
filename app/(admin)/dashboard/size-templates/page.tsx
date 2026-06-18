@@ -28,6 +28,7 @@ export default function SizeTemplatesPage() {
   // Form State
   const [name, setName] = useState("");
   const [type, setType] = useState("Sepatu");
+  const [isMultiSize, setIsMultiSize] = useState(false);
   const [sizesStr, setSizesStr] = useState("");
   const [measurements, setMeasurements] = useState<Record<string, any>>({});
 
@@ -42,6 +43,7 @@ export default function SizeTemplatesPage() {
     setType("Sepatu");
     setSizesStr("");
     setMeasurements({});
+    setIsMultiSize(false);
     setIsFormOpen(true);
   };
 
@@ -49,7 +51,13 @@ export default function SizeTemplatesPage() {
     setEditingId(item.id);
     setName(item.name);
     setType(item.type);
-    setSizesStr(item.sizes.join(", "));
+    const isMulti = item.sizes.length > 1 || (item.sizes[0] !== "All Size" && item.sizes[0] !== "one size");
+    setIsMultiSize(isMulti);
+    if (!isMulti) {
+      setSizesStr("");
+    } else {
+      setSizesStr(item.sizes.join(", "));
+    }
     setMeasurements(item.measurements || {});
     setIsFormOpen(true);
   };
@@ -114,12 +122,21 @@ export default function SizeTemplatesPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !sizesStr) {
-      toast.error("Nama dan Ukuran wajib diisi!");
+    if (!name) {
+      toast.error("Nama wajib diisi!");
       return;
     }
 
-    const sizes = sizesStr.split(",").map(s => s.trim()).filter(Boolean);
+    const needsSizesStr = type === "Sepatu" || isMultiSize;
+    if (needsSizesStr && !sizesStr) {
+      toast.error("Ukuran wajib diisi!");
+      return;
+    }
+
+    const sizes = needsSizesStr
+      ? sizesStr.split(",").map(s => s.trim()).filter(Boolean)
+      : ["All Size"];
+
     if (sizes.length === 0) {
       toast.error("Minimal masukkan 1 ukuran!");
       return;
@@ -314,44 +331,77 @@ export default function SizeTemplatesPage() {
                 </select>
               </div>
 
-              <div className="space-y-1.5">
-                <Label>Daftar Ukuran</Label>
-                <Input 
-                  value={sizesStr} 
-                  onChange={(e) => handleSizesStrChange(e.target.value)} 
-                  placeholder={
-                    type === "Sepatu" 
-                      ? "Cth: 39, 40, 41, 42, 43" 
-                      : type === "Apparel" 
-                      ? "Cth: S, M, L, XL atau 28, 30, 32"
-                      : type === "Aksesoris"
-                      ? "Cth: S, M, L atau 15, 16, 17"
-                      : "Cth: S, M, L, XL"
-                  } 
-                  required 
-                />
-                {type === "Sepatu" ? (
-                  <p className="text-[11px] text-amber-600 font-semibold flex items-center gap-1">
-                    ⚠️ Tipe Sepatu hanya mendukung ukuran berupa angka (huruf otomatis diblokir).
-                  </p>
-                ) : (
-                  <p className="text-[11px] text-stone-500 font-medium">
-                    Pisahkan dengan koma (,). Bisa berupa huruf (S, M, L) maupun angka.
-                  </p>
-                )}
-              </div>
+              {type !== "Sepatu" && (
+                <div className="flex items-center gap-2 py-1">
+                  <input
+                    type="checkbox"
+                    id="isMultiSize"
+                    checked={isMultiSize}
+                    onChange={(e) => {
+                      setIsMultiSize(e.target.checked);
+                      if (!e.target.checked) {
+                        setSizesStr("");
+                      }
+                    }}
+                    className="h-4 w-4 rounded border-stone-300 text-[#3C3025] focus:ring-[#3C3025]"
+                  />
+                  <Label htmlFor="isMultiSize" className="text-xs text-stone-700 font-semibold cursor-pointer select-none">
+                    Mempunyai beberapa variasi ukuran (S, M, L, dll)
+                  </Label>
+                </div>
+              )}
 
-              {sizesStr.split(",").map(s => s.trim()).filter(Boolean).length > 0 && (
-                <div className="space-y-3 border-t border-stone-150 pt-4">
-                  <Label className="text-stone-700 font-semibold block mb-1">Rincian Ukuran (dalam CM)</Label>
-                  <div className="space-y-2">
-                    {sizesStr.split(",").map(s => s.trim()).filter(Boolean).map((size) => (
+              {(type === "Sepatu" || isMultiSize) && (
+                <div className="space-y-1.5">
+                  <Label>Daftar Ukuran</Label>
+                  <Input 
+                    value={sizesStr} 
+                    onChange={(e) => handleSizesStrChange(e.target.value)} 
+                    placeholder={
+                      type === "Sepatu" 
+                        ? "Cth: 39, 40, 41, 42, 43" 
+                        : type === "Apparel" 
+                        ? "Cth: S, M, L, XL atau 28, 30, 32"
+                        : type === "Aksesoris"
+                        ? "Cth: S, M, L atau 15, 16, 17"
+                        : "Cth: S, M, L, XL"
+                    } 
+                    required 
+                  />
+                  {type === "Sepatu" ? (
+                    <p className="text-[11px] text-amber-600 font-semibold flex items-center gap-1">
+                      ⚠️ Tipe Sepatu hanya mendukung ukuran berupa angka (huruf otomatis diblokir).
+                    </p>
+                  ) : (
+                    <p className="text-[11px] text-stone-500 font-medium">
+                      Pisahkan dengan koma (,). Bisa berupa huruf (S, M, L) maupun angka.
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {(() => {
+              const needsSizesStr = type === "Sepatu" || isMultiSize;
+              const activeSizes = needsSizesStr 
+                ? sizesStr.split(",").map(s => s.trim()).filter(Boolean)
+                : ["All Size"];
+
+              if (activeSizes.length === 0 || (needsSizesStr && sizesStr.trim() === "")) return null;
+
+              return (
+                <div className="space-y-3 border-t border-stone-150 pt-4 px-1">
+                  <Label className="text-stone-700 font-semibold block mb-1">
+                    {needsSizesStr ? "Rincian Ukuran (dalam CM)" : "Spesifikasi Detail Ukuran (Satu Ukuran / All Size)"}
+                  </Label>
+                  <div className="space-y-2 max-h-[30vh] overflow-y-auto pr-1">
+                    {activeSizes.map((size) => (
                       <div key={size} className="flex items-center gap-4 bg-stone-50 p-2.5 rounded-lg border border-stone-200">
                         <span className="min-w-[40px] font-bold text-center bg-[#FEF4E8] text-[#3C3025] px-2 py-1 rounded border border-[#e8ded3] text-sm">
                           {size}
                         </span>
                         <div className="flex-1 grid grid-cols-2 gap-2">
-                           {type === "Sepatu" && (
+                          {type === "Sepatu" && (
                             <>
                               <div>
                                 <Label className="text-[10px] text-stone-500 uppercase">Panjang Insole (cm)</Label>
@@ -412,18 +462,72 @@ export default function SizeTemplatesPage() {
                             </>
                           )}
                           {type === "Aksesoris" && (
-                            <div className="col-span-2">
-                              <Label className="text-[10px] text-stone-500 uppercase">Lingkar Pergelangan (cm)</Label>
-                              <Input
-                                type="text"
-                                inputMode="decimal"
-                                pattern="[0-9.]*"
-                                onKeyDown={blockInvalidChar}
-                                placeholder="Cth: 18"
-                                className="h-8 text-xs bg-white"
-                                value={measurements[size]?.lingkar || ""}
-                                onChange={(e) => handleNumericChange(size, "lingkar", e.target.value)}
-                              />
+                            <div className="col-span-2 space-y-2">
+                              <div className="grid grid-cols-3 gap-1.5">
+                                <div>
+                                  <Label className="text-[9px] text-stone-500 uppercase">P (cm)</Label>
+                                  <Input
+                                    type="text"
+                                    inputMode="decimal"
+                                    pattern="[0-9.]*"
+                                    onKeyDown={blockInvalidChar}
+                                    placeholder="Panjang"
+                                    className="h-8 text-[11px] bg-white px-1.5"
+                                    value={measurements[size]?.panjang || ""}
+                                    onChange={(e) => handleNumericChange(size, "panjang", e.target.value)}
+                                  />
+                                </div>
+                                <div>
+                                  <Label className="text-[9px] text-stone-500 uppercase">L (cm)</Label>
+                                  <Input
+                                    type="text"
+                                    inputMode="decimal"
+                                    pattern="[0-9.]*"
+                                    onKeyDown={blockInvalidChar}
+                                    placeholder="Lebar"
+                                    className="h-8 text-[11px] bg-white px-1.5"
+                                    value={measurements[size]?.lebar || ""}
+                                    onChange={(e) => handleNumericChange(size, "lebar", e.target.value)}
+                                  />
+                                </div>
+                                <div>
+                                  <Label className="text-[9px] text-stone-500 uppercase">T (cm)</Label>
+                                  <Input
+                                    type="text"
+                                    inputMode="decimal"
+                                    pattern="[0-9.]*"
+                                    onKeyDown={blockInvalidChar}
+                                    placeholder="Tinggi"
+                                    className="h-8 text-[11px] bg-white px-1.5"
+                                    value={measurements[size]?.tinggi || ""}
+                                    onChange={(e) => handleNumericChange(size, "tinggi", e.target.value)}
+                                  />
+                                </div>
+                              </div>
+                              <div className="grid grid-cols-2 gap-2">
+                                <div>
+                                  <Label className="text-[9px] text-stone-500 uppercase">Lingkar (cm)</Label>
+                                  <Input
+                                    type="text"
+                                    inputMode="decimal"
+                                    pattern="[0-9.]*"
+                                    onKeyDown={blockInvalidChar}
+                                    placeholder="Gelang/Cincin"
+                                    className="h-8 text-[11px] bg-white"
+                                    value={measurements[size]?.lingkar || ""}
+                                    onChange={(e) => handleNumericChange(size, "lingkar", e.target.value)}
+                                  />
+                                </div>
+                                <div>
+                                  <Label className="text-[9px] text-stone-500 uppercase">Detail / Volume</Label>
+                                  <Input
+                                    placeholder="Cth: 60ml, All Size"
+                                    className="h-8 text-[11px] bg-white"
+                                    value={measurements[size]?.detail || ""}
+                                    onChange={(e) => updateMeasurement(size, "detail", e.target.value)}
+                                  />
+                                </div>
+                              </div>
                             </div>
                           )}
                           {type !== "Sepatu" && type !== "Apparel" && type !== "Aksesoris" && (
@@ -442,8 +546,8 @@ export default function SizeTemplatesPage() {
                     ))}
                   </div>
                 </div>
-              )}
-            </div>
+              );
+            })()}
 
             <DialogFooter className="pt-4 border-t border-stone-100 flex-shrink-0">
               <Button type="button" variant="outline" onClick={() => setIsFormOpen(false)}>

@@ -10,12 +10,16 @@ export async function GET(req: Request) {
     const limit = parseInt(searchParams.get("limit") || "20");
     const search = searchParams.get("search") || undefined;
     const type = searchParams.get("type") || undefined;
+    const dateFrom = searchParams.get("from") || undefined;
+    const dateTo = searchParams.get("to") || undefined;
 
     const result = await StockRepository.getLogs({
       page,
       limit,
       search,
       type,
+      dateFrom,
+      dateTo,
     });
 
     const totalPages = Math.ceil(result.total / limit);

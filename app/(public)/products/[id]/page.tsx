@@ -68,7 +68,14 @@ export default function ProductDetailPage({
       return null;
     }
     if (tType === "aksesoris" || tType === "gelang") {
-      return meas.lingkar ? `${meas.lingkar} cm` : null;
+      const p = meas.panjang || "";
+      const l = meas.lebar || "";
+      const t = meas.tinggi || "";
+      if (p || l || t) {
+        return `${p || "-"}/${l || "-"}/${t || "-"} cm`;
+      }
+      if (meas.lingkar) return `${meas.lingkar} cm`;
+      return meas.detail || null;
     }
     return meas.detail || null;
   };
@@ -96,9 +103,16 @@ export default function ProductDetailPage({
       return null;
     }
     if (tType === "aksesoris" || tType === "gelang") {
-      return meas.lingkar ? `Lingkar Pergelangan: ${meas.lingkar} cm` : null;
+      const p = meas.panjang || "";
+      const l = meas.lebar || "";
+      const t = meas.tinggi || "";
+      if (p || l || t) {
+        return `Panjang: ${p || "-"} cm, Lebar: ${l || "-"} cm, Tinggi: ${t || "-"} cm`;
+      }
+      if (meas.lingkar) return `Lingkar: ${meas.lingkar} cm`;
+      return meas.detail || null;
     }
-    return meas.detail ? `Keterangan: ${meas.detail}` : null;
+    return meas.detail || null;
   };
 
   // Set default variant saat data pertama kali tiba
@@ -495,30 +509,43 @@ export default function ProductDetailPage({
                     Spesifikasi Produk
                   </h3>
                   <dl className="grid grid-cols-2 gap-x-6 gap-y-4 text-sm">
-                    {product.detail.material && (
-                      <div className="space-y-1">
-                        <dt className="text-[10px] font-bold uppercase tracking-widest text-amber-700/70">Material Utama</dt>
-                        <dd className="font-bold text-[#4A3B2E]">{product.detail.material}</dd>
-                      </div>
-                    )}
-                    {product.detail.outsole && (
-                      <div className="space-y-1">
-                        <dt className="text-[10px] font-bold uppercase tracking-widest text-amber-700/70">Material Sol</dt>
-                        <dd className="font-bold text-[#4A3B2E]">{product.detail.outsole}</dd>
-                      </div>
-                    )}
-                    {product.detail.insole && (
-                      <div className="space-y-1">
-                        <dt className="text-[10px] font-bold uppercase tracking-widest text-amber-700/70">Insole</dt>
-                        <dd className="font-bold text-[#4A3B2E]">{product.detail.insole}</dd>
-                      </div>
-                    )}
-                    {product.detail.origin && (
-                      <div className="space-y-1">
-                        <dt className="text-[10px] font-bold uppercase tracking-widest text-amber-700/70">Asal Produksi</dt>
-                        <dd className="font-bold text-[#4A3B2E]">{product.detail.origin}</dd>
-                      </div>
-                    )}
+                    {(() => {
+                      const pType = product.productType?.toLowerCase() || "shoes";
+                      return (
+                        <>
+                          {product.detail.material && (
+                            <div className="space-y-1">
+                              <dt className="text-[10px] font-bold uppercase tracking-widest text-amber-700/70">Material Utama</dt>
+                              <dd className="font-bold text-[#4A3B2E]">{product.detail.material}</dd>
+                            </div>
+                          )}
+                          {product.detail.outsole && (pType === "shoes" || pType === "sandal") && (
+                            <div className="space-y-1">
+                              <dt className="text-[10px] font-bold uppercase tracking-widest text-amber-700/70">Material Sol (Outsole)</dt>
+                              <dd className="font-bold text-[#4A3B2E]">{product.detail.outsole}</dd>
+                            </div>
+                          )}
+                          {product.detail.insole && pType === "shoes" && (
+                            <div className="space-y-1">
+                              <dt className="text-[10px] font-bold uppercase tracking-widest text-amber-700/70">Insole</dt>
+                              <dd className="font-bold text-[#4A3B2E]">{product.detail.insole}</dd>
+                            </div>
+                          )}
+                          {product.detail.closureType && (pType === "shoes" || pType === "apparel" || pType === "accessories") && (
+                            <div className="space-y-1">
+                              <dt className="text-[10px] font-bold uppercase tracking-widest text-amber-700/70">Tipe Penutup</dt>
+                              <dd className="font-bold text-[#4A3B2E]">{product.detail.closureType}</dd>
+                            </div>
+                          )}
+                          {product.detail.origin && (
+                            <div className="space-y-1">
+                              <dt className="text-[10px] font-bold uppercase tracking-widest text-amber-700/70">Asal Produksi</dt>
+                              <dd className="font-bold text-[#4A3B2E]">{product.detail.origin}</dd>
+                            </div>
+                          )}
+                        </>
+                      );
+                    })()}
                     <div className="space-y-1">
                       <dt className="text-[10px] font-bold uppercase tracking-widest text-amber-700/70">Gender</dt>
                       <dd className="font-bold text-[#4A3B2E]">{product.gender}</dd>

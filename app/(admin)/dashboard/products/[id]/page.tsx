@@ -79,7 +79,14 @@ export default function EditProductPage({
       name: product.name || "",
       shortDescription: product.shortDescription || "",
       description: product.detail?.description || "",
-      productType: (product.productType?.toLowerCase() as any) || "shoes",
+      productType: (() => {
+        const rawType = product.productType?.toLowerCase() || "";
+        if (["shoes", "sepatu"].includes(rawType)) return "shoes";
+        if (["sandal"].includes(rawType)) return "sandal";
+        if (["apparel", "pakaian", "baju"].includes(rawType)) return "apparel";
+        if (["accessories", "aksesoris", "aksesori", "tas"].includes(rawType)) return "accessories";
+        return undefined;
+      })() as any,
       gender: product.gender
         ? ((product.gender.charAt(0).toUpperCase() +
           product.gender.slice(1).toLowerCase()) as any)
@@ -115,7 +122,7 @@ export default function EditProductPage({
       name: "",
       shortDescription: "",
       description: "",
-      productType: "shoes",
+      productType: undefined,
       gender: "Unisex",
       material: "",
       outsole: "",
@@ -133,6 +140,7 @@ export default function EditProductPage({
   });
 
   const watchSizeTemplateId = watch("sizeTemplateId") || "";
+  const watchProductType = watch("productType") || "shoes";
   const selectedTemplate = templates.find(
     (t: any) => t.id === watchSizeTemplateId,
   );
@@ -187,10 +195,17 @@ export default function EditProductPage({
   const onSubmit = (data: any) => {
     const formData = new FormData();
     Object.entries(data).forEach(([key, value]) => {
-      if (["categoryIds", "images", "variants"].includes(key)) return;
+      if (["categoryIds", "images", "variants", "customSizes", "customMeasurements"].includes(key)) return;
       if (value !== undefined && value !== null)
         formData.append(key, String(value));
     });
+
+    if (data.customSizes) {
+      formData.append("customSizes", JSON.stringify(data.customSizes));
+    }
+    if (data.customMeasurements) {
+      formData.append("customMeasurements", JSON.stringify(data.customMeasurements));
+    }
 
     data.categoryIds.forEach((catId: string) =>
       formData.append("categoryIds", catId),
@@ -386,14 +401,16 @@ export default function EditProductPage({
                     name="productType"
                     render={({ field }) => (
                       <Select
-                        value={field.value}
-                        onValueChange={field.onChange}
+                        value={field.value || "none"}
+                        onValueChange={(val) => field.onChange(val === "none" ? null : val)}
                       >
                         <SelectTrigger className="bg-white">
-                          <SelectValue />
+                          <SelectValue placeholder="Pilih..." />
                         </SelectTrigger>
                         <SelectContent>
+                          <SelectItem value="none">-- Pilih Tipe --</SelectItem>
                           <SelectItem value="shoes">Sepatu</SelectItem>
+                          <SelectItem value="sandal">Sandal</SelectItem>
                           <SelectItem value="apparel">Pakaian</SelectItem>
                           <SelectItem value="accessories">Aksesori</SelectItem>
                         </SelectContent>
@@ -482,20 +499,46 @@ export default function EditProductPage({
                     </p>
                   )}
                 </div>
+                {(watchProductType === "shoes" || watchProductType === "sandal") && (
+                  <div className="space-y-1.5">
+                    <Label className="text-[10px] uppercase font-bold text-stone-400">
+                      Outsole
+                    </Label>
+                    <Input {...register("outsole")} className="h-10" />
+                  </div>
+                )}
+                {watchProductType === "shoes" && (
+                  <div className="space-y-1.5">
+                    <Label className="text-[10px] uppercase font-bold text-stone-400">
+                      Insole
+                    </Label>
+                    <Input
+                      {...register("insole")}
+                      className="h-10"
+                      placeholder="Cth: Memory Foam / EVA"
+                    />
+                  </div>
+                )}
+                {(watchProductType === "shoes" || watchProductType === "apparel" || watchProductType === "accessories") && (
+                  <div className="space-y-1.5">
+                    <Label className="text-[10px] uppercase font-bold text-stone-400">
+                      Tipe Penutup
+                    </Label>
+                    <Input
+                      {...register("closureType")}
+                      className="h-10"
+                      placeholder="Cth: Tali / Laces / Resleting"
+                    />
+                  </div>
+                )}
                 <div className="space-y-1.5">
                   <Label className="text-[10px] uppercase font-bold text-stone-400">
-                    Outsole
-                  </Label>
-                  <Input {...register("outsole")} className="h-10" />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-[10px] uppercase font-bold text-stone-400">
-                    Insole
+                    Asal / Pembuatan
                   </Label>
                   <Input
-                    {...register("insole")}
+                    {...register("origin")}
                     className="h-10"
-                    placeholder="Cth: Memory Foam / EVA"
+                    placeholder="Cth: Indonesia"
                   />
                 </div>
               </div>

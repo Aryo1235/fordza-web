@@ -1,6 +1,6 @@
 <mxfile host="app.diagrams.net" agent="5.0">
   <diagram name="Sequence Diagram - Checkout" id="seq-checkout">
-    <mxGraphModel dx="405" dy="211" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="1000" math="0" shadow="0">
+    <mxGraphModel dx="1823" dy="952" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="1000" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -21,9 +21,6 @@
         </mxCell>
         <mxCell id="db" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#f8cecc;strokeColor=#b85450;" value="Database" vertex="1">
           <mxGeometry height="80" width="80" x="800" y="80" as="geometry" />
-        </mxCell>
-        <mxCell id="s3" parent="1" style="ellipse;shape=cloud;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" value="AWS S3" vertex="1">
-          <mxGeometry height="60" width="100" x="980" y="80" as="geometry" />
         </mxCell>
         <mxCell id="lifeline1" edge="1" parent="1" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;" value="">
           <mxGeometry height="50" relative="1" width="50" as="geometry">
@@ -53,12 +50,6 @@
           <mxGeometry height="50" relative="1" width="50" as="geometry">
             <mxPoint x="840" y="180" as="sourcePoint" />
             <mxPoint x="840" y="920" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="lifeline6" edge="1" parent="1" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;" value="">
-          <mxGeometry height="50" relative="1" width="50" as="geometry">
-            <mxPoint x="1030" y="180" as="sourcePoint" />
-            <mxPoint x="1030" y="920" as="targetPoint" />
           </mxGeometry>
         </mxCell>
         <mxCell id="msg1" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;" value="1: Pilih produk, varian, ukuran">
@@ -199,6 +190,9 @@
         </mxCell>
         <mxCell id="act3" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="" vertex="1">
           <mxGeometry height="340" width="10" x="645" y="490" as="geometry" />
+        </mxCell>
+        <mxCell id="act4" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" value="" vertex="1">
+          <mxGeometry height="260" width="10" x="835" y="530" as="geometry" />
         </mxCell>
         <mxCell id="note1" parent="1" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;fillColor=#fff2cc;strokeColor=#d6b656;size=15;" value="Note: Semua operasi DB&#xa;dalam 1 transaction&#xa;(atomic operation)" vertex="1">
           <mxGeometry height="80" width="150" x="900" y="540" as="geometry" />

@@ -1,0 +1,156 @@
+<mxfile host="app.diagrams.net" agent="5.0">
+  <diagram name="Activity Diagram - Impor Produk Massal" id="diagram-1">
+    <mxGraphModel dx="1216" dy="634" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1090" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="hdr_actor" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;align=center;strokeWidth=1;" value="Admin" vertex="1">
+          <mxGeometry height="40" width="200" x="40" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="hdr_system" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;align=center;strokeWidth=1;" value="Sistem (UI/Backend)" vertex="1">
+          <mxGeometry height="40" width="300" x="240" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="hdr_db" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;align=center;strokeWidth=1;" value="Database" vertex="1">
+          <mxGeometry height="40" width="240" x="540" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="start" parent="1" style="ellipse;html=1;shape=startState;fillColor=#000000;strokeColor=none;" value="" vertex="1">
+          <mxGeometry height="30" width="30" x="125" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="act_prep" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Siapkan File Excel/&lt;br&gt;CSV Produk" vertex="1">
+          <mxGeometry height="50" width="100" x="90" y="160" as="geometry" />
+        </mxCell>
+        <mxCell id="o-pCDRVGj6SoV5-H5Alz-2" edge="1" parent="1" source="act_upload" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="act_parse">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="act_upload" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Unggah File &lt;br&gt;ke Dropzone" vertex="1">
+          <mxGeometry height="50" width="130" x="75" y="250" as="geometry" />
+        </mxCell>
+        <mxCell id="dec_format" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="Format Kolom Sesuai?" vertex="1">
+          <mxGeometry height="80" width="80" x="260" y="390" as="geometry" />
+        </mxCell>
+        <mxCell id="o-pCDRVGj6SoV5-H5Alz-4" edge="1" parent="1" source="act_err_format" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="act_prep">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="o-pCDRVGj6SoV5-H5Alz-5" connectable="0" parent="o-pCDRVGj6SoV5-H5Alz-4" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="Kembali" vertex="1">
+          <mxGeometry relative="1" x="-0.084" y="-2" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="act_err_format" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#d5e8d4;strokeColor=#82b366;" value="Notifikasi Format&lt;br&gt;&amp;nbsp;Kolom Salah" vertex="1">
+          <mxGeometry height="50" width="130" x="400" y="480" as="geometry" />
+        </mxCell>
+        <mxCell id="act_send_req" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#d5e8d4;strokeColor=#82b366;" value="Kirim POST /api/admin/products/bulk-import" vertex="1">
+          <mxGeometry height="50" width="200" x="270" y="600" as="geometry" />
+        </mxCell>
+        <mxCell id="act_lookup" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#d5e8d4;strokeColor=#82b366;" value="Smart Lookup: Konversi Kategori ke ID" vertex="1">
+          <mxGeometry height="50" width="200" x="270" y="690" as="geometry" />
+        </mxCell>
+        <mxCell id="db_lookup" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#f8cecc;strokeColor=#b85450;" value="Query database Categories &amp; Templates" vertex="1">
+          <mxGeometry height="50" width="200" x="570" y="745" as="geometry" />
+        </mxCell>
+        <mxCell id="act_transaction" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#d5e8d4;strokeColor=#82b366;" value="Begin Transaction &amp; Looping Penyimpanan" vertex="1">
+          <mxGeometry height="50" width="220" x="260" y="820" as="geometry" />
+        </mxCell>
+        <mxCell id="db_insert" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#f8cecc;strokeColor=#b85450;" value="Insert Product, Variant, SKU &amp; Stock Log" vertex="1">
+          <mxGeometry height="50" width="200" x="564" y="890" as="geometry" />
+        </mxCell>
+        <mxCell id="dec_save" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="Semua Data Lolos Validasi?" vertex="1">
+          <mxGeometry height="100" width="100" x="250" y="910" as="geometry" />
+        </mxCell>
+        <mxCell id="act_commit" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#d5e8d4;strokeColor=#82b366;" value="Commit Transaction" vertex="1">
+          <mxGeometry height="50" width="111" x="250" y="1040" as="geometry" />
+        </mxCell>
+        <mxCell id="db_commit" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#f8cecc;strokeColor=#b85450;" value="Database Commit" vertex="1">
+          <mxGeometry height="50" width="160" x="604" y="1105" as="geometry" />
+        </mxCell>
+        <mxCell id="act_rollback" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#d5e8d4;strokeColor=#82b366;" value="Rollback Transaction &lt;br&gt;&amp;amp; Kumpulkan Error" vertex="1">
+          <mxGeometry height="50" width="140" x="390" y="1000" as="geometry" />
+        </mxCell>
+        <mxCell id="act_response" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#d5e8d4;strokeColor=#82b366;" value="Kembalikan Hasil Impor &lt;br&gt;(Sukses &amp;amp; Error Log)" vertex="1">
+          <mxGeometry height="50" width="130" x="395" y="1155" as="geometry" />
+        </mxCell>
+        <mxCell id="act_show_res" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Tampilkan Ringkasan &lt;br&gt;Impor &amp;amp; Highlight Error" vertex="1">
+          <mxGeometry height="50" width="160" x="50" y="1155" as="geometry" />
+        </mxCell>
+        <mxCell id="end" parent="1" style="ellipse;html=1;shape=endState;fillColor=#000000;strokeColor=#000000;" value="" vertex="1">
+          <mxGeometry height="30" width="30" x="115" y="1250" as="geometry" />
+        </mxCell>
+        <mxCell id="pool_left" parent="1" style="line;strokeWidth=1;fillColor=none;align=left;dashed=0;strokeColor=#666666;direction=south;" value="" vertex="1">
+          <mxGeometry height="1240" width="1" x="40" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="pool_div1" parent="1" style="line;strokeWidth=1;fillColor=none;align=left;dashed=0;strokeColor=#666666;direction=south;" value="" vertex="1">
+          <mxGeometry height="1240" width="1" x="240" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="pool_div2" parent="1" style="line;strokeWidth=1;fillColor=none;align=left;dashed=0;strokeColor=#666666;direction=south;" value="" vertex="1">
+          <mxGeometry height="1240" width="1" x="540" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="pool_right" parent="1" style="line;strokeWidth=1;fillColor=none;align=left;dashed=0;strokeColor=#666666;direction=south;" value="" vertex="1">
+          <mxGeometry height="1240" width="1" x="780" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="pool_bottom" parent="1" style="line;strokeWidth=1;fillColor=none;align=left;dashed=0;strokeColor=#666666;direction=east;" value="" vertex="1">
+          <mxGeometry height="1" width="740" x="40" y="1320" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_1" edge="1" parent="1" source="start" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" target="act_prep" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_2" edge="1" parent="1" source="act_prep" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" target="act_upload" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_5" edge="1" parent="1" source="dec_format" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;exitX=1;entryX=0.5;exitY=0.5;exitDx=0;exitDy=0;" target="act_err_format" value="T (No)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="414" y="515" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge_6" edge="1" parent="1" source="dec_format" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" target="act_send_req" value="Y (Yes)">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_8" edge="1" parent="1" source="act_send_req" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" target="act_lookup" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_9" edge="1" parent="1" source="act_lookup" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" target="db_lookup" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_10" edge="1" parent="1" source="db_lookup" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;exitX=0.5;entryX=1;" target="act_transaction" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_11" edge="1" parent="1" source="act_transaction" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" target="db_insert" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_12" edge="1" parent="1" source="db_insert" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;exitX=0.5;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="dec_save" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_13" edge="1" parent="1" source="dec_save" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;exitX=0.5;entryX=0.5;" target="act_commit" value="Y (Semua)">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_14" edge="1" parent="1" source="dec_save" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;exitX=1;entryX=0.5;" target="act_rollback" value="T (Ada Error)">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_15" edge="1" parent="1" source="act_commit" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" target="db_commit" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_16" edge="1" parent="1" source="db_commit" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;exitX=0.5;entryX=1;" target="act_response" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_17" edge="1" parent="1" source="act_rollback" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" target="act_response" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxArray as="points">
+              <mxPoint x="520" y="910" />
+            </mxArray>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge_18" edge="1" parent="1" source="act_response" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" target="act_show_res" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_19" edge="1" parent="1" source="act_show_res" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" target="end" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="o-pCDRVGj6SoV5-H5Alz-3" edge="1" parent="1" source="act_parse" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="dec_format">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="act_parse" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#d5e8d4;strokeColor=#82b366;" value="Parsing Excel ke JSON Array" vertex="1">
+          <mxGeometry height="50" width="160" x="290" y="250" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

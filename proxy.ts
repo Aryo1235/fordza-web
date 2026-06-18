@@ -74,34 +74,33 @@ export async function proxy(request: NextRequest) {
   // --- LOGIKA PENJAGA GERBANG (PASSIVE GUARD) ---
   const payload = token ? await verifyJWT(token, "access") : null;
 
-  // Jika Access Token tidak valid/habis, kita cek apakah ada Refresh Token.
-  // Kita TIDAK melakukan refresh di sini (biar Axios yang urus),
-  // tapi kita izinkan masuk ke halaman asalkan masih ada harapan (refresh token).
+  // Jika Access Token tidak valid/habis
   if (!payload) {
+    // 🔐 KEAMANAN API: Jika rute API, langsung kembalikan 401 tanpa kompromi (tidak boleh bypass pakai refresh token)
+    if (isApiRoute) {
+      console.warn(`[MIDDLEWARE] Sesi habis/Token tidak valid untuk API Route. TraceID: ${requestId}`);
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Sesi habis. Silakan login kembali.",
+          code: "UNAUTHORIZED",
+          traceId: requestId
+        },
+        { status: 401 },
+      );
+    }
+
+    // Untuk halaman frontend, kita izinkan masuk asalkan masih ada Refresh Token yang valid
+    // (agar halaman ter-render dan Axios client-side bisa melakukan silent-refresh)
     const refreshToken = request.cookies.get(REFRESH_COOKIE_NAME)?.value;
     const isRefreshValid = refreshToken
       ? await verifyToken(refreshToken, "refresh")
       : null;
 
     if (!isRefreshValid) {
-      // Benar-benar tidak punya akses sama sekali -> Login
-      if (isApiRoute) {
-        console.warn(`[MIDDLEWARE] Sesi habis/Token tidak valid. TraceID: ${requestId}`);
-        return NextResponse.json(
-          {
-            success: false,
-            message: "Sesi habis. Silakan login kembali.",
-            code: "UNAUTHORIZED",
-            traceId: requestId
-          },
-          { status: 401 },
-        );
-      }
+      // Benar-benar tidak punya akses sama sekali -> redirect ke login
       return NextResponse.redirect(new URL("/login", request.url));
     }
-
-    // Jika punya Refresh Token tapi Access Token abis, tetap biarkan masuk.
-    // Nanti saat halaman load, permintaan API pertama akan memicu 401 dan dihandle Axios.
   }
 
   // Jika kita sampai di sini, artinya user punya payload valid ATAU punya refresh token valid.

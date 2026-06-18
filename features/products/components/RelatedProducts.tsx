@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ProductCard } from "@/features/landing-page/ProductCard";
+import { useRelatedProducts } from "@/features/products";
 
 interface RecommendedProduct {
   id: string;
@@ -27,31 +27,11 @@ interface Props {
 }
 
 export function RelatedProducts({ productId }: Props) {
-  const [products, setProducts] = useState<RecommendedProduct[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    setLoading(true);
-    setError(null);
-
-    fetch(`/api/recommend/${productId}`)
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.success) {
-          setProducts(json.data.recommendations);
-        } else {
-          setError(json.message || "Gagal memuat rekomendasi");
-        }
-      })
-      .catch(() => {
-        setError("Terjadi kesalahan saat memuat rekomendasi");
-      })
-      .finally(() => setLoading(false));
-  }, [productId]);
+  const { data, isLoading: loading, isError } = useRelatedProducts(productId);
+  const products = data?.data?.recommendations || [];
 
   // Jangan render apa-apa jika error atau tidak ada rekomendasi
-  if (!loading && (error || products.length === 0)) {
+  if (!loading && (isError || products.length === 0)) {
     return null;
   }
 
@@ -93,7 +73,7 @@ export function RelatedProducts({ productId }: Props) {
           className="flex overflow-x-auto snap-x snap-mandatory gap-4 sm:gap-4 pb-4 custom-scrollbar items-stretch"
           style={{ scrollPaddingLeft: "0px" }}
         >
-          {products.map((product) => {
+          {products.map((product: RecommendedProduct) => {
             // Mapping RecommendedProduct to Product interface for ProductCard
             const productForCard = {
               ...product,

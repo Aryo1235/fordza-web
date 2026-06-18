@@ -18,7 +18,7 @@ const navLinks = [
   { label: "Beranda", href: "/" },
   { label: "Produk", href: "/products" },
   { label: "Kategori", href: "/categories" },
-  { label: "Promo", href: "/products?filter=promo" },
+  { label: "Promo", href: "/promo" },
   { label: "Tentang", href: "/about" },
 ];
 
@@ -27,8 +27,8 @@ export default function PublicNavbar() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
-  // Glass transparan di semua halaman KECUALI /products (bg terang, tulisan jadi tak terbaca)
-  const isProducts = pathname.startsWith("/products");
+  // Glass transparan di semua halaman KECUALI /products & /promo (bg terang, tulisan jadi tak terbaca)
+  const isProducts = pathname.startsWith("/products") || pathname.startsWith("/promo");
   const isGlass = !isProducts && !scrolled;
 
   useEffect(() => {

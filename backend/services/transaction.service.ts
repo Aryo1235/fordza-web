@@ -385,6 +385,7 @@ export const TransactionService = {
       amountPaid: Number(t.amountPaid),
       change: Number(t.change),
       status: t.status,
+      paymentMethod: t.paymentMethod,
       notes: t.notes,
       cancelReason: t.cancelReason,
       createdAt: t.createdAt.toISOString(),

@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
-import { useTransactionDetail } from "@/features/kasir/transactions";
+import { useTransactionDetail } from "@/features/transactions";
 import { InvoiceModal, VoidTransactionDialog } from "@/features/kasir";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

@@ -1,0 +1,146 @@
+<mxfile host="app.diagrams.net" agent="5.0">
+  <diagram name="Activity Diagram - Penyesuaian Stok Massal" id="diagram-1">
+    <mxGraphModel dx="1368" dy="714" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1020" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="hdr_actor" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;align=center;strokeWidth=1;" value="Admin" vertex="1">
+          <mxGeometry height="40" width="200" x="40" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="hdr_system" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;align=center;strokeWidth=1;" value="Sistem (UI/Backend)" vertex="1">
+          <mxGeometry height="40" width="300" x="240" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="hdr_db" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;align=center;strokeWidth=1;" value="Database" vertex="1">
+          <mxGeometry height="40" width="240" x="540" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="start" parent="1" style="ellipse;html=1;shape=startState;fillColor=#000000;strokeColor=none;" value="" vertex="1">
+          <mxGeometry height="30" width="30" x="125" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="act_view" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Buka Halaman Penyesuaian Stok" vertex="1">
+          <mxGeometry height="50" width="190" x="45" y="150" as="geometry" />
+        </mxCell>
+        <mxCell id="act_input" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Input Selisih/Stok Baru di Tabel" vertex="1">
+          <mxGeometry height="50" width="190" x="46" y="220" as="geometry" />
+        </mxCell>
+        <mxCell id="act_submit" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Klik Simpan Perubahan Stok" vertex="1">
+          <mxGeometry height="50" width="180" x="50" y="300" as="geometry" />
+        </mxCell>
+        <mxCell id="act_send" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#d5e8d4;strokeColor=#82b366;" value="PATCH /api/admin/stock/opname" vertex="1">
+          <mxGeometry height="50" width="180" x="300" y="300" as="geometry" />
+        </mxCell>
+        <mxCell id="act_tx" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#d5e8d4;strokeColor=#82b366;" value="Mulai Transaksi Database" vertex="1">
+          <mxGeometry height="50" width="160" x="310" y="380" as="geometry" />
+        </mxCell>
+        <mxCell id="act_update_sku" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#d5e8d4;strokeColor=#82b366;" value="Update Stok productSku &amp; Catat skuStockLog (ADJUSTMENT)" vertex="1">
+          <mxGeometry height="50" width="220" x="280" y="460" as="geometry" />
+        </mxCell>
+        <mxCell id="db_sku" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#f8cecc;strokeColor=#b85450;" value="prisma.productSku.update()" vertex="1">
+          <mxGeometry height="50" width="180" x="570" y="520" as="geometry" />
+        </mxCell>
+        <mxCell id="act_update_prod" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#d5e8d4;strokeColor=#82b366;" value="Hitung Ulang Total Stok Master &amp; Catat stockLog" vertex="1">
+          <mxGeometry height="50" width="220" x="271" y="580" as="geometry" />
+        </mxCell>
+        <mxCell id="db_prod" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#f8cecc;strokeColor=#b85450;" value="prisma.product.update()" vertex="1">
+          <mxGeometry height="50" width="180" x="581" y="660" as="geometry" />
+        </mxCell>
+        <mxCell id="dec_valid" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="Semua SKU ID Valid?" vertex="1">
+          <mxGeometry height="80" width="80" x="264.5" y="645" as="geometry" />
+        </mxCell>
+        <mxCell id="act_commit" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#d5e8d4;strokeColor=#82b366;" value="Commit Transaction &lt;br&gt;&amp;amp; Simpan Log" vertex="1">
+          <mxGeometry height="50" width="109" x="250" y="820" as="geometry" />
+        </mxCell>
+        <mxCell id="s6g4aayhxL_wvoXV6zd2-5" edge="1" parent="1" source="db_commit" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="act_res_ok">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="db_commit" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#f8cecc;strokeColor=#b85450;" value="Database Commit" vertex="1">
+          <mxGeometry height="50" width="160" x="581" y="990" as="geometry" />
+        </mxCell>
+        <mxCell id="act_res_error" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#d5e8d4;strokeColor=#82b366;" value="Kirim Respon Gagal&lt;br&gt;&amp;nbsp;(ID Tidak Valid)" vertex="1">
+          <mxGeometry height="50" width="130" x="390.5" y="890" as="geometry" />
+        </mxCell>
+        <mxCell id="act_res_ok" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#d5e8d4;strokeColor=#82b366;" value="Kirim Respon &lt;br&gt;Sukses 200 OK" vertex="1">
+          <mxGeometry height="50" width="109" x="401" y="1110" as="geometry" />
+        </mxCell>
+        <mxCell id="act_notify" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Tampilkan Notifikasi Ke &lt;br&gt;Layar Admin" vertex="1">
+          <mxGeometry height="50" width="150" x="50" y="1110" as="geometry" />
+        </mxCell>
+        <mxCell id="end" parent="1" style="ellipse;html=1;shape=endState;fillColor=#000000;strokeColor=#000000;" value="" vertex="1">
+          <mxGeometry height="30" width="30" x="110" y="1220" as="geometry" />
+        </mxCell>
+        <mxCell id="pool_left" parent="1" style="line;strokeWidth=1;fillColor=none;align=left;dashed=0;strokeColor=#666666;direction=south;" value="" vertex="1">
+          <mxGeometry height="1210" width="1" x="40" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="pool_div1" parent="1" style="line;strokeWidth=1;fillColor=none;align=left;dashed=0;strokeColor=#666666;direction=south;" value="" vertex="1">
+          <mxGeometry height="1210" width="1" x="240" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="pool_div2" parent="1" style="line;strokeWidth=1;fillColor=none;align=left;dashed=0;strokeColor=#666666;direction=south;" value="" vertex="1">
+          <mxGeometry height="1210" width="1" x="540" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="pool_right" parent="1" style="line;strokeWidth=1;fillColor=none;align=left;dashed=0;strokeColor=#666666;direction=south;" value="" vertex="1">
+          <mxGeometry height="1210" width="1" x="780" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="pool_bottom" parent="1" style="line;strokeWidth=1;fillColor=none;align=left;dashed=0;strokeColor=#666666;direction=east;" value="" vertex="1">
+          <mxGeometry height="1" width="740" x="40" y="1290" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_1" edge="1" parent="1" source="start" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" target="act_view" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_2" edge="1" parent="1" source="act_view" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" target="act_input" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_3" edge="1" parent="1" source="act_input" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" target="act_submit" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_4" edge="1" parent="1" source="act_submit" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" target="act_send" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_5" edge="1" parent="1" source="act_send" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" target="act_tx" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_6" edge="1" parent="1" source="act_tx" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" target="act_update_sku" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_7" edge="1" parent="1" source="act_update_sku" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" target="db_sku" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_8" edge="1" parent="1" source="db_sku" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;exitX=0.5;entryX=1;" target="act_update_prod" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_9" edge="1" parent="1" source="act_update_prod" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" target="db_prod" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_10" edge="1" parent="1" source="db_prod" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;exitX=0.5;entryX=1;" target="dec_valid" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_11" edge="1" parent="1" source="dec_valid" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;exitX=0.5;entryX=0.5;" target="act_commit" value="Y (Valid)">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_12" edge="1" parent="1" source="dec_valid" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;exitX=0.5;entryX=0.5;exitY=1;exitDx=0;exitDy=0;" target="act_rollback" value="T (Ada ID Salah)">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_13" edge="1" parent="1" source="act_commit" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" target="db_commit" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_15" edge="1" parent="1" source="act_rollback" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" target="act_res_error" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_16" edge="1" parent="1" source="act_res_error" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" target="act_notify" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxArray as="points">
+              <mxPoint x="520" y="840" />
+            </mxArray>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge_17" edge="1" parent="1" source="act_res_ok" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" target="act_notify" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_18" edge="1" parent="1" source="act_notify" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" target="end" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="act_rollback" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#d5e8d4;strokeColor=#82b366;" value="Rollback Transaction &lt;br&gt;&amp;amp; Throw AppError 404" vertex="1">
+          <mxGeometry height="50" width="150" x="380.5" y="770" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

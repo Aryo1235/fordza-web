@@ -1,6 +1,6 @@
 "use client";
 
-import { Heart, Package } from "lucide-react";
+import { Package, Tag } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -114,6 +114,26 @@ export function ProductCard({ product }: { product: Product }) {
         ) : (
           <div className="flex h-full items-center justify-center">
             <Package className="size-12 text-[var(--fordza-cream-dark)]" />
+          </div>
+        )}
+
+        {/* ── Promo Badge Overlay ── */}
+        {((product.promos && product.promos.length > 0) || product.promoName) && (
+          <div className="absolute top-2 left-2 z-20 flex flex-col gap-1 max-w-[85%]">
+            {(product.promos && product.promos.length > 0
+              ? product.promos
+              : product.promoName
+                ? [product.promoName]
+                : []
+            ).map((promo, idx) => (
+              <div 
+                key={idx}
+                className="flex items-center gap-1 bg-amber-400 text-[#4A3B2E] text-[9px] md:text-[10px] font-black uppercase tracking-wide px-1.5 py-1 rounded-[4px] shadow-md leading-none"
+              >
+                <Tag className="size-2.5 md:size-3 flex-shrink-0" />
+                <span className="truncate max-w-[90px]">{promo}</span>
+              </div>
+            ))}
           </div>
         )}
       </div>

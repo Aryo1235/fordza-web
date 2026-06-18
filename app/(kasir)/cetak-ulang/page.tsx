@@ -8,7 +8,7 @@ import {
   useCheckInvoice,
   type Transaction,
 } from "@/features/kasir";
-import { getTransactionById } from "@/features/kasir/transactions";
+import { getTransactionById } from "@/features/transactions";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 
 export default function CetakUlangPage() {

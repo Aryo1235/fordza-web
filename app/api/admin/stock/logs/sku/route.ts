@@ -12,6 +12,8 @@ export async function GET(req: Request) {
     const type = searchParams.get("type") || undefined;
     const productId = searchParams.get("productId") || undefined;
     const skuId = searchParams.get("skuId") || undefined;
+    const dateFrom = searchParams.get("from") || undefined;
+    const dateTo = searchParams.get("to") || undefined;
 
     const result = await StockRepository.getSkuLogs({
       page,
@@ -19,7 +21,9 @@ export async function GET(req: Request) {
       search,
       type,
       productId,
-      skuId
+      skuId,
+      dateFrom,
+      dateTo,
     });
 
     const totalPages = Math.ceil(result.total / limit);

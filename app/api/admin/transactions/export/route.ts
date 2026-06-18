@@ -55,7 +55,7 @@ export async function GET(req: NextRequest) {
         // --- Transaction Header Row ---
         pdfBody.push([
           {
-            content: `INVOICE: ${tx.invoiceNo}  |  TANGGAL: ${format(new Date(tx.createdAt), "dd/MM/yyyy HH:mm")}  |  KASIR: ${tx.kasir?.name || tx.kasir?.username || "-"}  |  PELANGGAN: ${tx.customerName || "-"} (${tx.customerPhone || "-"})`,
+            content: `INVOICE: ${tx.invoiceNo}  |  TANGGAL: ${format(new Date(tx.createdAt), "dd/MM/yyyy HH:mm")}  |  METODE: ${tx.paymentMethod || "CASH"}  |  KASIR: ${tx.kasir?.name || tx.kasir?.username || "-"}  |  PELANGGAN: ${tx.customerName || "-"} (${tx.customerPhone || "-"})`,
             colSpan: 8,
             styles: { 
               fillColor: mainColor, 
@@ -108,6 +108,67 @@ export async function GET(req: NextRequest) {
         // Empty spacer row
         pdfBody.push([{ content: "", colSpan: 8, styles: { cellPadding: 1, fillColor: [255, 255, 255] } }]);
       });
+
+      // Calculate Grand Totals for all transactions
+      const grandTotalRevenue = transactions.reduce((sum, tx: any) => sum + Number(tx.totalPrice || 0), 0);
+      const grandTotalQty = transactions.reduce((sum, tx: any) => {
+        return sum + (tx.items || []).reduce((itemSum: number, item: any) => itemSum + Number(item.quantity || 0), 0);
+      }, 0);
+      const grandTotalDiscount = transactions.reduce((sum, tx: any) => {
+        return sum + (tx.items || []).reduce((itemSum: number, item: any) => itemSum + Number(item.discountAmount || 0), 0);
+      }, 0);
+
+      // Push Grand Total Row to pdfBody
+      pdfBody.push([
+        {
+          content: `GRAND TOTAL (${transactions.length} Transaksi)`,
+          colSpan: 4,
+          styles: { 
+            fillColor: [60, 48, 37], 
+            textColor: [255, 255, 255],
+            fontStyle: 'bold',
+            fontSize: 9,
+            halign: 'left',
+            cellPadding: 4
+          }
+        },
+        {
+          content: grandTotalQty.toString(),
+          styles: { 
+            fillColor: [60, 48, 37], 
+            textColor: [255, 255, 255],
+            fontStyle: 'bold',
+            fontSize: 9,
+            halign: 'center',
+            cellPadding: 4
+          }
+        },
+        {
+          content: "", // Harga Satuan
+          styles: { 
+            fillColor: [60, 48, 37],
+            cellPadding: 4
+          }
+        },
+        {
+          content: "", // Diskon
+          styles: { 
+            fillColor: [60, 48, 37], 
+            cellPadding: 4
+          }
+        },
+        {
+          content: toCurrency(grandTotalRevenue),
+          styles: { 
+            fillColor: [60, 48, 37], 
+            textColor: [255, 255, 255],
+            fontStyle: 'bold',
+            fontSize: 9,
+            halign: 'right',
+            cellPadding: 4
+          }
+        }
+      ]);
 
       autoTable(doc, {
         startY: 32,
@@ -182,20 +243,40 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    const summaryRows = transactions.map((tx) => ({
-      "No. Invoice": tx.invoiceNo,
-      Tanggal: format(new Date(tx.createdAt), "dd/MM/yyyy HH:mm"),
-      Kasir: tx.kasir?.name || tx.kasir?.username || "-",
-      Customer: tx.customerName || "-",
-      "No. Customer": tx.customerPhone || "-",
-      Total: Number(tx.totalPrice),
-      Bayar: Number(tx.amountPaid),
-      Kembali: Number(tx.change),
-      Status: tx.status,
-      "Alasan Void": tx.cancelReason || "-",
-    }));
+    const grandTotal = transactions.reduce((sum, tx) => sum + Number(tx.totalPrice || 0), 0);
+    const grandPaid = transactions.reduce((sum, tx) => sum + Number(tx.amountPaid || 0), 0);
+    const grandChange = transactions.reduce((sum, tx) => sum + Number(tx.change || 0), 0);
 
-    const detailRows = transactions.flatMap((tx) =>
+    const summaryRows = [
+      ...transactions.map((tx) => ({
+        "No. Invoice": tx.invoiceNo,
+        Tanggal: format(new Date(tx.createdAt), "dd/MM/yyyy HH:mm"),
+        Kasir: tx.kasir?.name || tx.kasir?.username || "-",
+        Customer: tx.customerName || "-",
+        "No. Customer": tx.customerPhone || "-",
+        "Metode Pembayaran": tx.paymentMethod || "CASH",
+        Total: Number(tx.totalPrice),
+        Bayar: Number(tx.amountPaid),
+        Kembali: Number(tx.change),
+        Status: tx.status,
+        "Alasan Void": tx.cancelReason || "-",
+      })),
+      {
+        "No. Invoice": "TOTAL",
+        Tanggal: "",
+        Kasir: "",
+        Customer: "",
+        "No. Customer": "",
+        "Metode Pembayaran": "",
+        Total: grandTotal,
+        Bayar: grandPaid,
+        Kembali: grandChange,
+        Status: "",
+        "Alasan Void": "",
+      }
+    ];
+
+    const detailRowsRaw = transactions.flatMap((tx) =>
       (tx.items || []).map((item: any) => {
         const quantity = Number(item.quantity || 0);
         const price = Number(item.basePriceAtSale || 0);
@@ -205,6 +286,7 @@ export async function GET(req: NextRequest) {
           "No. Invoice": tx.invoiceNo,
           Tanggal: format(new Date(tx.createdAt), "dd/MM/yyyy HH:mm"),
           Kasir: tx.kasir?.name || tx.kasir?.username || "-",
+          "Metode Pembayaran": tx.paymentMethod || "CASH",
           "Kode Produk": item.productCode || "-",
           "Nama Produk": item.productName || "-",
           Warna: item.variantColor || "-",
@@ -217,6 +299,31 @@ export async function GET(req: NextRequest) {
         };
       }),
     );
+
+    const totalItemsQty = detailRowsRaw.reduce((sum, item) => sum + Number(item.Qty || 0), 0);
+    const totalItemsSubtotal = detailRowsRaw.reduce((sum, item) => sum + Number(item.Subtotal || 0), 0);
+    const totalItemsDiscount = detailRowsRaw.reduce((sum, item) => sum + Number(item.Diskon || 0), 0);
+
+    const detailRows = detailRowsRaw.length > 0
+      ? [
+          ...detailRowsRaw,
+          {
+            "No. Invoice": "TOTAL",
+            Tanggal: "",
+            Kasir: "",
+            "Metode Pembayaran": "",
+            "Kode Produk": "",
+            "Nama Produk": "",
+            Warna: "",
+            Ukuran: "",
+            Qty: totalItemsQty,
+            "Harga Satuan": "",
+            Promo: "",
+            Diskon: "",
+            Subtotal: totalItemsSubtotal,
+          }
+        ]
+      : [];
 
     const workbook = XLSX.utils.book_new();
     const summarySheet = XLSX.utils.json_to_sheet(summaryRows);

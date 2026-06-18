@@ -17,9 +17,11 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const search = searchParams.get("search") || undefined;
     const type = searchParams.get("type") || undefined;
+    const dateFrom = searchParams.get("from") || undefined;
+    const dateTo = searchParams.get("to") || undefined;
     const formatType = (searchParams.get("format") || "excel").toLowerCase();
 
-    const logs = await StockRepository.getSkuLogsExport({ search, type });
+    const logs = await StockRepository.getSkuLogsExport({ search, type, dateFrom, dateTo });
 
     // Logic Excel: Detail SKU Flat List
     const excelRows = logs.map((log: any) => ({
@@ -47,7 +49,7 @@ export async function GET(req: Request) {
       doc.setFontSize(9);
       doc.setTextColor(120);
       doc.text(`Fordza Web SKU Level Tracking - ${format(new Date(), "dd MMM yyyy, HH:mm")}`, 14, 25);
-      doc.text(`Filter: ${search || "Semua"} | Tipe: ${type || "Semua"}`, 14, 30);
+      doc.text(`Periode: ${dateFrom || "-"} s/d ${dateTo || "-"} | Filter: ${search || "Semua"} | Tipe: ${type || "Semua"}`, 14, 30);
 
       // Advanced Nested Grouping: Product -> Variant -> Logs
       const groupedData: any = {};

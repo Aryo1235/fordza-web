@@ -493,76 +493,94 @@ export const TransactionRepository = {
 
   // --- LAPORAN & STATISTIK ---
   async getReportStats(dateFrom: string, dateTo: string) {
-    // Normalisasi input tanggal dengan validasi cadangan (Fallback)
-    let startWib = new Date(dateFrom);
-    if (isNaN(startWib.getTime())) startWib = new Date();
-    startWib.setUTCHours(0, 0, 0, 0);
+    const { startUtc } = getWibDateRangeUtc(dateFrom);
+    const { endUtc } = getWibDateRangeUtc(dateTo);
 
-    let endWib = new Date(dateTo);
-    if (isNaN(endWib.getTime())) endWib = new Date();
-    endWib.setUTCHours(0, 0, 0, 0);
-
-    // 1. Ambil semua ringkasan dalam rentang tersebut dengan relasi SKU
-    const summaries = await prisma.skuSalesSummary.findMany({
+    // 1. Query transactions for global summaries & chart data
+    const transactions = await prisma.transaction.findMany({
       where: {
-        date: { gte: startWib, lte: endWib },
+        status: "PAID",
+        createdAt: { gte: startUtc, lte: endUtc },
+      },
+      orderBy: { createdAt: "asc" },
+    });
+
+    let totalRevenue = 0;
+    const totalOrders = transactions.length;
+    const dailyAggregation: Record<string, number> = {};
+
+    transactions.forEach((tx) => {
+      totalRevenue += Number(tx.totalPrice);
+      
+      const wibTime = new Date(tx.createdAt.getTime() + 7 * 60 * 60 * 1000);
+      const dateKey = wibTime.toISOString().split("T")[0];
+      dailyAggregation[dateKey] = (dailyAggregation[dateKey] || 0) + Number(tx.totalPrice);
+    });
+
+    const dailySales = Object.entries(dailyAggregation).map(([dateStr, revenue]) => {
+      const [y, m, d] = dateStr.split("-").map(Number);
+      return {
+        createdAt: new Date(Date.UTC(y, m - 1, d, 0, 0, 0, 0)),
+        totalPrice: revenue,
+      };
+    });
+
+    // 2. Query transaction items to get detailed sales per product SKU & payment method
+    const items = await prisma.transactionItem.findMany({
+      where: {
+        transaction: {
+          status: "PAID",
+          createdAt: { gte: startUtc, lte: endUtc },
+        },
       },
       include: {
+        transaction: true,
         product: true,
         sku: {
           include: {
-            variant: true,
+            variant: {
+              include: {
+                product: true,
+              },
+            },
           },
         },
       },
-      orderBy: { date: "asc" },
     });
-    // 2. Agregasi Global
-    let totalRevenue = 0;
-    let totalOrders = 0;
+
     const productAggregation: Record<string, any> = {};
-    const dailyAggregation: Record<string, number> = {};
 
-    summaries.forEach((s: any) => {
-      // Penjualan Global
-      totalRevenue += Number(s.totalRevenue);
-      totalOrders += s.totalOrders;
+    items.forEach((item: any) => {
+      const itemRevenue = (Number(item.basePriceAtSale) * item.quantity) - Number(item.discountAmount ?? 0);
+      const itemDiscount = Number(item.discountAmount ?? 0);
+      const paymentMethod = item.transaction?.paymentMethod || "CASH";
 
-      // Agregasi Produk (untuk tabel top products)
-      const key = `${s.productName}-${s.variantColor}-${s.skuSize}`;
+      const key = `${item.productName}-${item.variantColor || "-"}-${item.skuSize || "-"}-${paymentMethod}`;
       if (!productAggregation[key]) {
         productAggregation[key] = {
-          name: s.productName,
-          code: s.product?.productCode || "-",
-          variantCode: s.sku?.variant?.variantCode || "-",
-          color: s.variantColor || "-",
-          size: s.skuSize || "-",
+          name: item.productName,
+          code: item.productCode || item.product?.productCode || item.sku?.variant?.product?.productCode || "-",
+          variantCode: item.variant?.variantCode || item.sku?.variant?.variantCode || "-",
+          color: item.variantColor || "-",
+          size: item.skuSize || "-",
+          paymentMethod: paymentMethod,
           quantity: 0,
           revenue: 0,
           discount: 0,
         };
       }
-      productAggregation[key].quantity += s.totalQty;
-      productAggregation[key].revenue += Number(s.totalRevenue);
-      productAggregation[key].discount += Number(s.totalDiscount || 0);
-
-      // Agregasi Harian (untuk grafik)
-      const dateStr = s.date.toISOString();
-      dailyAggregation[dateStr] = (dailyAggregation[dateStr] || 0) + Number(s.totalRevenue);
+      productAggregation[key].quantity += item.quantity;
+      productAggregation[key].revenue += itemRevenue;
+      productAggregation[key].discount += itemDiscount;
     });
 
     const aggregatedProducts = Object.values(productAggregation)
-      .map(p => ({
+      .map((p: any) => ({
         ...p,
         basePriceAtSale: p.quantity > 0 ? (p.revenue + p.discount) / p.quantity : 0
       }))
-      .filter(p => p.quantity > 0) // Sembunyikan produk yang sudah di-VOID habis
-      .sort((a, b) => b.quantity - a.quantity);
-
-    const dailySales = Object.entries(dailyAggregation).map(([date, revenue]) => ({
-      createdAt: new Date(date),
-      totalPrice: revenue,
-    }));
+      .filter((p: any) => p.quantity > 0)
+      .sort((a: any, b: any) => b.quantity - a.quantity);
 
     return {
       revenue: totalRevenue,

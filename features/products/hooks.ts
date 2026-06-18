@@ -19,6 +19,7 @@ import {
   getPublicProductById,
   getProductsForPromo,
   getProductsForTestimonials,
+  getRelatedProducts,
 } from "./api";
 import type { ProductFilters, Product } from "./types";
 
@@ -32,6 +33,7 @@ export const productKeys = {
   variants: (id: string) => ["variants", "product", id] as const,
   promoProductsSelection: (search?: string) => ["products", "promo-selection", search] as const,
   testimonialProductsSelection: (search?: string) => ["products", "testimonial-selection", search] as const,
+  relatedProducts: (id: string) => ["products", "related", id] as const,
 };
 
 /** List produk untuk halaman Admin (dengan pagination & filter) */
@@ -46,7 +48,7 @@ export function useProductsAdmin(filters: ProductFilters = {}, enabled: boolean 
 
 /** Hook untuk mengambil log pergerakan stok universal */
 export function useStockLogs(
-  params: { page?: number; limit?: number; search?: string; type?: string } = {},
+  params: { page?: number; limit?: number; search?: string; type?: string; from?: string; to?: string } = {},
   options: { enabled?: boolean } = {}
 ) {
   return useQuery({
@@ -59,7 +61,7 @@ export function useStockLogs(
 
 /** Hook untuk mengambil log pergerakan stok level SKU (detail) */
 export function useSkuStockLogs(
-  params: { page?: number; limit?: number; search?: string; type?: string; productId?: string; skuId?: string } = {},
+  params: { page?: number; limit?: number; search?: string; type?: string; productId?: string; skuId?: string; from?: string; to?: string } = {},
   options: { enabled?: boolean } = {}
 ) {
   return useQuery({
@@ -111,6 +113,7 @@ export function useUpdateProduct() {
       // Invalidate list AND the specific product detail
       queryClient.invalidateQueries({ queryKey: productKeys.all });
       queryClient.invalidateQueries({ queryKey: productKeys.detail(variables.id) });
+      queryClient.invalidateQueries({ queryKey: productKeys.publicDetail(variables.id) });
       queryClient.invalidateQueries({ queryKey: productKeys.variants(variables.id) });
     },
   });
@@ -135,6 +138,7 @@ export function useDeleteProductImage() {
       deleteProductImage(productId, imageId),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: productKeys.detail(variables.productId) });
+      queryClient.invalidateQueries({ queryKey: productKeys.publicDetail(variables.productId) });
     },
   });
 }
@@ -147,6 +151,7 @@ export function useAddProductImage() {
       addProductImage(productId, file),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: productKeys.detail(variables.productId) });
+      queryClient.invalidateQueries({ queryKey: productKeys.publicDetail(variables.productId) });
     },
   });
 }
@@ -179,5 +184,15 @@ export function useProductsForTestimonials(search?: string, enabled: boolean = t
     queryFn: () => getProductsForTestimonials(search),
     placeholderData: (prev) => prev,
     enabled,
+  });
+}
+
+/** Hook untuk mengambil rekomendasi produk serupa (KNN) */
+export function useRelatedProducts(productId: string) {
+  return useQuery({
+    queryKey: productKeys.relatedProducts(productId),
+    queryFn: () => getRelatedProducts(productId),
+    enabled: !!productId,
+    staleTime: 1000 * 60 * 10, // Cache selama 10 menit
   });
 }

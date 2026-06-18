@@ -97,7 +97,7 @@ export async function addProductImage(productId: string, file: File) {
 }
 
 /** GET /api/admin/stock/logs — Histori pergerakan stok universal */
-export async function getStockLogs(params: { page?: number; limit?: number; search?: string; type?: string } = {}) {
+export async function getStockLogs(params: { page?: number; limit?: number; search?: string; type?: string; from?: string; to?: string } = {}) {
   try {
     const res = await api.get("/api/admin/stock/logs", { params });
     return res.data;
@@ -107,7 +107,7 @@ export async function getStockLogs(params: { page?: number; limit?: number; sear
 }
 
 /** GET /api/admin/stock/logs/sku — Histori pergerakan stok level SKU */
-export async function getSkuStockLogs(params: { page?: number; limit?: number; search?: string; type?: string; productId?: string; skuId?: string } = {}) {
+export async function getSkuStockLogs(params: { page?: number; limit?: number; search?: string; type?: string; productId?: string; skuId?: string; from?: string; to?: string } = {}) {
   try {
     const res = await api.get("/api/admin/stock/logs/sku", { params });
     return res.data;
@@ -143,5 +143,15 @@ export async function getProductsForTestimonials(search?: string) {
     return res.data;
   } catch (error: any) {
     throw new Error(error?.response?.data?.message || "Gagal mengambil daftar produk untuk testimoni");
+  }
+}
+
+/** GET /api/recommend/:id — Get related products based on KNN recommendation */
+export async function getRelatedProducts(productId: string) {
+  try {
+    const res = await api.get(`/api/recommend/${productId}`);
+    return res.data;
+  } catch (error: any) {
+    throw new Error(error?.response?.data?.message || "Gagal mengambil rekomendasi produk serupa");
   }
 }

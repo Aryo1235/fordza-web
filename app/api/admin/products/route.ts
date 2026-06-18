@@ -67,7 +67,10 @@ export async function POST(req: Request) {
       name: formData.get("name"),
       // price & stock tidak ada di form induk — dikelola per varian
       shortDescription: formData.get("shortDescription"),
-      productType: formData.get("productType"),
+      productType: (() => {
+        const val = formData.get("productType");
+        return (val === "" || val === "null" || val === "undefined" || val === null) ? undefined : val;
+      })(),
       gender: formData.get("gender") || "Unisex",
       categoryIds,
       description: formData.get("description"),

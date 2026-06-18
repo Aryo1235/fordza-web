@@ -11,10 +11,10 @@ export async function GET(
   try {
     const { id } = await params;
 
-    const result = await RecommendationService.getRecommendations(id, 6);
+    const result = await RecommendationService.getRecommendations(id, 4);
 
     if (!result) {
-   throw new AppError("Produk tidak ditemukan atau tidak memiliki rekomendasi", 404, "NOT_FOUND");
+      throw new AppError("Produk tidak ditemukan atau tidak memiliki rekomendasi", 404, "NOT_FOUND");
     }
 
     return NextResponse.json(
@@ -30,4 +30,4 @@ export async function GET(
   }
 }
 
-   
+
