@@ -56,24 +56,11 @@ export default function PublicNavbar() {
           aria-label="Fordza Home"
         >
           {/* icon mark */}
-          <div className={cn(
-            "flex size-7 items-center justify-center rounded-md transition-colors duration-500",
-            scrolled ? "bg-white/15" : "bg-white/20"
-          )}>
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              className="size-4 text-[var(--fordza-cream)]"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.57a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.57a2 2 0 0 0-1.34-2.23z" />
-            </svg>
+          <div className="flex size-9 items-center justify-center rounded-lg overflow-hidden bg-white p-[0.5px] shadow-sm">
+            <img src="/logo-fordza.png" alt="Fordza Logo" className="h-full w-full object-contain" />
           </div>
           <span
-            className="text-xl font-bold tracking-wide transition-colors duration-500"
+            className="text-lg font-bold tracking-wide transition-colors duration-500"
             style={{
               color: "var(--fordza-cream)",
               fontFamily: "var(--font-playfair), Georgia, serif",
@@ -143,8 +130,11 @@ export default function PublicNavbar() {
                 onClick={() => setOpen(false)}
                 className="flex items-center gap-2"
               >
+                <div className="flex size-8 items-center justify-center rounded-lg overflow-hidden bg-white p-[0.5px]">
+                  <img src="/logo-fordza.png" alt="Fordza Logo" className="h-full w-full object-contain" />
+                </div>
                 <span
-                  className="text-xl font-bold"
+                  className="text-base font-bold tracking-wide"
                   style={{
                     color: "var(--fordza-cream)",
                     fontFamily: "var(--font-playfair), Georgia, serif",

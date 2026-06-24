@@ -60,22 +60,32 @@ export function AdminSidebar() {
 
   return (
     <Sidebar collapsible="icon" variant="sidebar" className="border-none bg-[#3C3025]">
-      <SidebarHeader className="bg-[#3C3025] py-6 px-4">
-        <div className="flex items-center gap-3 overflow-hidden">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#FEF4E8] text-[#3C3025]">
-            <span className="font-bold">F</span>
+      <SidebarHeader className={cn(
+        "bg-[#3C3025] pt-5 pb-1 transition-all duration-300",
+        state === "collapsed" && !isMobile ? "px-0" : "px-4"
+      )}>
+        <div className="flex flex-col items-center justify-center text-center w-full overflow-hidden transition-all duration-300">
+          <div className={cn(
+            "shrink-0 items-center justify-center rounded-lg overflow-hidden bg-white transition-all duration-300",
+            state === "collapsed" && !isMobile
+              ? "flex h-8 w-8 p-[0.5px]"
+              : "flex h-10 w-10 p-[1px]"
+          )}>
+            <img src="/logo-fordza.png" alt="Fordza Logo" className="h-full w-full object-contain" />
           </div>
           <div className={cn(
-            "flex flex-col transition-opacity duration-300",
-            state === "collapsed" && !isMobile ? "opacity-0 invisible w-0" : "opacity-100"
+            "flex flex-col transition-all duration-300",
+            state === "collapsed" && !isMobile
+              ? "opacity-0 invisible h-0 w-0 pointer-events-none mt-0"
+              : "opacity-100 mt-2"
           )}>
             <p className="font-bold text-sm leading-tight text-white">Fordza</p>
-            <p className="text-[10px] text-[#c4a882] leading-tight uppercase tracking-widest">Admin Panel</p>
+            <p className="text-[10px] text-[#c4a882] leading-tight uppercase tracking-widest mt-0.5">Admin Panel</p>
           </div>
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="bg-[#3C3025] px-2 py-4">
+      <SidebarContent className="bg-[#3C3025] px-2 pt-1 pb-4">
         <SidebarMenu className="gap-1.5">
           {navItems.map((item) => {
             const Icon = item.icon;
