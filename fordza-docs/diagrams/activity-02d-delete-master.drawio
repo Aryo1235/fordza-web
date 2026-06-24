@@ -1,97 +1,106 @@
-<mxfile host="app.diagrams.net" agent="5.0">
+<mxfile host="app.diagrams.net" agent="5.0" version="21.0.0" type="device">
   <diagram name="Activity Diagram - Hapus Data Master" id="diagram-1">
-    <mxGraphModel dx="1094" dy="571" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="550" math="0" shadow="0">
+    <mxGraphModel dx="1422" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="550" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-        <mxCell id="hdr_actor" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;align=center;strokeWidth=1;" value="Admin" vertex="1">
-          <mxGeometry height="40" width="200" x="40" y="40" as="geometry" />
+        <mxCell id="hdr_actor" value="Admin" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;align=center;strokeWidth=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="40" width="200" height="40" as="geometry" />
         </mxCell>
-        <mxCell id="hdr_system" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;align=center;strokeWidth=1;" value="Sistem (Backend)" vertex="1">
-          <mxGeometry height="40" width="300" x="240" y="40" as="geometry" />
+        <mxCell id="hdr_system" value="Sistem (Backend)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;align=center;strokeWidth=1;" vertex="1" parent="1">
+          <mxGeometry x="240" y="40" width="300" height="40" as="geometry" />
         </mxCell>
-        <mxCell id="hdr_db" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;align=center;strokeWidth=1;" value="Database" vertex="1">
-          <mxGeometry height="40" width="240" x="540" y="40" as="geometry" />
+        <mxCell id="hdr_db" value="Database" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;align=center;strokeWidth=1;" vertex="1" parent="1">
+          <mxGeometry x="540" y="40" width="240" height="40" as="geometry" />
         </mxCell>
-        <mxCell id="start" parent="1" style="ellipse;html=1;shape=startState;fillColor=#000000;strokeColor=none;" value="" vertex="1">
-          <mxGeometry height="30" width="30" x="125" y="100" as="geometry" />
+        <mxCell id="start" value="" style="ellipse;html=1;shape=startState;fillColor=#000000;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="125" y="100" width="30" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="act_click_del" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Klik Tombol Hapus &lt;br&gt;pada Baris Tabel" vertex="1">
-          <mxGeometry height="50" width="120" x="80" y="160" as="geometry" />
+        <mxCell id="act_click_del" value="Klik Tombol Hapus pada Baris Tabel" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="40" y="140" width="200" height="50" as="geometry" />
         </mxCell>
-        <mxCell id="act_show_dialog" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#d5e8d4;strokeColor=#82b366;" value="Tampilkan Dialog Konfirmasi Hapus" vertex="1">
-          <mxGeometry height="50" width="200" x="300" y="235" as="geometry" />
+        <mxCell id="act_show_dialog" value="Tampilkan Dialog Konfirmasi Hapus" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="290" y="140" width="200" height="50" as="geometry" />
         </mxCell>
-        <mxCell id="dec_confirm" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="Konfirmasi?" vertex="1">
-          <mxGeometry height="80" width="80" x="120" y="220" as="geometry" />
+        <mxCell id="dec_confirm" value="Konfirmasi?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="100" y="220" width="80" height="80" as="geometry" />
         </mxCell>
-        <mxCell id="act_send_del" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Kirim DELETE/&lt;br&gt;PATCH Request" vertex="1">
-          <mxGeometry height="50" width="120" x="100" y="340" as="geometry" />
+        <mxCell id="act_send_del" value="Kirim DELETE/PATCH Request" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="50" y="320" width="180" height="50" as="geometry" />
         </mxCell>
-        <mxCell id="act_delete_sys" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#d5e8d4;strokeColor=#82b366;" value="Proses Deaktifasi Status (isActive=false)" vertex="1">
-          <mxGeometry height="50" width="220" x="290" y="340" as="geometry" />
+        <mxCell id="act_delete_sys" value="Proses Deaktifasi Status (isActive=false)" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="280" y="320" width="220" height="50" as="geometry" />
         </mxCell>
-        <mxCell id="db_delete" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#f8cecc;strokeColor=#b85450;" value="prisma.[entity].update()" vertex="1">
-          <mxGeometry height="50" width="160" x="600" y="400" as="geometry" />
+        <mxCell id="db_delete" value="prisma.[entity].update()" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="580" y="320" width="160" height="50" as="geometry" />
         </mxCell>
-        <mxCell id="act_success_sys" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#d5e8d4;strokeColor=#82b366;" value="Kirim Respon Sukses Hapus" vertex="1">
-          <mxGeometry height="50" width="200" x="300" y="480" as="geometry" />
+        <mxCell id="act_success_sys" value="Kirim Respon Sukses Hapus" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="290" y="400" width="200" height="50" as="geometry" />
         </mxCell>
-        <mxCell id="act_success_ui" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Hapus Baris dari Tabel &lt;br&gt;&amp;amp; Toast Sukses" vertex="1">
-          <mxGeometry height="50" width="140" x="90" y="480" as="geometry" />
+        <mxCell id="act_success_ui" value="Hapus Baris dari Tabel &amp; Toast Sukses" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="30" y="400" width="220" height="50" as="geometry" />
         </mxCell>
-        <mxCell id="end" parent="1" style="ellipse;html=1;shape=endState;fillColor=#000000;strokeColor=#000000;" value="" vertex="1">
-          <mxGeometry height="30" width="30" x="50" y="540" as="geometry" />
+        <mxCell id="end" value="" style="ellipse;html=1;shape=endState;fillColor=#000000;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="125" y="480" width="30" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="pool_left" parent="1" style="line;strokeWidth=1;fillColor=none;align=left;dashed=0;strokeColor=#666666;direction=south;" value="" vertex="1">
-          <mxGeometry height="520" width="1" x="40" y="80" as="geometry" />
+        <mxCell id="pool_left" value="" style="line;strokeWidth=1;fillColor=none;align=left;dashed=0;strokeColor=#666666;direction=south;" vertex="1" parent="1">
+          <mxGeometry x="40" y="80" width="1" height="410" as="geometry" />
         </mxCell>
-        <mxCell id="pool_div1" parent="1" style="line;strokeWidth=1;fillColor=none;align=left;dashed=0;strokeColor=#666666;direction=south;" value="" vertex="1">
-          <mxGeometry height="520" width="1" x="240" y="80" as="geometry" />
+        <mxCell id="pool_div1" value="" style="line;strokeWidth=1;fillColor=none;align=left;dashed=0;strokeColor=#666666;direction=south;" vertex="1" parent="1">
+          <mxGeometry x="240" y="80" width="1" height="410" as="geometry" />
         </mxCell>
-        <mxCell id="pool_div2" parent="1" style="line;strokeWidth=1;fillColor=none;align=left;dashed=0;strokeColor=#666666;direction=south;" value="" vertex="1">
-          <mxGeometry height="520" width="1" x="540" y="80" as="geometry" />
+        <mxCell id="pool_div2" value="" style="line;strokeWidth=1;fillColor=none;align=left;dashed=0;strokeColor=#666666;direction=south;" vertex="1" parent="1">
+          <mxGeometry x="540" y="80" width="1" height="410" as="geometry" />
         </mxCell>
-        <mxCell id="pool_right" parent="1" style="line;strokeWidth=1;fillColor=none;align=left;dashed=0;strokeColor=#666666;direction=south;" value="" vertex="1">
-          <mxGeometry height="520" width="1" x="780" y="80" as="geometry" />
+        <mxCell id="pool_right" value="" style="line;strokeWidth=1;fillColor=none;align=left;dashed=0;strokeColor=#666666;direction=south;" vertex="1" parent="1">
+          <mxGeometry x="780" y="80" width="1" height="410" as="geometry" />
         </mxCell>
-        <mxCell id="pool_bottom" parent="1" style="line;strokeWidth=1;fillColor=none;align=left;dashed=0;strokeColor=#666666;direction=east;" value="" vertex="1">
-          <mxGeometry height="1" width="740" x="40" y="600" as="geometry" />
+        <mxCell id="pool_bottom" value="" style="line;strokeWidth=1;fillColor=none;align=left;dashed=0;strokeColor=#666666;direction=east;" vertex="1" parent="1">
+          <mxGeometry x="40" y="490" width="740" height="1" as="geometry" />
         </mxCell>
-        <mxCell id="edge_1" edge="1" parent="1" source="start" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" target="act_click_del" value="">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="edge_2" edge="1" parent="1" source="act_click_del" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" target="act_show_dialog" value="">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="edge_3" edge="1" parent="1" source="act_show_dialog" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;exitX=0.5;entryX=0.5;" target="dec_confirm" value="">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="edge_4" edge="1" parent="1" source="dec_confirm" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;exitX=0.5;entryX=0.5;" target="act_send_del" value="Y (Ya)">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="edge_5" edge="1" parent="1" source="dec_confirm" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;exitX=1;entryX=0.5;" target="end" value="T (Tidak)">
+        <mxCell id="edge_1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="1" source="start" target="act_click_del">
           <mxGeometry relative="1" as="geometry">
-            <mxArray as="points">
-              <mxPoint x="180" y="260" />
-              <mxPoint x="140" y="260" />
-            </mxArray>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge_6" edge="1" parent="1" source="act_send_del" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" target="act_delete_sys" value="">
-          <mxGeometry relative="1" as="geometry" />
+        <mxCell id="edge_2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="1" source="act_click_del" target="act_show_dialog">
+          <mxGeometry relative="1" as="geometry">
+          </mxGeometry>
         </mxCell>
-        <mxCell id="edge_7" edge="1" parent="1" source="act_delete_sys" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" target="db_delete" value="">
-          <mxGeometry relative="1" as="geometry" />
+        <mxCell id="edge_3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;exitX=0.5;entryX=0.5;" edge="1" parent="1" source="act_show_dialog" target="dec_confirm">
+          <mxGeometry relative="1" as="geometry">
+          </mxGeometry>
         </mxCell>
-        <mxCell id="edge_8" edge="1" parent="1" source="db_delete" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;exitX=0.5;entryX=1;" target="act_success_sys" value="">
-          <mxGeometry relative="1" as="geometry" />
+        <mxCell id="edge_4" value="Y (Ya)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;exitX=0.5;entryX=0.5;" edge="1" parent="1" source="dec_confirm" target="act_send_del">
+          <mxGeometry relative="1" as="geometry">
+          </mxGeometry>
         </mxCell>
-        <mxCell id="edge_9" edge="1" parent="1" source="act_success_sys" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" target="act_success_ui" value="">
-          <mxGeometry relative="1" as="geometry" />
+        <mxCell id="edge_5" value="T (Tidak)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;exitX=1;entryX=0.5;" edge="1" parent="1" source="dec_confirm" target="end">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="180" y="260" />
+              <mxPoint x="140" y="260" />
+            </Array>
+          </mxGeometry>
         </mxCell>
-        <mxCell id="edge_10" edge="1" parent="1" source="act_success_ui" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" target="end" value="">
-          <mxGeometry relative="1" as="geometry" />
+        <mxCell id="edge_6" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="1" source="act_send_del" target="act_delete_sys">
+          <mxGeometry relative="1" as="geometry">
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge_7" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="1" source="act_delete_sys" target="db_delete">
+          <mxGeometry relative="1" as="geometry">
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge_8" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;exitX=0.5;entryX=1;" edge="1" parent="1" source="db_delete" target="act_success_sys">
+          <mxGeometry relative="1" as="geometry">
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge_9" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="1" source="act_success_sys" target="act_success_ui">
+          <mxGeometry relative="1" as="geometry">
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge_10" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="1" source="act_success_ui" target="end">
+          <mxGeometry relative="1" as="geometry">
+          </mxGeometry>
         </mxCell>
       </root>
     </mxGraphModel>

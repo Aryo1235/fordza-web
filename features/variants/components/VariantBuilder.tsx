@@ -83,6 +83,7 @@ export function StockGrid({
   onToggleBigsize,
   onDelete,
   deletingSize,
+  sizeTemplates = [],
 }: {
   sizes: string[];
   stockPerSize: Record<string, number>;
@@ -91,6 +92,7 @@ export function StockGrid({
   onToggleBigsize: (size: string) => void;
   onDelete?: (size: string) => void;
   deletingSize?: string | null;
+  sizeTemplates?: string[];
 }) {
   if (sizes.length === 0) {
     return (
@@ -116,6 +118,8 @@ export function StockGrid({
       <div className="flex flex-wrap gap-2">
         {sizes.map((size) => {
           const isBig = bigsizeSizes.includes(size);
+          const isDeletable = onDelete && !sizeTemplates.includes(size);
+
           return (
             <div
               key={size}
@@ -129,7 +133,7 @@ export function StockGrid({
                   <Loader2 className="w-4 h-4 animate-spin text-red-600" />
                 </div>
               )}
-              {onDelete && !deletingSize && (
+              {isDeletable && !deletingSize && (
                 <button
                   type="button"
                   onClick={(e) => {
@@ -502,27 +506,31 @@ function AddVariantInlineForm({
       </div>
 
       <div className="pt-4 border-t border-stone-200 grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-1">
-          <Label className="text-xs">Harga Khusus Bigsize (Opsional)</Label>
-          <Controller
-            control={control}
-            name="bigsizePrice"
-            render={({ field }) => (
-              <Input
-                type="text"
-                value={field.value ? formatNumber(field.value) : ""}
-                onChange={(e) => field.onChange(parseNumber(e.target.value))}
-                placeholder="Rp"
-                className="h-9 border-amber-300 bg-amber-50"
-              />
+        {bigsizeSizes.length > 0 ? (
+          <div className="space-y-1">
+            <Label className="text-xs">Harga Khusus Bigsize (Opsional)</Label>
+            <Controller
+              control={control}
+              name="bigsizePrice"
+              render={({ field }) => (
+                <Input
+                  type="text"
+                  value={field.value ? formatNumber(field.value) : ""}
+                  onChange={(e) => field.onChange(parseNumber(e.target.value))}
+                  placeholder="Rp"
+                  className="h-9 border-amber-300 bg-amber-50"
+                />
+              )}
+            />
+            {errors.bigsizePrice && (
+              <p className="text-xs text-red-500">
+                {errors.bigsizePrice.message}
+              </p>
             )}
-          />
-          {errors.bigsizePrice && (
-            <p className="text-xs text-red-500">
-              {errors.bigsizePrice.message}
-            </p>
-          )}
-        </div>
+          </div>
+        ) : (
+          <div />
+        )}
         <div className="flex items-end justify-end gap-2">
           <Button
             type="button"

@@ -16,6 +16,7 @@ import { Lock, AlertTriangle, X } from "lucide-react";
 import { toast } from "sonner";
 import { cn, formatNumber, parseNumber } from "@/lib/utils";
 import { useCloseShift } from "../hooks";
+import { jsPDF } from "jspdf";
 
 interface CloseShiftModalProps {
   isOpen: boolean;
@@ -32,6 +33,125 @@ export function CloseShiftModal({ isOpen, onClose }: CloseShiftModalProps) {
     setDisplayValue(raw === "" ? "" : formatNumber(raw));
   };
 
+  const generateShiftPDF = (shift: any) => {
+    const doc = new jsPDF({ unit: "mm", format: [80, 160], orientation: "portrait" });
+
+    let y = 10;
+    const lineH = 5;
+    const marginX = 5;
+    const rightAlignX = 75;
+
+    const formatRp = (amount: number) => {
+      return `Rp ${amount.toLocaleString("id-ID")}`;
+    };
+
+    const formatDate = (dateStr: string | null) => {
+      if (!dateStr) return "-";
+      return new Date(dateStr).toLocaleString("id-ID", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    };
+
+    // Header
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.text("FORDZA SHOP", 40, y, { align: "center" });
+    y += lineH;
+    doc.text("LAPORAN TUTUP SHIFT", 40, y, { align: "center" });
+    y += lineH;
+    doc.setFontSize(8);
+    doc.text("(Z-REPORT)", 40, y, { align: "center" });
+    y += lineH;
+
+    doc.line(marginX, y, rightAlignX, y);
+    y += lineH * 0.8;
+
+    // Info
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7);
+    doc.text(`ID Shift    : ${shift.id}`, marginX, y); y += lineH * 0.8;
+    doc.text(`Kasir       : ${shift.admin?.name || shift.admin?.username || "-"}`, marginX, y); y += lineH * 0.8;
+    doc.text(`Buka Shift  : ${formatDate(shift.startTime)}`, marginX, y); y += lineH * 0.8;
+    doc.text(`Tutup Shift : ${formatDate(shift.endTime)}`, marginX, y); y += lineH * 0.8;
+    
+    doc.line(marginX, y, rightAlignX, y);
+    y += lineH * 0.8;
+
+    // Omzet Penjualan
+    doc.setFont("helvetica", "bold");
+    doc.text("OMZET PENJUALAN SHIFT", marginX, y);
+    y += lineH;
+    doc.setFont("helvetica", "normal");
+    doc.text("- Penjualan Tunai (Cash)", marginX, y);
+    doc.text(formatRp(shift.cashSales || 0), rightAlignX, y, { align: "right" });
+    y += lineH * 0.8;
+    doc.text("- Penjualan QRIS", marginX, y);
+    doc.text(formatRp(shift.qrisSales || 0), rightAlignX, y, { align: "right" });
+    y += lineH * 0.8;
+    doc.text("- Penjualan Debit", marginX, y);
+    doc.text(formatRp(shift.debitSales || 0), rightAlignX, y, { align: "right" });
+    y += lineH * 0.8;
+
+    const totalSales = (shift.cashSales || 0) + (shift.qrisSales || 0) + (shift.debitSales || 0);
+    doc.setFont("helvetica", "bold");
+    doc.text("Total Penjualan", marginX, y);
+    doc.text(formatRp(totalSales), rightAlignX, y, { align: "right" });
+    y += lineH * 0.8;
+
+    doc.line(marginX, y, rightAlignX, y);
+    y += lineH * 0.8;
+
+    // Audit Laci Kasir
+    doc.setFont("helvetica", "bold");
+    doc.text("AUDIT LACI KASIR", marginX, y);
+    y += lineH;
+    doc.setFont("helvetica", "normal");
+    doc.text("- Modal Awal (Starting)", marginX, y);
+    doc.text(formatRp(shift.startingCash || 0), rightAlignX, y, { align: "right" });
+    y += lineH * 0.8;
+    doc.text("- Omzet Tunai (Cash)", marginX, y);
+    doc.text(formatRp(shift.cashSales || 0), rightAlignX, y, { align: "right" });
+    y += lineH * 0.8;
+
+    doc.setFont("helvetica", "bold");
+    doc.text("Uang Laci Expected", marginX, y);
+    doc.text(formatRp(shift.expectedEndingCash || 0), rightAlignX, y, { align: "right" });
+    y += lineH * 0.8;
+    doc.text("Uang Laci Fisik (Actual)", marginX, y);
+    doc.text(formatRp(shift.actualEndingCash || 0), rightAlignX, y, { align: "right" });
+    y += lineH * 0.8;
+
+    const diff = (shift.actualEndingCash || 0) - (shift.expectedEndingCash || 0);
+    doc.text("SELISIH (VARIANCE)", marginX, y);
+    doc.text(`${diff === 0 ? "Rp 0 (PAS)" : formatRp(diff)}`, rightAlignX, y, { align: "right" });
+    y += lineH * 0.8;
+
+    doc.line(marginX, y, rightAlignX, y);
+    y += lineH * 0.8;
+
+    // SOP setoran
+    doc.setFont("helvetica", "italic");
+    doc.text(`* Nominal Setoran Cash: ${formatRp(shift.cashSales || 0)}`, marginX, y); y += lineH * 0.8;
+    doc.text(`* Sisa Uang Laci (Modal): ${formatRp(shift.startingCash || 0)}`, marginX, y); y += lineH * 1.2;
+
+    // Signatures
+    doc.setFont("helvetica", "normal");
+    doc.text("Ttd Kasir,", marginX, y);
+    doc.text("Ttd Supervisor,", rightAlignX, y, { align: "right" });
+    y += lineH * 2.5;
+
+    doc.text("(..........................)", marginX, y);
+    doc.text("(..........................)", rightAlignX, y, { align: "right" });
+    y += lineH;
+
+    const formattedDate = new Date().toISOString().split("T")[0];
+    doc.save(`Laporan_Shift_${shift.id}_${formattedDate}.pdf`);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const numericValue = parseNumber(displayValue);
@@ -46,12 +166,23 @@ export function CloseShiftModal({ isOpen, onClose }: CloseShiftModalProps) {
     closeShiftMutation.mutate(
       { actualEndingCash: numericValue },
       {
-        onSuccess: async () => {
+        onSuccess: async (data: any) => {
           toast.success("Shift Berhasil Ditutup", {
-            description: `Fisik Rp ${formatNumber(numericValue)} telah direkam. Sesi kerja Anda selesai.`,
+            description: `Fisik Rp ${formatNumber(numericValue)} telah direkam. Mengunduh laporan shift PDF...`,
           });
-          await fetch("/api/admin/auth/logout", { method: "POST" });
-          window.location.href = "/login";
+          
+          try {
+            generateShiftPDF(data);
+          } catch (pdfError) {
+            console.error("Gagal generate PDF shift:", pdfError);
+            toast.error("Gagal mengunduh PDF laporan shift");
+          }
+
+          // Berikan jeda 1.5 detik agar unduhan terinisiasi dengan baik oleh browser sebelum logout/redirect
+          setTimeout(async () => {
+            await fetch("/api/admin/auth/logout", { method: "POST" });
+            window.location.href = "/login";
+          }, 1500);
         },
         onError: (error: any) => {
           toast.error("Gagal Menutup Shift", {

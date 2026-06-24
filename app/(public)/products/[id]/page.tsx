@@ -358,14 +358,35 @@ export default function ProductDetailPage({
             {/* Price */}
             <motion.div variants={infoItem} className="flex flex-col gap-1 py-6 border-y border-amber-200/50">
               {(() => {
+                // Harga final aktif: pakai finalPrice SKU jika size dipilih, atau fallback ke varian/produk
                 const currentFinalPrice = selectedSizeInfo?.finalPrice
                   ? Number(selectedSizeInfo.finalPrice)
                   : Number(selectedVariant?.finalPrice || product.finalPrice || product.price);
-                const highestPrice = Number(selectedVariant?.highestPrice || product.highestPrice || product.price);
-                let totalDiscountPercent = selectedVariant?.totalDiscountPercent || product.totalDiscountPercent || 0;
-                if (selectedSizeInfo?.finalPrice && highestPrice > currentFinalPrice) {
-                  totalDiscountPercent = Math.round(((highestPrice - currentFinalPrice) / highestPrice) * 100);
-                }
+
+                // Deteksi bigsize: SKU yang punya priceOverride
+                const skuPriceOverride = selectedSizeInfo?.priceOverride
+                  ? Number(selectedSizeInfo.priceOverride)
+                  : null;
+                const isBigsizeSelected = !!skuPriceOverride;
+
+                // Harga referensi produk (comparisonPrice/gimmick) — berlaku untuk semua ukuran
+                const variantHighestPrice = Number(selectedVariant?.highestPrice || product.highestPrice || product.price || 0);
+
+                // Harga coret — pakai referensi tertinggi yang ada:
+                // - Jika bigsize lebih murah dari referensi produk (130k < 150k) → pakai referensi (150k)
+                // - Jika bigsize lebih mahal dari referensi (180k > 150k) → pakai priceOverride (180k)
+                //   agar harga coret = harga asli bigsize sebelum promo
+                // - Ukuran normal: selalu pakai referensi produk (variantHighestPrice)
+                const effectiveHighestPrice = isBigsizeSelected
+                  ? Math.max(skuPriceOverride!, variantHighestPrice)
+                  : variantHighestPrice;
+
+                // Badge diskon: hanya tampil jika ada saving nyata dari harga coret
+                const totalDiscountPercent =
+                  effectiveHighestPrice > currentFinalPrice
+                    ? Math.round(((effectiveHighestPrice - currentFinalPrice) / effectiveHighestPrice) * 100)
+                    : 0;
+
                 return (
                   <>
                     <div className="flex items-baseline gap-4 flex-wrap">
@@ -375,11 +396,16 @@ export default function ProductDetailPage({
                           Hemat {totalDiscountPercent}%
                         </span>
                       )}
+                      {isBigsizeSelected && (
+                        <span className="rounded bg-amber-100 px-2 py-1 text-[10px] font-black uppercase tracking-widest text-amber-700">
+                          Bigsize
+                        </span>
+                      )}
                     </div>
-                    {highestPrice > currentFinalPrice && (
+                    {effectiveHighestPrice > currentFinalPrice && (
                       <div className="flex items-center gap-3 mt-1">
                         <span className="text-base font-bold text-[#4A3B2E]/40 line-through decoration-[#4A3B2E]/30">
-                          {formatRupiah(highestPrice)}
+                          {formatRupiah(effectiveHighestPrice)}
                         </span>
                         {selectedVariant?.promoName && (
                           <span className="text-[10px] font-black uppercase tracking-wider text-amber-700 bg-amber-100 px-2 py-0.5 rounded-sm">

@@ -115,9 +115,9 @@
         </mxCell>
         <mxCell id="edge_11" value="T (Tidak)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;exitX=1;entryX=0.5;" edge="1" parent="1" source="dec_export" target="end">
           <mxGeometry relative="1" as="geometry">
-            <mxArray as="points">
+            <Array as="points">
               <mxPoint x="140" y="770" />
-            </mxArray>
+            </Array>
           </mxGeometry>
         </mxCell>
         <mxCell id="edge_12" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="1" source="act_export_req" target="act_export_api">

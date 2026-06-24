@@ -1,5 +1,5 @@
 <mxfile host="app.diagrams.net" agent="5.0" version="21.0.0" type="device">
-  <diagram name="Activity Diagram - Login & Autentikasi" id="diagram-1">
+  <diagram name="Activity Diagram - Login &amp; Autentikasi" id="diagram-1">
     <mxGraphModel dx="1422" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1120" math="0" shadow="0">
       <root>
         <mxCell id="0" />
@@ -111,10 +111,10 @@
         </mxCell>
         <mxCell id="edge_6" value="Kembali" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;exitX=0.5;entryX=0.5;" edge="1" parent="1" source="act_error_429" target="act_input">
           <mxGeometry relative="1" as="geometry">
-            <mxArray as="points">
+            <Array as="points">
               <mxPoint x="520" y="115" />
               <mxPoint x="140" y="115" />
-            </mxArray>
+            </Array>
           </mxGeometry>
         </mxCell>
         <mxCell id="edge_7" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="1" source="act_validate" target="dec_validate">
@@ -131,10 +131,10 @@
         </mxCell>
         <mxCell id="edge_10" value="Kembali" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;exitX=0.5;entryX=0.5;" edge="1" parent="1" source="act_error_400" target="act_input">
           <mxGeometry relative="1" as="geometry">
-            <mxArray as="points">
+            <Array as="points">
               <mxPoint x="520" y="115" />
               <mxPoint x="140" y="115" />
-            </mxArray>
+            </Array>
           </mxGeometry>
         </mxCell>
         <mxCell id="edge_11" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="1" source="act_search_db" target="db_search">
@@ -155,10 +155,10 @@
         </mxCell>
         <mxCell id="edge_15" value="Kembali" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;exitX=0.5;entryX=0.5;" edge="1" parent="1" source="act_error_401_user" target="act_input">
           <mxGeometry relative="1" as="geometry">
-            <mxArray as="points">
+            <Array as="points">
               <mxPoint x="520" y="115" />
               <mxPoint x="140" y="115" />
-            </mxArray>
+            </Array>
           </mxGeometry>
         </mxCell>
         <mxCell id="edge_16" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="1" source="act_verify_pwd" target="dec_pwd">
@@ -175,10 +175,10 @@
         </mxCell>
         <mxCell id="edge_19" value="Kembali" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;exitX=0.5;entryX=0.5;" edge="1" parent="1" source="act_error_401_pwd" target="act_input">
           <mxGeometry relative="1" as="geometry">
-            <mxArray as="points">
+            <Array as="points">
               <mxPoint x="520" y="115" />
               <mxPoint x="140" y="115" />
-            </mxArray>
+            </Array>
           </mxGeometry>
         </mxCell>
         <mxCell id="edge_20" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="1" source="act_gen_token" target="act_set_cookie">

@@ -401,6 +401,7 @@ export default function EditProductPage({
                     name="productType"
                     render={({ field }) => (
                       <Select
+                        key={`type-${field.value}`}
                         value={field.value || "none"}
                         onValueChange={(val) => field.onChange(val === "none" ? null : val)}
                       >

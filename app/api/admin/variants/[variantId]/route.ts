@@ -221,6 +221,7 @@ export async function PATCH(
               stock: skuData.stock,
               priceOverride: skuData.priceOverride ?? null,
               isActive: skuData.isActive ?? true,
+              deletedAt: null, // Reset deletedAt to null if it's reactivated/updated
             },
           });
 

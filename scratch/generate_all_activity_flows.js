@@ -146,7 +146,7 @@ class ActivityBuilder {
     ];
 
     let xml = `<mxfile host="app.diagrams.net" agent="5.0" version="21.0.0" type="device">\n`;
-    xml += `  <diagram name="${this.name}" id="diagram-1">\n`;
+    xml += `  <diagram name="${this.name.replace(/&/g, '&amp;')}" id="diagram-1">\n`;
     xml += `    <mxGraphModel dx="1422" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="${customHeight}" math="0" shadow="0">\n`;
     xml += `      <root>\n`;
     xml += `        <mxCell id="0" />\n`;
@@ -171,11 +171,11 @@ class ActivityBuilder {
       xml += `        <mxCell id="${edge.id}" value="${edge.label || ''}" style="${edge.style}" edge="1" parent="1" source="${edge.sourceId}" target="${edge.targetId}">\n`;
       xml += `          <mxGeometry relative="1" as="geometry">\n`;
       if (edge.points && edge.points.length > 0) {
-        xml += `            <mxArray as="points">\n`;
+        xml += `            <Array as="points">\n`;
         for (const pt of edge.points) {
           xml += `              <mxPoint x="${pt.x}" y="${pt.y}" />\n`;
         }
-        xml += `            </mxArray>\n`;
+        xml += `            </Array>\n`;
       }
       xml += `          </mxGeometry>\n`;
       xml += `        </mxCell>\n`;
@@ -529,80 +529,95 @@ console.log("Generated: activity-05-sales-report.drawio");
 const actCheckout = new ActivityBuilder("Activity Diagram - Transaksi POS (Checkout)")
   .addHeader("Kasir", "Sistem POS (POS/Backend)", "Database")
   .addStart("actor", 100)
-  .addAction("act_cart", "Masukkan Produk ke Keranjang POS", "actor", 140, 200, 50)
-  .addAction("act_val_stock", "Cek Ketersediaan Stok SKU Fisik", "system", 140, 200, 50)
-  .addAction("db_stock", "Query SKU/Product Stock", "db", 140)
-  .addDecision("dec_stock", "Stok Cukup?", "system", 220)
-  .addAction("act_err_stock", "Tampilkan Error (Stok Tidak Cukup)", "system", 235, 200, 50, 130) // Shifted right
+  
+  // Shift Check (At the very beginning)
+  .addAction("act_check_shift", "Verifikasi Laci Shift Kasir Aktif", "system", 140, 200, 50)
+  .addAction("db_shift", "Query Open Shift by Kasir ID", "db", 140)
+  .addDecision("dec_shift", "Shift Aktif?", "system", 220)
+  .addAction("act_err_shift", "Tampilkan Error (Harus Buka Shift)", "system", 235, 200, 50, 130) // Shifted right
+
+  // Main POS Flow (If Shift Active)
+  .addAction("act_cart", "Masukkan Produk ke Keranjang POS", "actor", 320, 200, 50)
+  .addAction("act_val_stock", "Cek Ketersediaan Stok SKU Fisik", "system", 320, 200, 50)
+  .addAction("db_stock", "Query SKU/Product Stock", "db", 320)
+  .addDecision("dec_stock", "Stok Cukup?", "system", 400)
+  .addAction("act_err_stock", "Tampilkan Error (Stok Tidak Cukup)", "system", 415, 200, 50, 130) // Shifted right
   
   // Promo Calculation
-  .addAction("act_promo", "Cari Promo Aktif (Variant -> Product -> Category -> Global)", "system", 320, 240, 55)
-  .addAction("db_promo", "Query Active Promos", "db", 320)
-  .addDecision("dec_promo", "Memenuhi minPurchase?", "system", 410, 100, 80)
-  .addAction("act_apply_promo", "Hitung & Terapkan Potongan Harga", "system", 510, 200, 50)
-  .addAction("act_no_promo", "Gunakan Harga Normal", "system", 425, 160, 50, 130) // Shifted right
+  .addAction("act_promo", "Cari Promo Aktif (Variant -> Product -> Category -> Global)", "system", 500, 240, 55)
+  .addAction("db_promo", "Query Active Promos", "db", 500)
+  .addDecision("dec_promo", "Memenuhi minPurchase?", "system", 590, 100, 80)
+  .addAction("act_apply_promo", "Hitung & Terapkan Potongan Harga", "system", 690, 200, 50)
+  .addAction("act_no_promo", "Gunakan Harga Normal", "system", 605, 160, 50, 130) // Shifted right
 
   // Auth Threshold
-  .addDecision("dec_auth", "Total Diskon > Rp 300.000?", "system", 600, 100, 80)
-  .addAction("act_input_pin", "Minta PIN Otorisasi Admin", "actor", 695)
-  .addAction("act_verify_pin", "Verifikasi PIN Admin di DB", "system", 695)
-  .addAction("db_pin", "Query Admin by PIN", "db", 695)
-  .addDecision("dec_pin", "PIN Valid?", "system", 780)
-  .addAction("act_err_pin", "Tampilkan Error PIN Salah", "system", 795, 160, 50, 130) // Shifted right
-
-  // Shift Check
-  .addAction("act_check_shift", "Verifikasi Laci Shift Kasir Aktif", "system", 870, 200, 50)
-  .addAction("db_shift", "Query Open Shift by Kasir ID", "db", 870)
-  .addDecision("dec_shift", "Shift Aktif?", "system", 950)
-  .addAction("act_err_shift", "Tampilkan Error (Harus Buka Shift)", "system", 965, 200, 50, 130) // Shifted right
+  .addDecision("dec_auth", "Total Diskon > Rp 300.000?", "system", 780, 100, 80)
+  .addAction("act_input_pin", "Minta PIN Otorisasi Admin", "actor", 875)
+  .addAction("act_verify_pin", "Verifikasi PIN Admin di DB", "system", 875)
+  .addAction("db_pin", "Query Admin by PIN", "db", 875)
+  .addDecision("dec_pin", "PIN Valid?", "system", 960)
+  .addAction("act_err_pin", "Tampilkan Error PIN Salah", "system", 975, 160, 50, 130) // Shifted right
 
   // Payment
-  .addAction("act_payment", "Pilih Pembayaran & Input Nominal Diterima", "actor", 1040, 220, 50)
-  .addDecision("dec_pay", "Nominal >= Total Belanja?", "system", 1120, 100, 80)
-  .addAction("act_err_pay", "Tampilkan Error (Uang Kurang)", "system", 1135, 180, 50, 130) // Shifted right
+  .addAction("act_payment", "Pilih Pembayaran & Input Nominal Diterima", "actor", 1060, 220, 50)
+  .addDecision("dec_pay", "Nominal >= Total Belanja?", "system", 1140, 100, 80)
+  .addAction("act_err_pay", "Tampilkan Error (Uang Kurang)", "system", 1155, 180, 50, 130) // Shifted right
   
   // Save Transaction
-  .addAction("act_save", "Simpan Transaksi, Potong Stok & Buat Logs", "system", 1230, 220, 50)
-  .addAction("db_save", "Insert Transaction, Update Stock & Write logs", "db", 1230, 220, 50)
-  .addAction("act_print", "Cetak Invoice Belanja (POS Printer)", "actor", 1310, 200, 50)
-  .addEnd("end", "actor", 1380)
+  .addAction("act_save", "Simpan Transaksi, Potong Stok & Buat Logs", "system", 1250, 220, 50)
+  .addAction("db_save", "Insert Transaction, Update Stock & Write logs", "db", 1250, 220, 50)
+  .addAction("act_print", "Cetak Invoice Belanja (POS Printer)", "actor", 1330, 200, 50)
+  .addEnd("end", "actor", 1410)
 
   // Edges
-  .addEdge("start", "act_cart")
+  .addEdge("start", "act_check_shift")
+  .addEdge("act_check_shift", "db_shift")
+  .addEdge("db_shift", "dec_shift", "", [], "0.5", "1")
+  .addEdge("dec_shift", "act_err_shift", "T (Tidak)", [], "1", "0.5")
+  // act_err_shift → end: Route down the right side (db column) then cut left to actor end
+  .addEdge("act_err_shift", "end", "Selesai", [ { x: 660, y: 270 }, { x: 660, y: 1430 }, { x: 125, y: 1430 } ], "0.5", "0.5")
+
+  .addEdge("dec_shift", "act_cart", "Y (Ada)", [], "0.5", "0.5")
   .addEdge("act_cart", "act_val_stock")
   .addEdge("act_val_stock", "db_stock")
   .addEdge("db_stock", "dec_stock", "", [], "0.5", "1")
   .addEdge("dec_stock", "act_err_stock", "T (No)", [], "1", "0.5")
+  // act_err_stock → act_cart: loop back via right column, then swing left back to actor
+  .addEdge("act_err_stock", "act_cart", "Kembali", [ { x: 660, y: 440 }, { x: 660, y: 345 }, { x: 125, y: 345 } ], "0.5", "0.5")
+
   .addEdge("dec_stock", "act_promo", "Y (Yes)")
-  .addEdge("act_err_stock", "act_cart", "Kembali", [ { x: 520, y: 115 }, { x: 140, y: 115 } ], "0.5", "0.5")
   .addEdge("act_promo", "db_promo")
   .addEdge("db_promo", "dec_promo", "", [], "0.5", "1")
   .addEdge("dec_promo", "act_apply_promo", "Y (Yes)", [], "0.5", "0.5")
   .addEdge("dec_promo", "act_no_promo", "T (No)", [], "1", "0.5")
-  .addEdge("act_apply_promo", "dec_auth", "", [ { x: 390, y: 570 } ])
-  .addEdge("act_no_promo", "dec_auth", "", [ { x: 390, y: 570 } ])
-  .addEdge("dec_auth", "act_check_shift", "T (Tidak)", [], "0.5", "0.5")
-  .addEdge("dec_auth", "act_input_pin", "Y (Ya)", [ { x: 140, y: 640 } ], "0.5", "0.5")
+  // Merge both promo paths into dec_auth with DISTINCT waypoints to avoid overlap
+  .addEdge("act_apply_promo", "dec_auth", "", [ { x: 390, y: 740 }, { x: 390, y: 800 } ])
+  .addEdge("act_no_promo", "dec_auth", "", [ { x: 480, y: 665 }, { x: 480, y: 800 } ])
+
+  // dec_auth → act_payment (skip PIN): straight down in system column
+  .addEdge("dec_auth", "act_payment", "T (Tidak)", [], "0.5", "0.5")
+  // dec_auth → act_input_pin (require PIN): route left to actor column
+  .addEdge("dec_auth", "act_input_pin", "Y (Ya)", [ { x: 350, y: 840 }, { x: 125, y: 840 } ], "1", "0.5")
   .addEdge("act_input_pin", "act_verify_pin")
   .addEdge("act_verify_pin", "db_pin")
   .addEdge("db_pin", "dec_pin", "", [], "0.5", "1")
-  .addEdge("dec_pin", "act_check_shift", "Y (Valid)", [], "0.5", "0.5")
+  // dec_pin → act_payment (PIN valid): route right back to system column at payment y
+  .addEdge("dec_pin", "act_payment", "Y (Valid)", [ { x: 350, y: 1000 }, { x: 350, y: 1085 } ], "0.5", "0.5")
   .addEdge("dec_pin", "act_err_pin", "T (Salah)", [], "1", "0.5")
-  .addEdge("act_err_pin", "act_input_pin", "Kembali", [ { x: 520, y: 670 }, { x: 140, y: 670 } ], "0.5", "0.5")
-  .addEdge("act_check_shift", "db_shift")
-  .addEdge("db_shift", "dec_shift", "", [], "0.5", "1")
-  .addEdge("dec_shift", "act_payment", "Y (Ada)", [], "0.5", "0.5")
-  .addEdge("dec_shift", "act_err_shift", "T (Tidak ada)", [], "1", "0.5")
-  .addEdge("act_err_shift", "end", "Selesai", [ { x: 520, y: 1350 }, { x: 140, y: 1350 } ])
+  // act_err_pin → act_input_pin: tight local loop within actor column
+  .addEdge("act_err_pin", "act_input_pin", "Kembali", [ { x: 660, y: 1000 }, { x: 660, y: 900 }, { x: 125, y: 900 } ], "0.5", "0.5")
+
   .addEdge("act_payment", "dec_pay")
   .addEdge("dec_pay", "act_save", "Y (Pas/Lebih)", [], "0.5", "0.5")
   .addEdge("dec_pay", "act_err_pay", "T (Uang Kurang)", [], "1", "0.5")
-  .addEdge("act_err_pay", "act_payment", "Kembali", [ { x: 520, y: 1010 }, { x: 140, y: 1010 } ], "0.5", "0.5")
+  // act_err_pay → act_payment: tight loop via right side then back to actor
+  .addEdge("act_err_pay", "act_payment", "Kembali", [ { x: 660, y: 1180 }, { x: 660, y: 1085 }, { x: 125, y: 1085 } ], "0.5", "0.5")
+
   .addEdge("act_save", "db_save")
   .addEdge("db_save", "act_print", "", [], "0.5", "1")
   .addEdge("act_print", "end");
 
-fs.writeFileSync("fordza-docs/diagrams/activity-06-checkout.drawio", actCheckout.build(1440));
+fs.writeFileSync("fordza-docs/diagrams/activity-06-checkout.drawio", actCheckout.build(1480));
 console.log("Generated: activity-06-checkout.drawio");
 
 
@@ -614,126 +629,135 @@ const actShiftVoid = new ActivityBuilder("Activity Diagram - Shift & Void POS")
   .addStart("actor", 80)
   .addDecision("dec_opt", "Pilih Menu POS", "actor", 120)
 
-  // Buka Shift Flow
-  .addAction("act_open_shift", "Pilih Menu Buka Shift & Input Modal Awal", "actor", 195, 200, 50)
-  .addAction("act_save_open", "Simpan Shift Baru ke DB (Status OPEN)", "system", 195, 200, 50)
-  .addAction("db_open", "prisma.shift.create()", "db", 195)
+  // ── SECTION A: Buka Shift (y: 200 – 340) ───────────────────────────────────
+  .addAction("act_open_shift", "Pilih Menu Buka Shift & Input Modal Awal", "actor", 200, 200, 55)
+  .addAction("act_save_open", "POST /api/pos/shift/open — Simpan Shift Baru (OPEN)", "system", 200, 220, 55)
+  .addAction("db_open", "prisma.shift.create()", "db", 200, 180, 55)
 
-  // Tutup Shift Flow
-  .addAction("act_close_shift", "Pilih Tutup Shift & Input Uang Laci Aktual", "actor", 285, 200, 50)
-  .addAction("act_calc_shift", "Hitung Selisih Uang Laci Otomatis", "system", 285, 200, 50)
-  .addAction("act_save_close", "Update Shift ke DB (Status CLOSED)", "system", 365, 200, 50)
-  .addAction("db_close", "prisma.shift.update()", "db", 365)
-  .addAction("act_print_shift", "Cetak Laporan Penutupan Shift", "actor", 440, 200, 50)
+  // ── SECTION B: Tutup Shift (y: 420 – 600) ──────────────────────────────────
+  .addAction("act_close_shift", "Pilih Tutup Shift & Input Uang Laci Aktual", "actor", 420, 200, 55)
+  .addAction("act_calc_shift", "PATCH /api/pos/shift/close — Hitung Selisih Laci Otomatis", "system", 420, 230, 55)
+  .addAction("act_save_close", "Update Shift ke DB (Status CLOSED & Selisih)", "system", 500, 220, 55)
+  .addAction("db_close", "prisma.shift.update()", "db", 500, 180, 55)
+  .addAction("act_print_shift", "Cetak Laporan Penutupan Shift", "actor", 580, 180, 55)
 
-  // Void Transaction Flow
-  .addAction("act_void_select", "Pilih Transaksi & Klik Void", "actor", 520)
-  .addAction("act_void_pin", "Minta PIN Verifikasi & Alasan Void", "actor", 600, 200, 50)
-  .addAction("act_void_verify", "Validasi PIN Admin & Ambil Data Transaksi", "system", 600, 220, 50)
-  .addAction("db_void_check", "Query Admin PIN & Transaction Data", "db", 600, 220, 50)
-  .addDecision("dec_void_valid", "PIN Valid?", "system", 680)
-  .addAction("act_void_err", "Tampilkan Notifikasi PIN Salah", "system", 695, 200, 50, 130) // Shifted right
-  
-  // Void Execution
-  .addAction("act_void_exec", "Mulai Transaksi Void di Database", "system", 780, 200, 50)
-  .addAction("db_void_exec", "Update status = VOID, Increment stock & logs", "db", 780, 220, 50)
-  
-  // Success Notify
-  .addAction("act_success", "Tampilkan Notifikasi Berhasil", "system", 870, 200, 50)
-  .addEnd("end", "actor", 880)
+  // ── SECTION C: Void Transaksi (y: 680 – 960) ───────────────────────────────
+  .addAction("act_void_select", "Pilih Transaksi dari Daftar & Klik Void", "actor", 680, 200, 55)
+  .addAction("act_void_pin", "Input PIN Otorisasi & Alasan Void", "actor", 760, 180, 55)
+  .addAction("act_void_verify", "POST /api/pos/void — Validasi PIN Admin", "system", 760, 220, 55)
+  .addAction("db_void_check", "Query Admin PIN & Ambil Data Transaksi", "db", 760, 220, 55)
+  .addDecision("dec_void_valid", "PIN Valid?", "system", 845, 90, 80)
+  .addAction("act_void_err", "Tampilkan Error: PIN Salah", "system", 860, 180, 50, 140)
+  .addAction("act_void_exec", "Update status=VOID, Restore Stok & Catat Log", "system", 950, 230, 55)
+  .addAction("db_void_exec", "prisma.transaction.update() & productSku.update()", "db", 950, 220, 55)
 
-  // Edges
+  // ── SECTION D: Convergence / End (y: 1040 – 1120) ──────────────────────────
+  .addAction("act_success", "Tampilkan Notifikasi Berhasil ke Layar Kasir", "system", 1040, 220, 55)
+  .addEnd("end", "actor", 1060)
+
+  // ── EDGES ───────────────────────────────────────────────────────────────────
   .addEdge("start", "dec_opt")
-  
-  // Buka shift connections
+
+  // Branch A: Buka Shift
   .addEdge("dec_opt", "act_open_shift", "Buka Shift", [], "0.5", "0.5")
   .addEdge("act_open_shift", "act_save_open")
   .addEdge("act_save_open", "db_open")
-  .addEdge("db_open", "act_success", "", [ { x: 660, y: 225 }, { x: 660, y: 840 }, { x: 390, y: 840 } ], "0.5", "0.5")
+  .addEdge("db_open", "act_success", "", [ { x: 760, y: 255 }, { x: 760, y: 1065 }, { x: 500, y: 1065 } ], "0.5", "0.5")
 
-  // Tutup shift connections
-  .addEdge("dec_opt", "act_close_shift", "Tutup Shift", [ { x: 140, y: 145 }, { x: 140, y: 310 } ], "0.5", "0.5")
+  // Branch B: Tutup Shift
+  .addEdge("dec_opt", "act_close_shift", "Tutup Shift", [ { x: 60, y: 160 }, { x: 60, y: 448 } ], "0.5", "0.5")
   .addEdge("act_close_shift", "act_calc_shift")
   .addEdge("act_calc_shift", "act_save_close")
   .addEdge("act_save_close", "db_close")
   .addEdge("db_close", "act_print_shift", "", [], "0.5", "1")
-  .addEdge("act_print_shift", "act_success", "", [ { x: 140, y: 840 }, { x: 390, y: 840 } ])
+  .addEdge("act_print_shift", "act_success", "", [ { x: 60, y: 608 }, { x: 60, y: 1065 }, { x: 280, y: 1065 } ])
 
-  // Void connections
-  .addEdge("dec_opt", "act_void_select", "Void Transaksi", [ { x: 140, y: 145 }, { x: 140, y: 545 } ], "0.5", "0.5")
+  // Branch C: Void Transaksi
+  .addEdge("dec_opt", "act_void_select", "Void Transaksi", [ { x: 60, y: 160 }, { x: 60, y: 708 } ], "0.5", "0.5")
   .addEdge("act_void_select", "act_void_pin")
   .addEdge("act_void_pin", "act_void_verify")
   .addEdge("act_void_verify", "db_void_check")
   .addEdge("db_void_check", "dec_void_valid", "", [], "0.5", "1")
-  .addEdge("dec_void_valid", "act_void_exec", "Y (Valid)")
+  .addEdge("dec_void_valid", "act_void_exec", "Y (Valid)", [], "0.5", "0.5")
   .addEdge("dec_void_valid", "act_void_err", "T (Salah)", [], "1", "0.5")
-  .addEdge("act_void_err", "act_void_pin", "Kembali", [ { x: 520, y: 570 }, { x: 140, y: 570 } ], "0.5", "0.5")
+  .addEdge("act_void_err", "act_void_pin", "Coba Lagi", [ { x: 760, y: 885 }, { x: 760, y: 788 }, { x: 125, y: 788 } ], "0.5", "0.5")
   .addEdge("act_void_exec", "db_void_exec")
-  .addEdge("db_void_exec", "act_success", "", [], "0.5", "1")
+  .addEdge("db_void_exec", "act_success", "", [ { x: 660, y: 1005 }, { x: 660, y: 1065 }, { x: 500, y: 1065 } ], "0.5", "0.5")
 
   .addEdge("act_success", "end");
 
-fs.writeFileSync("fordza-docs/diagrams/activity-07-shift-void.drawio", actShiftVoid.build(950));
+fs.writeFileSync("fordza-docs/diagrams/activity-07-shift-void.drawio", actShiftVoid.build(1150));
 console.log("Generated: activity-07-shift-void.drawio");
 
 
 // ============================================================================
-// 8. CUSTOMER CATALOG & KNN RECOMMENDATION (With Slashed Price Details)
+// 8. CUSTOMER CATALOG & KNN RECOMMENDATION (Accurate Implementation)
 // ============================================================================
-const actCustomerKnn = new ActivityBuilder("Activity Diagram - Katalog & KNN Recommendation")
-  .addHeader("Customer", "Sistem (Web Frontend/Backend)", "Database / KNN")
+const actCustomerKnn = new ActivityBuilder("Activity Diagram - Katalog Produk & Rekomendasi KNN")
+  .addHeader("Customer", "Sistem (Frontend / Backend)", "Database / KNN Engine")
   .addStart("actor", 80)
-  .addAction("act_catalog", "Buka Katalog & Lakukan Filter Produk", "actor", 120, 220, 50)
-  .addAction("act_query_cat", "Query Produk berdasarkan Filter & Kategori", "system", 120, 220, 50)
-  .addAction("db_query_cat", "Query active products with filters", "db", 120, 200, 50)
-  .addAction("act_detail", "Pilih & Klik Salah Satu Produk", "actor", 200, 200, 50)
-  .addAction("act_fetch_det", "Buka Halaman Detail (GET /products/[id])", "system", 200, 220, 50)
-  .addAction("db_fetch_det", "Ambil detail produk, varian & data SKU", "db", 200, 220, 50)
 
-  // Dynamic Promo Check
-  .addAction("act_check_promo", "Sistem Memeriksa Promo Aktif untuk Varian", "system", 280, 240, 50)
-  .addAction("db_check_promo", "Query active promos target in DB", "db", 280, 200, 50)
-  .addDecision("dec_has_promo", "Ada Promo Aktif?", "system", 360)
-  .addAction("act_calc_slashed", "Hitung Slashed Price & finalPrice untuk SKU", "system", 450, 240, 55)
-  .addAction("act_normal_price", "Gunakan Harga Asli tanpa Potongan", "system", 375, 200, 50, 130) // Shifted right
-  
-  // Render Detail
-  .addAction("act_render_page", "Render Detail Produk (Tampilkan Harga Coret)", "system", 540, 240, 50)
-  .addAction("act_view_info", "Membaca Info Detail Produk & Memilih Ukuran", "actor", 540, 240, 50)
+  // ── SECTION 1: KATALOG (y: 120–250) ────────────────────────────────────────
+  .addAction("act_open_cat",  "Buka Katalog & Terapkan Filter Produk", "actor", 120, 210, 55)
+  .addAction("act_req_cat",   "GET /api/public/products (search, gender, categoryIds, minPrice, maxPrice, sortBy)", "system", 120, 260, 55)
+  .addAction("db_cat",        "Query Products WHERE isActive=true + Filters & Pagination", "db", 120, 240, 55)
+  .addAction("act_browse",    "Telusuri Hasil Katalog & Pilih Produk yang Diminati", "actor", 230, 200, 55)
 
-  // Asynchronous KNN Recommendation
-  .addAction("act_knn_req", "Pemicu Rekomendasi (GET /api/recommend/[id])", "system", 620, 240, 50)
-  .addAction("act_knn_fetch", "Tarik Data Target & Semua Produk Aktif", "system", 700, 220, 50)
-  .addAction("db_knn_fetch", "Query all active products features", "db", 700, 200, 50)
-  .addAction("act_knn_vector", "Ekstraksi Fitur & Vektorisasi (One-Hot + Min-Max Price)", "system", 780, 260, 55)
-  .addAction("act_knn_dist", "Hitung Euclidean Distance & Ambil K=4 Terdekat", "system", 860, 250, 55)
-  .addAction("act_knn_res", "Kembalikan data 4 Produk Rekomendasi Terdekat", "system", 940, 250, 50)
-  .addAction("act_show_knn", "Tampilkan Produk Serupa & Skor Kemiripan", "actor", 940, 220, 50)
-  .addEnd("end", "actor", 1020)
+  // ── SECTION 2: PRODUCT DETAIL (y: 320–510) ─────────────────────────────────
+  // Catatan: promo & finalPrice sudah ter-embed di data varian dari products.repo.ts
+  // Tidak ada roundtrip DB terpisah untuk promo di endpoint ini
+  .addAction("act_click",     "Klik Produk — Halaman Detail Mulai Dimuat", "actor", 320, 200, 55)
+  .addAction("act_fetch_det", "GET /api/public/products/[id]", "system", 320, 220, 55)
+  .addAction("db_det",        "Query Produk + Varian + SKU (finalPrice & promoName sudah ter-embed dari repo layer)", "db", 320, 250, 55)
+  .addAction("act_render",    "Render Detail: finalPrice, promoName, highestPrice, galeri, stok per ukuran", "system", 420, 250, 55)
+  .addAction("act_read",      "Membaca Info Produk, Pilih Warna & Ukuran", "actor", 510, 200, 55)
 
-  // Edges
-  .addEdge("start", "act_catalog")
-  .addEdge("act_catalog", "act_query_cat")
-  .addEdge("act_query_cat", "db_query_cat")
-  .addEdge("db_query_cat", "act_detail", "", [], "0.5", "1")
-  .addEdge("act_detail", "act_fetch_det")
-  .addEdge("act_fetch_det", "db_fetch_det")
-  .addEdge("db_fetch_det", "act_check_promo", "", [], "0.5", "1")
-  .addEdge("act_check_promo", "db_check_promo")
-  .addEdge("db_check_promo", "dec_has_promo", "", [], "0.5", "1")
-  .addEdge("dec_has_promo", "act_calc_slashed", "Y (Ada)", [], "0.5", "0.5")
-  .addEdge("dec_has_promo", "act_normal_price", "T (Tidak)", [], "1", "0.5")
-  .addEdge("act_calc_slashed", "act_render_page", "", [ { x: 390, y: 510 } ])
-  .addEdge("act_normal_price", "act_render_page", "", [ { x: 390, y: 510 } ])
-  .addEdge("act_render_page", "act_view_info")
-  .addEdge("act_view_info", "act_knn_req")
-  .addEdge("act_knn_req", "act_knn_fetch")
-  .addEdge("act_knn_fetch", "db_knn_fetch")
-  .addEdge("db_knn_fetch", "act_knn_vector", "", [], "0.5", "1")
-  .addEdge("act_knn_vector", "act_knn_dist")
-  .addEdge("act_knn_dist", "act_knn_res")
-  .addEdge("act_knn_res", "act_show_knn")
-  .addEdge("act_show_knn", "end");
+  // ── SECTION 3: KNN ASYNC (y: 610–1120) ─────────────────────────────────────
+  // Catatan: dipanggil PARALEL dengan Section 2 oleh React Query (useRelatedProducts hook)
+  // Tidak menunggu product detail selesai
+  .addAction("act_knn_fire",  "React Query: GET /api/recommend/[id] (async, paralel saat halaman dimuat)", "system", 610, 270, 55)
+  .addAction("db_knn_one",    "prisma.product.findMany(isActive:true) — 1 Query Semua Produk Aktif", "db", 610, 250, 55)
+  .addAction("act_find_tgt",  "Find targetProduct dari array di memori (.find() — bukan query DB tambahan)", "system", 710, 260, 55)
+  .addAction("act_feat_map",  "Map ke ProductFeature[] — categoryIds, material, insole, gender, productType, price", "system", 800, 270, 55)
+  .addAction("act_ext_dim",   "extractUniqueDimensions() — Bangun Dimensi Adaptif untuk One-Hot Encoding", "system", 890, 270, 55)
+  .addAction("act_vectorize", "buildProductVectors() — One-Hot Encode Kategori + Min-Max Normalisasi Harga", "system", 980, 270, 55)
+  .addAction("act_knn_dist",  "findKNearest() — Hitung Euclidean Distance, Ambil K=4 Terdekat", "system", 1070, 270, 55)
+  .addAction("act_fmt_out",   "Format Output: Gabung Data Produk + distance Score (4 desimal)", "system", 1160, 250, 55)
 
-fs.writeFileSync("fordza-docs/diagrams/activity-08-customer-knn.drawio", actCustomerKnn.build(1080));
+  // ── SECTION 4: CONVERGENCE (y: 1250–1350) ──────────────────────────────────
+  .addAction("act_show",      "Tampilkan Carousel Produk Serupa & Badge Skor Kemiripan", "actor", 1250, 240, 55)
+  .addEnd("end", "actor", 1360)
+
+  // ── EDGES ───────────────────────────────────────────────────────────────────
+  .addEdge("start", "act_open_cat")
+
+  // Section 1: Catalog
+  .addEdge("act_open_cat",  "act_req_cat")
+  .addEdge("act_req_cat",   "db_cat")
+  .addEdge("db_cat",        "act_browse",   "", [], "0.5", "1")
+  .addEdge("act_browse",    "act_click")
+
+  // Section 2: Product Detail
+  .addEdge("act_click",     "act_fetch_det")
+  .addEdge("act_fetch_det", "db_det")
+  .addEdge("db_det",        "act_render",   "", [], "0.5", "1")
+  .addEdge("act_render",    "act_read")
+
+  // Section 3: KNN async — dari act_read menuju KNN pipeline
+  // (representasi sequential; async terjadi saat halaman mount)
+  .addEdge("act_read",      "act_knn_fire", "async (paralel saat halaman mount)")
+  .addEdge("act_knn_fire",  "db_knn_one")
+  .addEdge("db_knn_one",    "act_find_tgt", "", [], "0.5", "1")
+  .addEdge("act_find_tgt",  "act_feat_map")
+  .addEdge("act_feat_map",  "act_ext_dim")
+  .addEdge("act_ext_dim",   "act_vectorize")
+  .addEdge("act_vectorize", "act_knn_dist")
+  .addEdge("act_knn_dist",  "act_fmt_out")
+
+  // Section 4: Convergence — dari format output ke actor show
+  .addEdge("act_fmt_out",   "act_show",     "", [ { x: 390, y: 1200 }, { x: 140, y: 1200 } ])
+  .addEdge("act_show",      "end");
+
+fs.writeFileSync("fordza-docs/diagrams/activity-08-customer-knn.drawio", actCustomerKnn.build(1430));
 console.log("Generated: activity-08-customer-knn.drawio");
+

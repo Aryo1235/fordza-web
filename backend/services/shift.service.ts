@@ -31,21 +31,55 @@ export const ShiftService = {
     }
 
     // 2. Kalkulasi Sistem (Expected Cash) = Modal Awal + Total Penjualan TUNAI/CASH
-    let totalCashSales = 0;
+    let cashSales = 0;
+    let debitSales = 0;
+    let qrisSales = 0;
+
     currentShift.transactions.forEach((trx: any) => {
-        // Pastikan hanya Transaksi Berstatus PAID dan berjenis CASH
-        if (trx.status === "PAID" && (trx.paymentMethod === "CASH" || !trx.paymentMethod)) {
-            totalCashSales += Number(trx.totalPrice); 
+        // Pastikan hanya Transaksi Berstatus PAID
+        if (trx.status === "PAID") {
+            const val = Number(trx.totalPrice);
+            if (trx.paymentMethod === "DEBIT") {
+                debitSales += val;
+            } else if (trx.paymentMethod === "QRIS") {
+                qrisSales += val;
+            } else {
+                cashSales += val;
+            }
         }
     });
 
-    const expectedEndingCash = Number(currentShift.startingCash) + totalCashSales;
+    const expectedEndingCash = Number(currentShift.startingCash) + cashSales;
 
     // 3. Simpan Penutupan Laci dengan bukti Audit (Termasuk jika ada indikasi Fraud / Selisih)
-    return await ShiftRepository.closeShift(currentShift.id, {
+    const closedShift = await ShiftRepository.closeShift(currentShift.id, {
         expectedEndingCash,
         actualEndingCash // (Uang fisik asli hasil ketikan kasir malam harinya)
     });
+
+    // Ambil data detail shift yang terupdate dengan menyertakan relasi admin dan transaksi
+    const fullShift = await ShiftRepository.findById(closedShift.id);
+    if (!fullShift) {
+      return {
+        ...closedShift,
+        startingCash: Number(closedShift.startingCash),
+        expectedEndingCash: closedShift.expectedEndingCash != null ? Number(closedShift.expectedEndingCash) : null,
+        actualEndingCash: closedShift.actualEndingCash != null ? Number(closedShift.actualEndingCash) : null,
+        cashSales,
+        debitSales,
+        qrisSales,
+      };
+    }
+
+    return {
+      ...fullShift,
+      startingCash: Number(fullShift.startingCash),
+      expectedEndingCash: fullShift.expectedEndingCash != null ? Number(fullShift.expectedEndingCash) : null,
+      actualEndingCash: fullShift.actualEndingCash != null ? Number(fullShift.actualEndingCash) : null,
+      cashSales,
+      debitSales,
+      qrisSales,
+    };
   },
 
   async getAllShiftsPaginated(filters: {

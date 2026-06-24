@@ -1,0 +1,13 @@
+const fs = require('fs');
+const xml = fs.readFileSync('fordza-docs/diagrams/erd-fordza-chen.drawio', 'utf8');
+const bad = /&(?!(amp|lt|gt|quot|apos);)/.test(xml);
+const vertices = (xml.match(/vertex="1"/g)||[]).length;
+const edges = (xml.match(/edge="1"/g)||[]).length;
+const ellipses = (xml.match(/ellipse/g)||[]).length;
+const rhombus = (xml.match(/rhombus/g)||[]).length;
+console.log('XML entity errors:', bad ? 'YES - ada masalah' : 'OK');
+console.log('Vertices (node)  :', vertices);
+console.log('Edges (koneksi)  :', edges);
+console.log('Ellipses (attrs) :', Math.floor(ellipses/2), 'attrs');
+console.log('Rhombus (rel)    :', Math.floor(rhombus/2), 'relationships');
+console.log('File size        :', xml.length, 'bytes');
