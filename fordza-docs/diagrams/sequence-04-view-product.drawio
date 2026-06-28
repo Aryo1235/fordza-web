@@ -1,162 +1,203 @@
 <mxfile host="app.diagrams.net" agent="5.0">
-  <diagram name="Sequence Diagram - Lihat Produk" id="seq-view-product">
-    <mxGraphModel dx="1287" dy="672" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="700" math="0" shadow="0">
+  <diagram name="Sequence Diagram - Lihat Detail Produk (Customer)" id="diagram-1">
+    <mxGraphModel dx="951" dy="497" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="900" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
         <mxCell id="title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1" value="Sequence Diagram - Lihat Detail Produk (Customer)" vertex="1">
           <mxGeometry height="30" width="500" x="300" y="20" as="geometry" />
         </mxCell>
-        <mxCell id="actor" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;fillColor=#f8cecc;strokeColor=#b85450;" value="Customer" vertex="1">
+        <mxCell id="customer" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" value="Customer" vertex="1">
           <mxGeometry height="80" width="40" x="60" y="80" as="geometry" />
         </mxCell>
-        <mxCell id="ui" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Product Page" vertex="1">
-          <mxGeometry height="60" width="120" x="200" y="80" as="geometry" />
-        </mxCell>
-        <mxCell id="api" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" value="API Route" vertex="1">
-          <mxGeometry height="60" width="120" x="420" y="80" as="geometry" />
-        </mxCell>
-        <mxCell id="service" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="Product&#xa;Service" vertex="1">
-          <mxGeometry height="60" width="120" x="640" y="80" as="geometry" />
-        </mxCell>
-        <mxCell id="db" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#f8cecc;strokeColor=#b85450;" value="Database" vertex="1">
-          <mxGeometry height="80" width="80" x="860" y="80" as="geometry" />
-        </mxCell>
-        <mxCell id="knn" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" value="KNN Service" vertex="1">
-          <mxGeometry height="60" width="100" x="1040" y="80" as="geometry" />
-        </mxCell>
-        <mxCell id="lifeline1" edge="1" parent="1" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;" value="">
+        <mxCell id="ll_customer" edge="1" parent="1" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;" value="">
           <mxGeometry height="50" relative="1" width="50" as="geometry">
             <mxPoint x="80" y="180" as="sourcePoint" />
-            <mxPoint x="80" y="660" as="targetPoint" />
+            <mxPoint x="80" y="880" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="lifeline2" edge="1" parent="1" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;" value="">
+        <mxCell id="ui" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Product Page" vertex="1">
+          <mxGeometry height="60" width="100" x="200" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="ll_ui" edge="1" parent="1" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;" value="">
           <mxGeometry height="50" relative="1" width="50" as="geometry">
-            <mxPoint x="260" y="180" as="sourcePoint" />
-            <mxPoint x="260" y="660" as="targetPoint" />
+            <mxPoint x="250" y="180" as="sourcePoint" />
+            <mxPoint x="250" y="880" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="lifeline3" edge="1" parent="1" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;" value="">
+        <mxCell id="act_ui" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="" vertex="1">
+          <mxGeometry height="620" width="10" x="245" y="170" as="geometry" />
+        </mxCell>
+        <mxCell id="api" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" value="API Route" vertex="1">
+          <mxGeometry height="60" width="100" x="400" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="ll_api" edge="1" parent="1" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;" value="">
           <mxGeometry height="50" relative="1" width="50" as="geometry">
-            <mxPoint x="480" y="180" as="sourcePoint" />
-            <mxPoint x="480" y="660" as="targetPoint" />
+            <mxPoint x="450" y="180" as="sourcePoint" />
+            <mxPoint x="450" y="880" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="lifeline4" edge="1" parent="1" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;" value="">
+        <mxCell id="act_api" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" value="" vertex="1">
+          <mxGeometry height="540" width="10" x="445" y="210" as="geometry" />
+        </mxCell>
+        <mxCell id="svc" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="Product Service" vertex="1">
+          <mxGeometry height="60" width="100" x="600" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="ll_svc" edge="1" parent="1" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;" value="">
           <mxGeometry height="50" relative="1" width="50" as="geometry">
-            <mxPoint x="700" y="180" as="sourcePoint" />
-            <mxPoint x="700" y="660" as="targetPoint" />
+            <mxPoint x="650" y="180" as="sourcePoint" />
+            <mxPoint x="650" y="880" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="lifeline5" edge="1" parent="1" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;" value="">
+        <mxCell id="act_svc" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="" vertex="1">
+          <mxGeometry height="140" width="10" x="645" y="250" as="geometry" />
+        </mxCell>
+        <mxCell id="knn" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="KNN Service" vertex="1">
+          <mxGeometry height="60" width="100" x="800" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="ll_knn" edge="1" parent="1" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;" value="">
           <mxGeometry height="50" relative="1" width="50" as="geometry">
-            <mxPoint x="900" y="180" as="sourcePoint" />
-            <mxPoint x="900" y="660" as="targetPoint" />
+            <mxPoint x="850" y="180" as="sourcePoint" />
+            <mxPoint x="850" y="880" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="lifeline6" edge="1" parent="1" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;" value="">
+        <mxCell id="act_knn" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="" vertex="1">
+          <mxGeometry height="180" width="10" x="845" y="530" as="geometry" />
+        </mxCell>
+        <mxCell id="db" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#f8cecc;strokeColor=#b85450;" value="Database" vertex="1">
+          <mxGeometry height="80" width="80" x="1000" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="ll_db" edge="1" parent="1" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;" value="">
           <mxGeometry height="50" relative="1" width="50" as="geometry">
-            <mxPoint x="1090" y="180" as="sourcePoint" />
-            <mxPoint x="1090" y="660" as="targetPoint" />
+            <mxPoint x="1040" y="180" as="sourcePoint" />
+            <mxPoint x="1040" y="880" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="msg1" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;" value="1: Klik produk">
+        <mxCell id="act_db" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" value="" vertex="1">
+          <mxGeometry height="340" width="10" x="1035" y="290" as="geometry" />
+        </mxCell>
+        <mxCell id="msg1" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;" value="1: Klik produk di katalog">
           <mxGeometry relative="1" x="-0.2" y="10" as="geometry">
             <mxPoint as="offset" />
-            <mxPoint x="80" y="200" as="sourcePoint" />
-            <mxPoint x="260" y="200" as="targetPoint" />
+            <mxPoint x="75" y="200" as="sourcePoint" />
+            <mxPoint x="245" y="200" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="msg2" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;" value="2: GET /api/public/products/:id">
+        <mxCell id="msg2" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;" value="2: GET /api/public/products/[id]">
           <mxGeometry relative="1" x="-0.2" y="10" as="geometry">
             <mxPoint as="offset" />
-            <mxPoint x="260" y="240" as="sourcePoint" />
-            <mxPoint x="480" y="240" as="targetPoint" />
+            <mxPoint x="250" y="220" as="sourcePoint" />
+            <mxPoint x="450" y="220" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="msg3" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;" value="3: Get product by ID">
+        <mxCell id="msg3" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;" value="3: getById(id)">
           <mxGeometry relative="1" x="-0.2" y="10" as="geometry">
             <mxPoint as="offset" />
-            <mxPoint x="480" y="280" as="sourcePoint" />
-            <mxPoint x="700" y="280" as="targetPoint" />
+            <mxPoint x="450" y="260" as="sourcePoint" />
+            <mxPoint x="650" y="260" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="msg4" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;" value="4: Query product with relations">
+        <mxCell id="msg4" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;" value="4: Query product details &amp; variants data">
           <mxGeometry relative="1" x="-0.2" y="10" as="geometry">
             <mxPoint as="offset" />
-            <mxPoint x="700" y="320" as="sourcePoint" />
-            <mxPoint x="900" y="320" as="targetPoint" />
+            <mxPoint x="650" y="300" as="sourcePoint" />
+            <mxPoint x="1040" y="300" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="msg5" edge="1" parent="1" style="endArrow=open;endFill=0;html=1;dashed=1;" value="5: Return product data">
+        <mxCell id="msg5" edge="1" parent="1" style="endArrow=open;endFill=0;html=1;dashed=1;" value="5: Return product record">
           <mxGeometry relative="1" x="-0.2" y="10" as="geometry">
             <mxPoint as="offset" />
-            <mxPoint x="900" y="360" as="sourcePoint" />
-            <mxPoint x="700" y="360" as="targetPoint" />
+            <mxPoint x="1040" y="340" as="sourcePoint" />
+            <mxPoint x="650" y="340" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="msg6" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;" value="6: Calculate promo dan final price">
-          <mxGeometry relative="1" x="-0.125" y="32" as="geometry">
-            <mxPoint x="-2" y="-11" as="offset" />
+        <mxCell id="msg6" edge="1" parent="1" style="endArrow=open;endFill=0;html=1;dashed=1;" value="6: Return product data">
+          <mxGeometry relative="1" x="-0.2" y="10" as="geometry">
+            <mxPoint as="offset" />
+            <mxPoint x="650" y="380" as="sourcePoint" />
+            <mxPoint x="450" y="380" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="msg7" edge="1" parent="1" style="endArrow=open;endFill=0;html=1;dashed=1;" value="7: Return 200 OK (Product data)">
+          <mxGeometry relative="1" x="-0.2" y="10" as="geometry">
+            <mxPoint as="offset" />
+            <mxPoint x="450" y="420" as="sourcePoint" />
+            <mxPoint x="250" y="420" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="msg8" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;align=left;verticalAlign=bottom;endArrow=block;rounded=0;" value="8: Render product info &amp; show skeleton loader">
+          <mxGeometry relative="1" x="-0.0005" y="10" as="geometry">
+            <mxPoint as="offset" />
             <Array as="points">
-              <mxPoint x="770" y="400" />
-              <mxPoint x="770" y="420" />
+              <mxPoint x="320" y="460" />
+              <mxPoint x="320" y="480" />
             </Array>
-            <mxPoint x="700" y="400" as="sourcePoint" />
-            <mxPoint x="700" y="420" as="targetPoint" />
+            <mxPoint x="250" y="460" as="sourcePoint" />
+            <mxPoint x="250" y="480" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="msg7" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;" value="7: Get recommendations (KNN)">
+        <mxCell id="msg9" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;" value="9: GET /api/recommend/[id] (Async KNN Fetch)">
           <mxGeometry relative="1" x="-0.2" y="10" as="geometry">
             <mxPoint as="offset" />
-            <mxPoint x="700" y="460" as="sourcePoint" />
-            <mxPoint x="1090" y="460" as="targetPoint" />
+            <mxPoint x="250" y="510" as="sourcePoint" />
+            <mxPoint x="450" y="510" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="msg8" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;" value="8: Calculate similarity">
+        <mxCell id="msg10" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;" value="10: getRecommendations(id, 4)">
           <mxGeometry relative="1" x="-0.2" y="10" as="geometry">
+            <mxPoint as="offset" />
+            <mxPoint x="450" y="540" as="sourcePoint" />
+            <mxPoint x="850" y="540" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="msg11" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;" value="11: Query all active products for vectors">
+          <mxGeometry relative="1" x="-0.2" y="10" as="geometry">
+            <mxPoint as="offset" />
+            <mxPoint x="850" y="580" as="sourcePoint" />
+            <mxPoint x="1040" y="580" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="msg12" edge="1" parent="1" style="endArrow=open;endFill=0;html=1;dashed=1;" value="12: Return active products data">
+          <mxGeometry relative="1" x="-0.2" y="10" as="geometry">
+            <mxPoint as="offset" />
+            <mxPoint x="1040" y="620" as="sourcePoint" />
+            <mxPoint x="850" y="620" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="msg13" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;align=left;verticalAlign=bottom;endArrow=block;rounded=0;" value="13: Compute Euclidean Distance &amp; Sort K-Nearest">
+          <mxGeometry relative="1" x="-0.0005" y="10" as="geometry">
             <mxPoint as="offset" />
             <Array as="points">
-              <mxPoint x="1160" y="500" />
-              <mxPoint x="1160" y="520" />
+              <mxPoint x="920" y="660" />
+              <mxPoint x="920" y="680" />
             </Array>
-            <mxPoint x="1090" y="500" as="sourcePoint" />
-            <mxPoint x="1090" y="520" as="targetPoint" />
+            <mxPoint x="850" y="660" as="sourcePoint" />
+            <mxPoint x="850" y="680" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="msg9" edge="1" parent="1" style="endArrow=open;endFill=0;html=1;dashed=1;" value="9: Return related products">
+        <mxCell id="msg14" edge="1" parent="1" style="endArrow=open;endFill=0;html=1;dashed=1;" value="14: Return top 4 recommended products">
           <mxGeometry relative="1" x="-0.2" y="10" as="geometry">
             <mxPoint as="offset" />
-            <mxPoint x="1090" y="560" as="sourcePoint" />
-            <mxPoint x="700" y="560" as="targetPoint" />
+            <mxPoint x="850" y="700" as="sourcePoint" />
+            <mxPoint x="450" y="700" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="msg10" edge="1" parent="1" style="endArrow=open;endFill=0;html=1;dashed=1;" value="10: Return complete data">
+        <mxCell id="msg15" edge="1" parent="1" style="endArrow=open;endFill=0;html=1;dashed=1;" value="15: Return 200 OK (Recommendations JSON)">
           <mxGeometry relative="1" x="-0.2" y="10" as="geometry">
             <mxPoint as="offset" />
-            <mxPoint x="700" y="600" as="sourcePoint" />
-            <mxPoint x="480" y="600" as="targetPoint" />
+            <mxPoint x="450" y="740" as="sourcePoint" />
+            <mxPoint x="250" y="740" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="msg11" edge="1" parent="1" style="endArrow=open;endFill=0;html=1;dashed=1;" value="11: Render product detail">
+        <mxCell id="msg16" edge="1" parent="1" style="endArrow=open;endFill=0;html=1;dashed=1;" value="16: Render Produk Serupa section &amp; match badges">
           <mxGeometry relative="1" x="-0.2" y="10" as="geometry">
             <mxPoint as="offset" />
-            <mxPoint x="480" y="640" as="sourcePoint" />
-            <mxPoint x="260" y="640" as="targetPoint" />
+            <mxPoint x="250" y="780" as="sourcePoint" />
+            <mxPoint x="80" y="780" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="act1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="" vertex="1">
-          <mxGeometry height="460" width="10" x="255" y="190" as="geometry" />
-        </mxCell>
-        <mxCell id="act2" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" value="" vertex="1">
-          <mxGeometry height="420" width="10" x="475" y="230" as="geometry" />
-        </mxCell>
-        <mxCell id="act3" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="" vertex="1">
-          <mxGeometry height="340" width="10" x="695" y="270" as="geometry" />
-        </mxCell>
-        <mxCell id="act4" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" value="" vertex="1">
-          <mxGeometry height="120" width="10" x="1085" y="450" as="geometry" />
+        <mxCell id="note_1" parent="1" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;fillColor=#fff2cc;strokeColor=#d6b656;size=15;" value="Arsitektur Pemuatan Asimetris (Asymmetric Loading):&amp;#xa;Untuk mencegah kelambatan pemuatan halaman (*page blocking*), kueri KNN dipisah menjadi API terpisah (/api/recommend/[id]). Halaman produk utama termuat secara instan (langkah 1-7), sedangkan modul rekomendasi KNN dimuat secara asinkronus (langkah 9-15)." vertex="1">
+          <mxGeometry height="190" width="250" x="1100" y="180" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>

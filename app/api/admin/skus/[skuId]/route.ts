@@ -176,7 +176,21 @@ export async function DELETE(
           ? sku.stock
           : 0;
 
-      await tx.productSku.delete({ where: { id: skuId } });
+      const transactionCount = await tx.transactionItem.count({
+        where: { skuId },
+      });
+
+      if (transactionCount > 0) {
+        await tx.productSku.update({
+          where: { id: skuId },
+          data: {
+            isActive: false,
+            deletedAt: new Date(),
+          },
+        });
+      } else {
+        await tx.productSku.delete({ where: { id: skuId } });
+      }
 
       const totalStock = await tx.productSku.aggregate({
         where: {

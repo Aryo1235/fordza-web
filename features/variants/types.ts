@@ -24,6 +24,7 @@ export interface ProductVariant {
   finalPrice?: number | null;           // Harga bayar setelah promo
   totalDiscountPercent?: number | null; // Total % gabungan
   promoName?: string | null;            // Nama promo aktif
+  promos?: string[] | null;             // Semua nama promo aktif yang cocok
   isPromoConditional?: boolean;         // Flag syarat belanja minimal
   isActive: boolean;
   productId: string;

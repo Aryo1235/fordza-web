@@ -49,7 +49,7 @@ export function ProductForm({ initialData, onSubmit, isLoading, submitLabel }: P
       name: "",
       shortDescription: "",
       description: "",
-      productType: "shoes",
+      productType: undefined,
       gender: "Unisex",
       material: "",
       outsole: "",
@@ -151,17 +151,23 @@ export function ProductForm({ initialData, onSubmit, isLoading, submitLabel }: P
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label>Tipe Produk <span className="text-red-500">*</span></Label>
+              <Label>Tipe Produk</Label>
               <Controller
                 control={control}
                 name="productType"
                 render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
+                  <Select
+                    key={`type-${field.value}`}
+                    value={field.value || "none"}
+                    onValueChange={(val) => field.onChange(val === "none" ? null : val)}
+                  >
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Pilih Tipe" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="none">-- Pilih Tipe --</SelectItem>
                       <SelectItem value="shoes">Sepatu (Shoes)</SelectItem>
+                      <SelectItem value="sandal">Sandal (Sandal)</SelectItem>
                       <SelectItem value="apparel">Pakaian (Apparel)</SelectItem>
                       <SelectItem value="accessories">Aksesoris (Accessories)</SelectItem>
                     </SelectContent>

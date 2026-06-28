@@ -45,14 +45,6 @@ export default function SizeTemplateDetailPage({ params }: { params: Promise<{ i
       limit,
     };
 
-  // Debug logs
-  useEffect(() => {
-    console.log("SizeTemplateDetailPage - detailResponse:", detailResponse);
-    console.log("SizeTemplateDetailPage - isWrapped:", isWrapped);
-    console.log("SizeTemplateDetailPage - template:", template);
-    console.log("SizeTemplateDetailPage - associatedProducts:", associatedProducts);
-    console.log("SizeTemplateDetailPage - meta:", meta);
-  }, [detailResponse, isWrapped, template, associatedProducts, meta]);
 
   // Handle errors
   useEffect(() => {
@@ -156,9 +148,25 @@ export default function SizeTemplateDetailPage({ params }: { params: Promise<{ i
       );
     }
     if (tType === "aksesoris" || tType === "gelang") {
+      if (meas.panjang || meas.lebar || meas.tinggi) {
+        return (
+          <span className="text-[9.5px] text-stone-600 block font-semibold mt-0.5 leading-tight">
+            P: {meas.panjang || "-"} cm<br />
+            L: {meas.lebar || "-"} cm<br />
+            T: {meas.tinggi || "-"} cm
+          </span>
+        );
+      }
+      if (meas.lingkar) {
+        return (
+          <span className="text-[9.5px] text-stone-600 block font-semibold mt-0.5">
+            Lingkar: {meas.lingkar} cm
+          </span>
+        );
+      }
       return (
-        <span className="text-[9.5px] text-stone-600 block font-semibold mt-0.5">
-          Lingkar: {meas.lingkar || "-"} cm
+        <span className="text-[9.5px] text-stone-600 block font-semibold mt-0.5 max-w-[80px] truncate" title={meas.detail}>
+          {meas.detail || "-"}
         </span>
       );
     }

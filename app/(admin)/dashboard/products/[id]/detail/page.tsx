@@ -50,7 +50,14 @@ export default function ProductDetailAdminPage({ params }: { params: Promise<{ i
       return null;
     }
     if (tType === "aksesoris" || tType === "gelang") {
-      return meas.lingkar ? `${meas.lingkar} cm` : null;
+      const p = meas.panjang || "";
+      const l = meas.lebar || "";
+      const t = meas.tinggi || "";
+      if (p || l || t) {
+        return `${p || "-"}/${l || "-"}/${t || "-"} cm`;
+      }
+      if (meas.lingkar) return `${meas.lingkar} cm`;
+      return meas.detail || null;
     }
     return meas.detail || null;
   };
@@ -207,28 +214,39 @@ export default function ProductDetailAdminPage({ params }: { params: Promise<{ i
                 <CardTitle className="text-sm font-bold uppercase tracking-wider text-stone-800">Spesifikasi Teknis</CardTitle>
               </div>
             </CardHeader>
-            <CardContent className="pt-6 grid grid-cols-2 md:grid-cols-5 gap-6">
-                <div>
-                  <h4 className="text-[10px] font-bold text-stone-400 uppercase mb-1 tracking-widest">Material Atas</h4>
-                  <p className="text-sm text-stone-800 font-bold">{product.detail?.material || "-"}</p>
-                </div>
-                <div>
-                  <h4 className="text-[10px] font-bold text-stone-400 uppercase mb-1 tracking-widest">Sol (Outsole)</h4>
-                  <p className="text-sm text-stone-800 font-bold">{product.detail?.outsole || "-"}</p>
-                </div>
-                <div>
-                  <h4 className="text-[10px] font-bold text-stone-400 uppercase mb-1 tracking-widest">Insole</h4>
-                  <p className="text-sm text-stone-800 font-bold">{product.detail?.insole || "-"}</p>
-                </div>
-                <div>
-                  <h4 className="text-[10px] font-bold text-stone-400 uppercase mb-1 tracking-widest">Konstruksi</h4>
-                  <p className="text-sm text-stone-800 font-bold">{product.detail?.closureType || "-"}</p>
-                </div>
-                <div>
-                  <h4 className="text-[10px] font-bold text-stone-400 uppercase mb-1 tracking-widest">Asal Produksi</h4>
-                  <p className="text-sm text-stone-800 font-bold">{product.detail?.origin || "-"}</p>
-                </div>
-            </CardContent>
+            {(() => {
+              const pType = product.productType?.toLowerCase() || "shoes";
+              return (
+                <CardContent className="pt-6 grid grid-cols-2 md:grid-cols-5 gap-6">
+                  <div>
+                    <h4 className="text-[10px] font-bold text-stone-400 uppercase mb-1 tracking-widest">Material Utama</h4>
+                    <p className="text-sm text-stone-800 font-bold">{product.detail?.material || "-"}</p>
+                  </div>
+                  {(pType === "shoes" || pType === "sandal") && (
+                    <div>
+                      <h4 className="text-[10px] font-bold text-stone-400 uppercase mb-1 tracking-widest">Sol (Outsole)</h4>
+                      <p className="text-sm text-stone-800 font-bold">{product.detail?.outsole || "-"}</p>
+                    </div>
+                  )}
+                  {pType === "shoes" && (
+                    <div>
+                      <h4 className="text-[10px] font-bold text-stone-400 uppercase mb-1 tracking-widest">Insole</h4>
+                      <p className="text-sm text-stone-800 font-bold">{product.detail?.insole || "-"}</p>
+                    </div>
+                  )}
+                  {(pType === "shoes" || pType === "apparel" || pType === "accessories") && (
+                    <div>
+                      <h4 className="text-[10px] font-bold text-stone-400 uppercase mb-1 tracking-widest">Tipe Penutup</h4>
+                      <p className="text-sm text-stone-800 font-bold">{product.detail?.closureType || "-"}</p>
+                    </div>
+                  )}
+                  <div>
+                    <h4 className="text-[10px] font-bold text-stone-400 uppercase mb-1 tracking-widest">Asal Produksi</h4>
+                    <p className="text-sm text-stone-800 font-bold">{product.detail?.origin || "-"}</p>
+                  </div>
+                </CardContent>
+              );
+            })()}
           </Card>
 
           {/* Varian & Stok Table */}

@@ -156,3 +156,65 @@
     scrollbar-color: #e5e7eb transparent;
   }
 }
+
+/* Styling untuk HTML Rich Text (Prose fallback karena plugin tailwind-typography tidak diinstall) */
+.prose {
+  h1 {
+    font-size: 1.75rem;
+    font-weight: 800;
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+    color: #4A3B2E;
+  }
+  h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-top: 1.25rem;
+    margin-bottom: 0.5rem;
+    color: #4A3B2E;
+  }
+  h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+    color: #4A3B2E;
+  }
+  p {
+    margin-top: 0.5rem;
+    margin-bottom: 0.75rem;
+    line-height: 1.625;
+  }
+  ul {
+    list-style-type: disc !important;
+    padding-left: 1.5rem !important;
+    margin-top: 0.5rem !important;
+    margin-bottom: 1rem !important;
+  }
+  ol {
+    list-style-type: decimal !important;
+    padding-left: 1.5rem !important;
+    margin-top: 0.5rem !important;
+    margin-bottom: 1rem !important;
+  }
+  li {
+    margin-bottom: 0.25rem;
+    display: list-item !important;
+  }
+  blockquote {
+    border-left: 4px solid #c1a890;
+    padding-left: 1rem;
+    font-style: italic;
+    margin: 1.25rem 0;
+    color: #8a7060;
+  }
+  strong, b {
+    font-weight: 700 !important;
+  }
+  em, i {
+    font-style: italic !important;
+  }
+  u {
+    text-decoration: underline !important;
+  }
+}

@@ -1,0 +1,210 @@
+<mxfile host="app.diagrams.net" agent="5.0" version="21.0.0" type="device">
+  <diagram name="Activity Diagram - Shift &amp; Void POS" id="diagram-1">
+    <mxGraphModel dx="1422" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1150" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="hdr_actor" value="Kasir" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;align=center;strokeWidth=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="40" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="hdr_system" value="Sistem (POS/Backend)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;align=center;strokeWidth=1;" vertex="1" parent="1">
+          <mxGeometry x="240" y="40" width="300" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="hdr_db" value="Database" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;align=center;strokeWidth=1;" vertex="1" parent="1">
+          <mxGeometry x="540" y="40" width="240" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="start" value="" style="ellipse;html=1;shape=startState;fillColor=#000000;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="125" y="80" width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="dec_opt" value="Pilih Menu POS" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="100" y="120" width="80" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="act_open_shift" value="Pilih Menu Buka Shift &amp; Input Modal Awal" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="40" y="200" width="200" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="act_save_open" value="POST /api/pos/shift/open — Simpan Shift Baru (OPEN)" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="280" y="200" width="220" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="db_open" value="prisma.shift.create()" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="570" y="200" width="180" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="act_close_shift" value="Pilih Tutup Shift &amp; Input Uang Laci Aktual" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="40" y="420" width="200" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="act_calc_shift" value="PATCH /api/pos/shift/close — Hitung Selisih Laci Otomatis" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="275" y="420" width="230" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="act_save_close" value="Update Shift ke DB (Status CLOSED &amp; Selisih)" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="280" y="500" width="220" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="db_close" value="prisma.shift.update()" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="570" y="500" width="180" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="act_print_shift" value="Cetak Laporan Penutupan Shift" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="50" y="580" width="180" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="act_void_select" value="Pilih Transaksi dari Daftar &amp; Klik Void" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="40" y="680" width="200" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="act_void_pin" value="Input PIN Otorisasi &amp; Alasan Void" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="50" y="760" width="180" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="act_void_verify" value="POST /api/pos/void — Validasi PIN Admin" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="280" y="760" width="220" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="db_void_check" value="Query Admin PIN &amp; Ambil Data Transaksi" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="550" y="760" width="220" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="dec_void_valid" value="PIN Valid?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="345" y="845" width="90" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="act_void_err" value="Tampilkan Error: PIN Salah" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="440" y="860" width="180" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="act_void_exec" value="Update status=VOID, Restore Stok &amp; Catat Log" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="275" y="950" width="230" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="db_void_exec" value="prisma.transaction.update() &amp; productSku.update()" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="550" y="950" width="220" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="act_success" value="Tampilkan Notifikasi Berhasil ke Layar Kasir" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="280" y="1040" width="220" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="end" value="" style="ellipse;html=1;shape=endState;fillColor=#000000;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="125" y="1060" width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="pool_left" value="" style="line;strokeWidth=1;fillColor=none;align=left;dashed=0;strokeColor=#666666;direction=south;" vertex="1" parent="1">
+          <mxGeometry x="40" y="80" width="1" height="1010" as="geometry" />
+        </mxCell>
+        <mxCell id="pool_div1" value="" style="line;strokeWidth=1;fillColor=none;align=left;dashed=0;strokeColor=#666666;direction=south;" vertex="1" parent="1">
+          <mxGeometry x="240" y="80" width="1" height="1010" as="geometry" />
+        </mxCell>
+        <mxCell id="pool_div2" value="" style="line;strokeWidth=1;fillColor=none;align=left;dashed=0;strokeColor=#666666;direction=south;" vertex="1" parent="1">
+          <mxGeometry x="540" y="80" width="1" height="1010" as="geometry" />
+        </mxCell>
+        <mxCell id="pool_right" value="" style="line;strokeWidth=1;fillColor=none;align=left;dashed=0;strokeColor=#666666;direction=south;" vertex="1" parent="1">
+          <mxGeometry x="780" y="80" width="1" height="1010" as="geometry" />
+        </mxCell>
+        <mxCell id="pool_bottom" value="" style="line;strokeWidth=1;fillColor=none;align=left;dashed=0;strokeColor=#666666;direction=east;" vertex="1" parent="1">
+          <mxGeometry x="40" y="1090" width="740" height="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="1" source="start" target="dec_opt">
+          <mxGeometry relative="1" as="geometry">
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge_2" value="Buka Shift" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;exitX=0.5;entryX=0.5;" edge="1" parent="1" source="dec_opt" target="act_open_shift">
+          <mxGeometry relative="1" as="geometry">
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge_3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="1" source="act_open_shift" target="act_save_open">
+          <mxGeometry relative="1" as="geometry">
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge_4" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="1" source="act_save_open" target="db_open">
+          <mxGeometry relative="1" as="geometry">
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge_5" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;exitX=0.5;entryX=0.5;" edge="1" parent="1" source="db_open" target="act_success">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="760" y="255" />
+              <mxPoint x="760" y="1065" />
+              <mxPoint x="500" y="1065" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge_6" value="Tutup Shift" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;exitX=0.5;entryX=0.5;" edge="1" parent="1" source="dec_opt" target="act_close_shift">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="60" y="160" />
+              <mxPoint x="60" y="448" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge_7" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="1" source="act_close_shift" target="act_calc_shift">
+          <mxGeometry relative="1" as="geometry">
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge_8" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="1" source="act_calc_shift" target="act_save_close">
+          <mxGeometry relative="1" as="geometry">
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge_9" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="1" source="act_save_close" target="db_close">
+          <mxGeometry relative="1" as="geometry">
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge_10" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;exitX=0.5;entryX=1;" edge="1" parent="1" source="db_close" target="act_print_shift">
+          <mxGeometry relative="1" as="geometry">
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge_11" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="1" source="act_print_shift" target="act_success">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="60" y="608" />
+              <mxPoint x="60" y="1065" />
+              <mxPoint x="280" y="1065" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge_12" value="Void Transaksi" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;exitX=0.5;entryX=0.5;" edge="1" parent="1" source="dec_opt" target="act_void_select">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="60" y="160" />
+              <mxPoint x="60" y="708" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge_13" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="1" source="act_void_select" target="act_void_pin">
+          <mxGeometry relative="1" as="geometry">
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge_14" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="1" source="act_void_pin" target="act_void_verify">
+          <mxGeometry relative="1" as="geometry">
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge_15" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="1" source="act_void_verify" target="db_void_check">
+          <mxGeometry relative="1" as="geometry">
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge_16" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;exitX=0.5;entryX=1;" edge="1" parent="1" source="db_void_check" target="dec_void_valid">
+          <mxGeometry relative="1" as="geometry">
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge_17" value="Y (Valid)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;exitX=0.5;entryX=0.5;" edge="1" parent="1" source="dec_void_valid" target="act_void_exec">
+          <mxGeometry relative="1" as="geometry">
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge_18" value="T (Salah)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;exitX=1;entryX=0.5;" edge="1" parent="1" source="dec_void_valid" target="act_void_err">
+          <mxGeometry relative="1" as="geometry">
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge_19" value="Coba Lagi" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;exitX=0.5;entryX=0.5;" edge="1" parent="1" source="act_void_err" target="act_void_pin">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="760" y="885" />
+              <mxPoint x="760" y="788" />
+              <mxPoint x="125" y="788" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge_20" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="1" source="act_void_exec" target="db_void_exec">
+          <mxGeometry relative="1" as="geometry">
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge_21" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;exitX=0.5;entryX=0.5;" edge="1" parent="1" source="db_void_exec" target="act_success">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="660" y="1005" />
+              <mxPoint x="660" y="1065" />
+              <mxPoint x="500" y="1065" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge_22" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="1" source="act_success" target="end">
+          <mxGeometry relative="1" as="geometry">
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

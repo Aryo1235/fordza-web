@@ -16,12 +16,15 @@ import {
   FileSpreadsheet, 
   FileText,
   Layers,
-  Package as PackageIcon
+  Package as PackageIcon,
+  X
 } from "lucide-react";
 import { useStockLogs, useSkuStockLogs } from "@/features/products/hooks";
 import { Badge } from "@/components/ui/badge";
-import { format } from "date-fns";
+import { format, startOfMonth } from "date-fns";
 import { id } from "date-fns/locale";
+import { DatePicker } from "@/components/ui/date-picker";
+import { Label } from "@/components/ui/label";
 import {
   Table,
   TableBody,
@@ -38,8 +41,21 @@ export default function StockLogsPage() {
   const [activeTab, setActiveTab] = useState<string>("universal");
   const [search, setSearch] = useState("");
   const [type, setType] = useState<string>("");
+  const [dateFrom, setDateFrom] = useState<Date>(startOfMonth(new Date()));
+  const [dateTo, setDateTo] = useState<Date>(new Date());
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
+
+  const fromStr = format(dateFrom, "yyyy-MM-dd");
+  const toStr = format(dateTo, "yyyy-MM-dd");
+
+  const resetFilters = () => {
+    setSearch("");
+    setType("");
+    setDateFrom(startOfMonth(new Date()));
+    setDateTo(new Date());
+    setPage(1);
+  };
 
   // Hook untuk log universal
   const { data: universalData, isLoading: isUniversalLoading } = useStockLogs({
@@ -47,6 +63,8 @@ export default function StockLogsPage() {
     limit,
     search,
     type: type || undefined,
+    from: fromStr,
+    to: toStr,
   }, { enabled: activeTab === "universal" });
 
   // Hook untuk log SKU (detail)
@@ -55,6 +73,8 @@ export default function StockLogsPage() {
     limit,
     search,
     type: type || undefined,
+    from: fromStr,
+    to: toStr,
   }, { enabled: activeTab === "sku" });
 
   const isLoading = activeTab === "universal" ? isUniversalLoading : isSkuLoading;
@@ -107,7 +127,7 @@ export default function StockLogsPage() {
     await downloadFile(
       endpoint,
       `Laporan_Histori_Stok_${activeTab === "universal" ? "Universal" : "Detail_SKU"}_Fordza.xlsx`,
-      { search, type, format: "xlsx" }
+      { search, type, from: fromStr, to: toStr, format: "xlsx" }
     );
   };
 
@@ -119,7 +139,7 @@ export default function StockLogsPage() {
     await downloadFile(
       endpoint,
       `Laporan_Histori_Stok_${activeTab === "universal" ? "Universal" : "Detail_SKU"}_Fordza.pdf`,
-      { search, type, format: "pdf" }
+      { search, type, from: fromStr, to: toStr, format: "pdf" }
     );
   };
 
@@ -195,31 +215,95 @@ export default function StockLogsPage() {
                 <Layers className="w-4 h-4" /> Detail Varian & Ukuran
               </TabsTrigger>
             </TabsList>
+          </div>
 
-            {/* Filter Bar (Inside Tabs Header area for compact look) */}
-            <div className="flex items-center gap-3 bg-white p-1 rounded-xl border border-stone-200 shadow-sm grow ml-8 max-w-2xl">
-              <div className="relative flex-1">
+          {/* Filter Bar */}
+          <div className="bg-white border border-stone-200 rounded-xl p-4 mb-4 flex flex-wrap gap-4 items-end shadow-sm">
+            <div className="flex-1 min-w-[200px] space-y-1.5">
+              <Label className="text-xs text-stone-500 font-medium">
+                Cari Produk / Kode / Catatan
+              </Label>
+              <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
                 <Input
                   placeholder="Cari kode, nama, atau catatan..."
                   value={search}
                   onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-                  className="pl-9 h-10 border-none shadow-none focus-visible:ring-0"
+                  className="pl-10"
                 />
+                {search && (
+                  <button
+                    onClick={() => {
+                      setSearch("");
+                      setPage(1);
+                    }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
               </div>
-              <div className="w-px h-6 bg-stone-100" />
-              <select
-                className="h-10 px-3 bg-transparent text-xs font-bold text-stone-500 uppercase outline-none cursor-pointer"
-                value={type}
-                onChange={(e) => { setType(e.target.value); setPage(1); }}
-              >
-                <option value="">Semua Aktivitas</option>
-                <option value="SALE">Penjualan</option>
-                <option value="RESTOCK">Stok Masuk</option>
-                <option value="VOID">Pembatalan</option>
-                <option value="ADJUSTMENT">Penyesuaian</option>
-              </select>
             </div>
+
+            <div className="space-y-1.5 flex flex-col">
+              <Label className="text-xs text-stone-500 font-medium">
+                Dari Tanggal
+              </Label>
+              <DatePicker
+                date={dateFrom}
+                setDate={(d) => {
+                  d && setDateFrom(d);
+                  setPage(1);
+                }}
+                placeholder="Mulai"
+                className="w-[140px]"
+              />
+            </div>
+
+            <div className="space-y-1.5 flex flex-col">
+              <Label className="text-xs text-stone-500 font-medium">
+                Sampai Tanggal
+              </Label>
+              <DatePicker
+                date={dateTo}
+                setDate={(d) => {
+                  d && setDateTo(d);
+                  setPage(1);
+                }}
+                placeholder="Selesai"
+                className="w-[140px]"
+              />
+            </div>
+
+            <div className="space-y-1.5 flex flex-col">
+              <Label className="text-xs text-stone-500 font-medium">
+                Tipe Aktivitas
+              </Label>
+              <div className="relative border border-stone-200 rounded-md bg-white">
+                <select
+                  className="h-10 px-3 bg-transparent text-xs font-semibold text-stone-600 outline-none cursor-pointer w-[160px]"
+                  value={type}
+                  onChange={(e) => { setType(e.target.value); setPage(1); }}
+                >
+                  <option value="">Semua Aktivitas</option>
+                  <option value="SALE">Penjualan</option>
+                  <option value="RESTOCK">Stok Masuk</option>
+                  <option value="VOID">Pembatalan</option>
+                  <option value="ADJUSTMENT">Penyesuaian</option>
+                </select>
+              </div>
+            </div>
+
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={resetFilters}
+              className="ml-auto text-stone-400 hover:text-red-500 hover:bg-red-50 gap-2 h-10 border border-stone-200"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>Reset</span>
+            </Button>
           </div>
 
           <TabsContent value="universal" className="mt-0">

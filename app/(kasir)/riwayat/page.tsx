@@ -343,7 +343,7 @@ export default function RiwayatPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right font-semibold text-stone-800">
-                      Rp {tx.totalPrice.toLocaleString("id-ID")}
+                      Rp {Number(tx.totalPrice).toLocaleString("id-ID")}
                     </td>
                     <td className="px-4 py-3 text-center">
                       <span

@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
-import { useTransactionDetail } from "@/features/kasir/transactions";
+import { useTransactionDetail } from "@/features/transactions";
 import { InvoiceModal } from "@/features/kasir";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -220,7 +220,16 @@ export default function AdminTransactionDetailPage() {
             <CardContent className="space-y-4">
               <div className="flex justify-between items-center py-2 border-b border-stone-50 text-sm">
                 <span className="text-stone-500">Metode</span>
-                <span className="font-bold text-stone-800 uppercase italic">Tunai</span>
+                <span className={cn(
+                  "font-bold uppercase italic",
+                  transaction.paymentMethod === "DEBIT"
+                    ? "text-blue-700"
+                    : transaction.paymentMethod === "QRIS"
+                      ? "text-purple-700"
+                      : "text-stone-800"
+                )}>
+                  {transaction.paymentMethod || "CASH"}
+                </span>
               </div>
               {totalDiscount > 0 && (
                 <div className="flex justify-between items-center py-2 border-b border-stone-50 text-sm">

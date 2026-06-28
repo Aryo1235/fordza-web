@@ -30,13 +30,8 @@ export function useOpenShift() {
 }
 
 export function useCloseShift() {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: (payload: CloseShiftPayload) => closeShift(payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: shiftKeys.current });
-    },
   });
 }
 

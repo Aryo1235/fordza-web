@@ -1,0 +1,67 @@
+<mxfile host="app.diagrams.net" agent="5.0">
+  <diagram name="Use Case - Customer" id="uc-customer">
+    <mxGraphModel dx="1460" dy="775" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="system" parent="1" style="swimlane;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=14;fontStyle=1" value="Fordza-Web (Public Catalog)" vertex="1">
+          <mxGeometry height="680" width="530" x="200" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="uc14" parent="system" style="ellipse;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" value="Lihat Homepage" vertex="1">
+          <mxGeometry height="60" width="140" x="60" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="uc15" parent="system" style="ellipse;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" value="Lihat Katalog Produk" vertex="1">
+          <mxGeometry height="60" width="140" x="60" y="130" as="geometry" />
+        </mxCell>
+        <mxCell id="uc16" parent="system" style="ellipse;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" value="Lihat Detail Produk" vertex="1">
+          <mxGeometry height="60" width="140" x="60" y="250" as="geometry" />
+        </mxCell>
+        <mxCell id="uc17" parent="system" style="ellipse;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" value="Filter Produk" vertex="1">
+          <mxGeometry height="60" width="140" x="330" y="130" as="geometry" />
+        </mxCell>
+        <mxCell id="uc18" parent="system" style="ellipse;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" value="Lihat Kategori" vertex="1">
+          <mxGeometry height="60" width="140" x="60" y="350" as="geometry" />
+        </mxCell>
+        <mxCell id="uc19" parent="system" style="ellipse;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" value="Lihat Rekomendasi" vertex="1">
+          <mxGeometry height="60" width="140" x="330" y="250" as="geometry" />
+        </mxCell>
+        <mxCell id="uc21" parent="system" style="ellipse;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" value="Lihat About Page" vertex="1">
+          <mxGeometry height="60" width="140" x="60" y="450" as="geometry" />
+        </mxCell>
+        <mxCell id="uc22" parent="system" style="ellipse;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" value="Lihat Halaman Promo" vertex="1">
+          <mxGeometry height="60" width="140" x="50" y="550" as="geometry" />
+        </mxCell>
+        <mxCell id="extend1" edge="1" parent="system" source="uc16" style="endArrow=open;endSize=12;dashed=1;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" target="uc15" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" width="160" as="geometry" />
+        </mxCell>
+        <mxCell id="extend2" edge="1" parent="system" source="uc17" style="endArrow=open;endSize=12;dashed=1;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="uc15" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" width="160" as="geometry" />
+        </mxCell>
+        <mxCell id="extend3" edge="1" parent="system" source="uc19" style="endArrow=open;endSize=12;dashed=1;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="uc16" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" width="160" as="geometry" />
+        </mxCell>
+        <mxCell id="actor-customer" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=12;fontStyle=1" value="Customer" vertex="1">
+          <mxGeometry height="120" width="60" x="60" y="320" as="geometry" />
+        </mxCell>
+        <mxCell id="assoc14" edge="1" parent="1" source="actor-customer" style="endArrow=none;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="uc14" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry" />
+        </mxCell>
+        <mxCell id="assoc15" edge="1" parent="1" source="actor-customer" style="endArrow=none;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="uc15" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry" />
+        </mxCell>
+        <mxCell id="assoc16" edge="1" parent="1" source="actor-customer" style="endArrow=none;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="uc16" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry" />
+        </mxCell>
+        <mxCell id="assoc18" edge="1" parent="1" source="actor-customer" style="endArrow=none;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="uc18" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry" />
+        </mxCell>
+        <mxCell id="assoc21" edge="1" parent="1" source="actor-customer" style="endArrow=none;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="uc21" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry" />
+        </mxCell>
+        <mxCell id="assoc22" edge="1" parent="1" source="actor-customer" style="endArrow=none;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="uc22" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

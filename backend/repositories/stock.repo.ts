@@ -1,5 +1,20 @@
 import { prisma } from "@/lib/prisma";
 
+// Konversi tanggal lokal (YYYY-MM-DD, acuan WIB) ke rentang UTC agar stabil lintas timezone server.
+function getWibDateRangeUtc(dateStr: string) {
+  const [year, month, day] = dateStr.split("-").map(Number);
+  const baseUtc = Date.UTC(year, month - 1, day, 0, 0, 0, 0);
+
+  // WIB = UTC+7, jadi 00:00 WIB = H-1 17:00 UTC
+  const startUtc = new Date(baseUtc - 7 * 60 * 60 * 1000);
+  // 23:59:59.999 WIB = H 16:59:59.999 UTC
+  const endUtc = new Date(
+    baseUtc + (24 * 60 * 60 * 1000 - 1) - 7 * 60 * 60 * 1000,
+  );
+
+  return { startUtc, endUtc };
+}
+
 export const StockRepository = {
   // ─── Product-Level Stock Log (produk tanpa varian) ─────────────────────────
 
@@ -9,9 +24,23 @@ export const StockRepository = {
     search?: string;
     type?: string;
     productId?: string;
+    dateFrom?: string;
+    dateTo?: string;
   }) {
-    const { page, limit, search, type, productId } = filters;
+    const { page, limit, search, type, productId, dateFrom, dateTo } = filters;
     const where: any = {};
+
+    if (dateFrom || dateTo) {
+      where.createdAt = {};
+      if (dateFrom) {
+        const { startUtc } = getWibDateRangeUtc(dateFrom);
+        where.createdAt.gte = startUtc;
+      }
+      if (dateTo) {
+        const { endUtc } = getWibDateRangeUtc(dateTo);
+        where.createdAt.lte = endUtc;
+      }
+    }
 
     if (type) where.type = type;
     if (productId) where.productId = productId;
@@ -53,9 +82,23 @@ export const StockRepository = {
     search?: string;
     type?: string;
     productId?: string;
+    dateFrom?: string;
+    dateTo?: string;
   }) {
-    const { search, type, productId } = filters;
+    const { search, type, productId, dateFrom, dateTo } = filters;
     const where: any = {};
+
+    if (dateFrom || dateTo) {
+      where.createdAt = {};
+      if (dateFrom) {
+        const { startUtc } = getWibDateRangeUtc(dateFrom);
+        where.createdAt.gte = startUtc;
+      }
+      if (dateTo) {
+        const { endUtc } = getWibDateRangeUtc(dateTo);
+        where.createdAt.lte = endUtc;
+      }
+    }
 
     if (type) where.type = type;
     if (productId) where.productId = productId;
@@ -116,9 +159,23 @@ export const StockRepository = {
     type?: string;
     skuId?: string;
     productId?: string;
+    dateFrom?: string;
+    dateTo?: string;
   }) {
-    const { page, limit, search, type, skuId, productId } = filters;
+    const { page, limit, search, type, skuId, productId, dateFrom, dateTo } = filters;
     const where: any = {};
+
+    if (dateFrom || dateTo) {
+      where.createdAt = {};
+      if (dateFrom) {
+        const { startUtc } = getWibDateRangeUtc(dateFrom);
+        where.createdAt.gte = startUtc;
+      }
+      if (dateTo) {
+        const { endUtc } = getWibDateRangeUtc(dateTo);
+        where.createdAt.lte = endUtc;
+      }
+    }
 
     if (type) where.type = type;
     if (skuId) where.skuId = skuId;
@@ -227,9 +284,26 @@ export const StockRepository = {
     });
   },
 
-  async getSkuLogsExport(filters: { search?: string; type?: string }) {
-    const { search, type } = filters;
+  async getSkuLogsExport(filters: {
+    search?: string;
+    type?: string;
+    dateFrom?: string;
+    dateTo?: string;
+  }) {
+    const { search, type, dateFrom, dateTo } = filters;
     const where: any = {};
+
+    if (dateFrom || dateTo) {
+      where.createdAt = {};
+      if (dateFrom) {
+        const { startUtc } = getWibDateRangeUtc(dateFrom);
+        where.createdAt.gte = startUtc;
+      }
+      if (dateTo) {
+        const { endUtc } = getWibDateRangeUtc(dateTo);
+        where.createdAt.lte = endUtc;
+      }
+    }
 
     if (type) where.type = type;
 

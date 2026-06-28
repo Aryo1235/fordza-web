@@ -36,6 +36,9 @@ export async function GET(req: Request) {
       minQuantity,
     });
     const detailRows = report.soldProducts;
+    const totalQty = detailRows.reduce((sum, item: any) => sum + Number(item.quantity || 0), 0);
+    const totalRevenue = detailRows.reduce((sum, item: any) => sum + Number(item.revenue || 0), 0);
+    const totalDiscount = detailRows.reduce((sum, item: any) => sum + Number(item.discount || 0), 0);
 
     if (formatType === "pdf") {
       const doc = new jsPDF({ orientation: "landscape" });
@@ -63,6 +66,7 @@ export async function GET(req: Request) {
             "Nama Produk",
             "Warna",
             "Size",
+            "Metode Pembayaran",
             "Harga Satuan",
             "Total Diskon",
             "Qty",
@@ -77,14 +81,30 @@ export async function GET(req: Request) {
                 product.name,
                 product.color || "-",
                 product.size || "-",
+                product.paymentMethod || "CASH",
                 `Rp ${Number(product.basePriceAtSale || 0).toLocaleString("id-ID")}`,
                 Number(product.discount || 0) > 0 ? `-Rp ${Number(product.discount).toLocaleString("id-ID")}` : "-",
                 product.quantity,
                 `Rp ${Number(product.revenue || 0).toLocaleString("id-ID")}`,
               ])
-            : [["-", "-", "Tidak ada data", "-", "-", "-", "-", "-", "-"]],
+            : [["-", "-", "Tidak ada data", "-", "-", "-", "-", "-", "-", "-"]],
+        foot: detailRows.length > 0 ? [
+          [
+            "TOTAL",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            totalQty.toString(),
+            `Rp ${totalRevenue.toLocaleString("id-ID")}`,
+          ]
+        ] : undefined,
         styles: { fontSize: 8 },
         headStyles: { fillColor: [60, 48, 37] },
+        footStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: "bold" },
       });
 
       const pdfBuffer = new Uint8Array(doc.output("arraybuffer"));
@@ -97,21 +117,36 @@ export async function GET(req: Request) {
     }
 
     const workbook = XLSX.utils.book_new();
-    const detailSheet = XLSX.utils.json_to_sheet(
-      detailRows.length > 0
-        ? detailRows.map((product: any) => ({
+    const excelRows = detailRows.length > 0
+      ? [
+          ...detailRows.map((product: any) => ({
             "Kode Produk": product.code || "-",
             "Kode Variant": product.variantCode || "-",
             "Nama Produk": product.name,
             Warna: product.color || "-",
             Ukuran: product.size || "-",
+            "Metode Pembayaran": product.paymentMethod || "CASH",
             "Harga Satuan": Number(product.basePriceAtSale || 0),
             "Total Diskon": Number(product.discount || 0),
             Qty: product.quantity,
             Revenue: Number(product.revenue || 0),
-          }))
-        : [{ Info: "Tidak ada data" }],
-    );
+          })),
+          {
+            "Kode Produk": "TOTAL",
+            "Kode Variant": "",
+            "Nama Produk": "",
+            Warna: "",
+            Ukuran: "",
+            "Metode Pembayaran": "",
+            "Harga Satuan": "",
+            "Total Diskon": "",
+            Qty: totalQty,
+            Revenue: totalRevenue,
+          }
+        ]
+      : [{ Info: "Tidak ada data" }];
+
+    const detailSheet = XLSX.utils.json_to_sheet(excelRows);
 
     XLSX.utils.book_append_sheet(workbook, detailSheet, "Detail Produk");
 

@@ -1,0 +1,157 @@
+<mxfile host="app.diagrams.net" agent="5.0">
+  <diagram name="Activity Diagram - Login &amp; Autentikasi" id="diagram-1">
+    <mxGraphModel dx="1776" dy="504" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1120" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="hdr_actor" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;align=center;strokeWidth=1;" value="User (Admin/Kasir)" vertex="1">
+          <mxGeometry height="40" width="240" x="-40" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="hdr_system" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;align=center;strokeWidth=1;" value="Sistem (Backend)" vertex="1">
+          <mxGeometry height="40" width="340" x="200" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="hdr_db" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;align=center;strokeWidth=1;" value="Database" vertex="1">
+          <mxGeometry height="40" width="240" x="540" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="start" parent="1" style="ellipse;html=1;shape=startState;fillColor=#000000;strokeColor=none;" value="" vertex="1">
+          <mxGeometry height="30" width="30" x="65" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="act_input" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Input Username &amp; Password" vertex="1">
+          <mxGeometry height="50" width="160" y="160" as="geometry" />
+        </mxCell>
+        <mxCell id="act_check_limit" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#d5e8d4;strokeColor=#82b366;" value="Cek Login Rate Limit (5x/menit)" vertex="1">
+          <mxGeometry height="50" width="160" x="280" y="190" as="geometry" />
+        </mxCell>
+        <mxCell id="dec_limit" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="Limit Terpenuhi?" vertex="1">
+          <mxGeometry height="80" width="80" x="210" y="340" as="geometry" />
+        </mxCell>
+        <mxCell id="i4fwOvBcU_by3Yp82rlq-1" edge="1" parent="1" source="act_error_429" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" target="act_input">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="act_error_429" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#d5e8d4;strokeColor=#82b366;" value="Tampilkan Error 429 (Rate Limit Exceeded)" vertex="1">
+          <mxGeometry height="50" width="140" x="385" y="290" as="geometry" />
+        </mxCell>
+        <mxCell id="act_validate" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#d5e8d4;strokeColor=#82b366;" value="Validasi Keberadaan Input (Zod)" vertex="1">
+          <mxGeometry height="50" width="160" x="217.5" y="450" as="geometry" />
+        </mxCell>
+        <mxCell id="dec_validate" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="Valid?" vertex="1">
+          <mxGeometry height="80" width="80" x="210" y="570" as="geometry" />
+        </mxCell>
+        <mxCell id="i4fwOvBcU_by3Yp82rlq-2" edge="1" parent="1" source="act_error_400" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" target="act_input">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="act_error_400" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#d5e8d4;strokeColor=#82b366;" value="Kembalikan Error 400 (Bad Request)" vertex="1">
+          <mxGeometry height="50" width="150" x="390" y="470" as="geometry" />
+        </mxCell>
+        <mxCell id="act_search_db" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#d5e8d4;strokeColor=#82b366;" value="Cari Admin berdasarkan Username" vertex="1">
+          <mxGeometry height="50" width="135" x="220" y="685" as="geometry" />
+        </mxCell>
+        <mxCell id="db_search" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#f8cecc;strokeColor=#b85450;" value="Query Admin by Username" vertex="1">
+          <mxGeometry height="50" width="160" x="650" y="750" as="geometry" />
+        </mxCell>
+        <mxCell id="dec_exist" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="User Ditemukan?" vertex="1">
+          <mxGeometry height="80" width="80" x="220" y="840" as="geometry" />
+        </mxCell>
+        <mxCell id="i4fwOvBcU_by3Yp82rlq-3" edge="1" parent="1" source="act_error_401_user" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" target="act_input">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="act_error_401_user" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#d5e8d4;strokeColor=#82b366;" value="Kembalikan Error 401 (Wrong Username)" vertex="1">
+          <mxGeometry height="50" width="120" x="370" y="855" as="geometry" />
+        </mxCell>
+        <mxCell id="act_verify_pwd" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#d5e8d4;strokeColor=#82b366;" value="Verifikasi Hash Password" vertex="1">
+          <mxGeometry height="50" width="130" x="220" y="960" as="geometry" />
+        </mxCell>
+        <mxCell id="dec_pwd" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="Password Cocok?" vertex="1">
+          <mxGeometry height="80" width="80" x="245" y="1040" as="geometry" />
+        </mxCell>
+        <mxCell id="i4fwOvBcU_by3Yp82rlq-4" edge="1" parent="1" source="act_error_401_pwd" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" target="act_input">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="act_error_401_pwd" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#d5e8d4;strokeColor=#82b366;" value="Kembalikan Error 401 (Wrong Password)" vertex="1">
+          <mxGeometry height="50" width="140" x="380" y="1010" as="geometry" />
+        </mxCell>
+        <mxCell id="act_gen_token" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#d5e8d4;strokeColor=#82b366;" value="Generate JWT Access &amp; Refresh Token" vertex="1">
+          <mxGeometry height="50" width="139.25" x="220" y="1170" as="geometry" />
+        </mxCell>
+        <mxCell id="i4fwOvBcU_by3Yp82rlq-5" edge="1" parent="1" source="act_set_cookie" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="act_redirect">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="act_set_cookie" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#d5e8d4;strokeColor=#82b366;" value="Set HttpOnly Cookies &amp; Kirim 200 OK" vertex="1">
+          <mxGeometry height="50" width="128.75" x="226.25" y="1250" as="geometry" />
+        </mxCell>
+        <mxCell id="i4fwOvBcU_by3Yp82rlq-7" edge="1" parent="1" source="act_redirect" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="end">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="act_redirect" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Redirect ke Dashboard sesuai Role" vertex="1">
+          <mxGeometry height="50" width="180" x="-10" y="1300" as="geometry" />
+        </mxCell>
+        <mxCell id="end" parent="1" style="ellipse;html=1;shape=endState;fillColor=#000000;strokeColor=#000000;" value="" vertex="1">
+          <mxGeometry height="30" width="30" x="65" y="1400" as="geometry" />
+        </mxCell>
+        <mxCell id="pool_left" parent="1" style="line;strokeWidth=1;fillColor=none;align=left;dashed=0;strokeColor=#666666;direction=south;" value="" vertex="1">
+          <mxGeometry height="1360" width="1" x="-40" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="pool_div1" parent="1" style="line;strokeWidth=1;fillColor=none;align=left;dashed=0;strokeColor=#666666;direction=south;" value="" vertex="1">
+          <mxGeometry height="1360" width="1" x="200" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="pool_div2" parent="1" style="line;strokeWidth=1;fillColor=none;align=left;dashed=0;strokeColor=#666666;direction=south;" value="" vertex="1">
+          <mxGeometry height="1360" width="1" x="540" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="pool_right" parent="1" style="line;strokeWidth=1;fillColor=none;align=left;dashed=0;strokeColor=#666666;direction=south;" value="" vertex="1">
+          <mxGeometry height="1360" width="1" x="780" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="pool_bottom" parent="1" style="line;strokeWidth=1;fillColor=none;align=left;dashed=0;strokeColor=#666666;direction=east;" value="" vertex="1">
+          <mxGeometry height="1" width="831.25" x="-41.25" y="1440" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_1" edge="1" parent="1" source="start" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" target="act_input" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_2" edge="1" parent="1" source="act_input" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" target="act_check_limit" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_3" edge="1" parent="1" source="act_check_limit" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" target="dec_limit" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_4" edge="1" parent="1" source="dec_limit" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;exitX=1;entryX=0.5;" target="act_error_429" value="Y (No)">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_5" edge="1" parent="1" source="dec_limit" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;exitX=0.5;entryX=0.5;exitY=1;exitDx=0;exitDy=0;" target="act_validate" value="T (Yes)">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_7" edge="1" parent="1" source="act_validate" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" target="dec_validate" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_8" edge="1" parent="1" source="dec_validate" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;exitX=1;entryX=0.5;" target="act_error_400" value="T (No)">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_9" edge="1" parent="1" source="dec_validate" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;exitX=0.5;entryX=0.5;" target="act_search_db" value="Y (Yes)">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_11" edge="1" parent="1" source="act_search_db" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" target="db_search" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_12" edge="1" parent="1" source="db_search" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;exitX=0.5;entryX=1;exitY=1;exitDx=0;exitDy=0;" target="dec_exist" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_13" edge="1" parent="1" source="dec_exist" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;exitX=1;entryX=0.5;" target="act_error_401_user" value="T (No)">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_14" edge="1" parent="1" source="dec_exist" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;exitX=0.5;entryX=0.5;" target="act_verify_pwd" value="Y (Yes)">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_16" edge="1" parent="1" source="act_verify_pwd" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" target="dec_pwd" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_17" edge="1" parent="1" source="dec_pwd" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;exitX=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" target="act_error_401_pwd" value="T (No)">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_18" edge="1" parent="1" source="dec_pwd" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;exitX=0.5;entryX=0.5;" target="act_gen_token" value="Y (Yes)">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_20" edge="1" parent="1" source="act_gen_token" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" target="act_set_cookie" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

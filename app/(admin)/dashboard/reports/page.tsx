@@ -458,14 +458,15 @@ export default function ReportsPage() {
               <TableHeader className="bg-stone-50">
                 <TableRow>
                   <TableHead className="w-16">#</TableHead>
-                  <TableHead>Kode Produk</TableHead>
-                  <TableHead>Kode Variant</TableHead>
-                  <TableHead>Produk</TableHead>
-                  <TableHead>Varian</TableHead>
-                  <TableHead className="text-right">Qty Terjual</TableHead>
-                  <TableHead className="text-right">Harga Satuan</TableHead>
-                  <TableHead className="text-right">Total Diskon</TableHead>
-                  <TableHead className="text-right">Revenue</TableHead>
+                  <TableHead className="whitespace-nowrap ">Kode Produk</TableHead>
+
+                  <TableHead className="whitespace-nowrap">Produk</TableHead>
+                  <TableHead className="whitespace-nowrap">Varian</TableHead>
+                  <TableHead className="whitespace-nowrap">Metode</TableHead>
+                  <TableHead className="text-center whitespace-nowrap">Qty Terjual</TableHead>
+                  <TableHead className="text-left whitespace-nowrap">Harga Satuan</TableHead>
+                  <TableHead className="text-left whitespace-nowrap">Total Diskon</TableHead>
+                  <TableHead className="text-left whitespace-nowrap">Revenue</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody className="h-30 overflow-y-auto">
@@ -473,7 +474,7 @@ export default function ReportsPage() {
                   Array.from({ length: 5 }).map((_, index) => (
                     <TableRow key={index} className="h-14">
                       <TableCell
-                        colSpan={9}
+                        colSpan={10}
                         className="h-14 animate-pulse bg-stone-50/40"
                       />
                     </TableRow>
@@ -481,7 +482,7 @@ export default function ReportsPage() {
                 ) : paginatedSoldProducts.length === 0 ? (
                   <TableRow>
                     <TableCell
-                      colSpan={9}
+                      colSpan={10}
                       className="h-24 text-center text-stone-400"
                     >
                       Tidak ada produk yang cocok dengan filter.
@@ -497,28 +498,38 @@ export default function ReportsPage() {
                         <TableCell className="font-mono text-[10px] text-stone-500">
                           {product.code}
                         </TableCell>
-                        <TableCell className="font-mono text-[10px] text-[#3C3025] font-semibold">
-                          {product.variantCode}
-                        </TableCell>
-                        <TableCell className="font-semibold text-[#3C3025]">
+
+                        <TableCell className="font-semibold text-[#3C3025] max-w-100 whitespace-nowrap truncate">
                           {product.name}
                         </TableCell>
-                        <TableCell className="text-xs text-stone-500">
+                        <TableCell className="text-xs text-stone-500 whitespace-nowrap">
                           {product.color} - Size: {product.size}
                         </TableCell>
-                        <TableCell className="text-right font-medium text-[#3C3025]">
+                        <TableCell>
+                          <span
+                            className={`inline-flex items-center px-1.5 py-0.5 rounded-sm font-black text-[9px] uppercase tracking-wide border ${product.paymentMethod === "DEBIT"
+                              ? "bg-blue-50 text-blue-700 border-blue-200"
+                              : product.paymentMethod === "QRIS"
+                                ? "bg-purple-50 text-purple-700 border-purple-200"
+                                : "bg-stone-50 text-stone-600 border-stone-200"
+                              }`}
+                          >
+                            {product.paymentMethod || "CASH"}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-center font-medium text-[#3C3025]">
                           {product.quantity}
                         </TableCell>
-                        <TableCell className="text-right text-stone-600">
+                        <TableCell className="text-left whitespace-nowrap text-stone-600">
                           Rp{" "}
                           {Number(product.basePriceAtSale || 0).toLocaleString(
                             "id-ID",
                           )}
                         </TableCell>
-                        <TableCell className="text-right text-red-600 font-medium">
+                        <TableCell className="text-left text-red-600 font-medium">
                           {Number(product.discount || 0) > 0 ? `-Rp ${Number(product.discount).toLocaleString("id-ID")}` : "-"}
                         </TableCell>
-                        <TableCell className="text-right font-bold text-[#3C3025]">
+                        <TableCell className="text-left font-bold whitespace-nowrap text-[#3C3025]">
                           Rp{" "}
                           {Number(product.revenue || 0).toLocaleString("id-ID")}
                         </TableCell>

@@ -60,6 +60,7 @@ export interface ProductVariant {
   totalDiscountPercent?: number | null; // Agregasi Gimmick % + Promo %
   promoDiscountPercent?: number | null; // Diskon promo murni
   promoName?: string | null;            // Nama promo aktif
+  promos?: string[] | null;             // Semua nama promo aktif yang cocok
   isPromoConditional?: boolean;         // Flag jika butuh minPurchase
   isActive: boolean;
   skus: ProductSku[];
@@ -76,6 +77,7 @@ export interface Product {
   highestPrice?: number | null;         // Harga tertinggi untuk referensi coret lead
   totalDiscountPercent?: number | null; // Diskon tertinggi untuk lencana kartu
   promoName?: string | null;            // Nama promo aktif (lead)
+  promos?: string[] | null;             // Semua nama promo aktif yang cocok (lead)
   stock: number;
   productType: string;
   gender: string;

@@ -49,7 +49,7 @@ export default function NewProductPage() {
   const { data: templatesData } = useSizeTemplatesAdmin();
   const categories = categoriesData?.data || [];
   const templates = templatesData?.data || [];
-  console.log("files state: ", files, setFiles);
+
   const {
     register,
     handleSubmit,
@@ -63,7 +63,7 @@ export default function NewProductPage() {
       name: "",
       shortDescription: "",
       description: "",
-      productType: "shoes",
+      productType: undefined,
       gender: "Unisex",
       material: "",
       outsole: "",
@@ -99,6 +99,10 @@ export default function NewProductPage() {
   const [ld, setLd] = useState("");
   const [pb, setPb] = useState("");
   const [lingkar, setLingkar] = useState("");
+  const [panjang, setPanjang] = useState("");
+  const [lebar, setLebar] = useState("");
+  const [tinggi, setTinggi] = useState("");
+  const [detailVal, setDetailVal] = useState("");
   const [showCustomSizeForm, setShowCustomSizeForm] = useState(false);
 
   // Reset custom sizes ketika template diubah
@@ -106,6 +110,9 @@ export default function NewProductPage() {
     setCustomSizes([]);
     setCustomMeasurements({});
     setNewSizeInput("");
+    setInsoleLength(""); setInsoleWidth("");
+    setLd(""); setPb(""); setLingkar("");
+    setPanjang(""); setLebar(""); setTinggi(""); setDetailVal("");
   }, [watchSizeTemplateId]);
 
   // Gabungan ukuran template + kustom → dikirim ke VariantBuilder
@@ -129,13 +136,18 @@ export default function NewProductPage() {
       if (ld) meas.ld = ld;
       if (pb) meas.pb = pb;
     } else {
+      if (panjang) meas.panjang = panjang;
+      if (lebar) meas.lebar = lebar;
+      if (tinggi) meas.tinggi = tinggi;
       if (lingkar) meas.lingkar = lingkar;
+      if (detailVal) meas.detail = detailVal;
     }
 
     setCustomSizes(prev => [...prev, size]);
     setCustomMeasurements(prev => ({ ...prev, [size]: meas }));
     setNewSizeInput(""); setInsoleLength(""); setInsoleWidth("");
     setLd(""); setPb(""); setLingkar("");
+    setPanjang(""); setLebar(""); setTinggi(""); setDetailVal("");
     setShowCustomSizeForm(false);
     toast.success(`Ukuran ${size} berhasil ditambahkan`);
   };
@@ -346,12 +358,17 @@ export default function NewProductPage() {
                   control={control}
                   name="productType"
                   render={({ field }) => (
-                    <Select value={field.value} onValueChange={field.onChange}>
+                    <Select
+                      value={field.value || "none"}
+                      onValueChange={(val) => field.onChange(val === "none" ? null : val)}
+                    >
                       <SelectTrigger className="bg-white">
-                        <SelectValue />
+                        <SelectValue placeholder="Pilih..." />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="none">-- Pilih Tipe --</SelectItem>
                         <SelectItem value="shoes">Sepatu</SelectItem>
+                        <SelectItem value="sandal">Sandal</SelectItem>
                         <SelectItem value="apparel">Pakaian</SelectItem>
                         <SelectItem value="accessories">Aksesori</SelectItem>
                       </SelectContent>
@@ -394,36 +411,42 @@ export default function NewProductPage() {
                   className="bg-stone-50/30 border-stone-100 h-10"
                 />
               </div>
-              <div className="space-y-1.5">
-                <Label className="text-[10px] uppercase font-bold text-stone-400">
-                  Material Sol (Outsole)
-                </Label>
-                <Input
-                  {...register("outsole")}
-                  placeholder="Cth: Rubber TPR"
-                  className="bg-stone-50/30 border-stone-100 h-10"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-[10px] uppercase font-bold text-stone-400">
-                  Insole (Alas Dalam)
-                </Label>
-                <Input
-                  {...register("insole")}
-                  placeholder="Cth: Memory Foam / EVA"
-                  className="bg-stone-50/30 border-stone-100 h-10"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-[10px] uppercase font-bold text-stone-400">
-                  Tipe Penutup
-                </Label>
-                <Input
-                  {...register("closureType")}
-                  placeholder="Cth: Tali / Laces"
-                  className="bg-stone-50/30 border-stone-100 h-10"
-                />
-              </div>
+              {(watchProductType === "shoes" || watchProductType === "sandal") && (
+                <div className="space-y-1.5">
+                  <Label className="text-[10px] uppercase font-bold text-stone-400">
+                    Material Sol (Outsole)
+                  </Label>
+                  <Input
+                    {...register("outsole")}
+                    placeholder="Cth: Rubber TPR"
+                    className="bg-stone-50/30 border-stone-100 h-10"
+                  />
+                </div>
+              )}
+              {watchProductType === "shoes" && (
+                <div className="space-y-1.5">
+                  <Label className="text-[10px] uppercase font-bold text-stone-400">
+                    Insole (Alas Dalam)
+                  </Label>
+                  <Input
+                    {...register("insole")}
+                    placeholder="Cth: Memory Foam / EVA"
+                    className="bg-stone-50/30 border-stone-100 h-10"
+                  />
+                </div>
+              )}
+              {(watchProductType === "shoes" || watchProductType === "apparel" || watchProductType === "accessories") && (
+                <div className="space-y-1.5">
+                  <Label className="text-[10px] uppercase font-bold text-stone-400">
+                    Tipe Penutup
+                  </Label>
+                  <Input
+                    {...register("closureType")}
+                    placeholder="Cth: Tali / Laces / Resleting"
+                    className="bg-stone-50/30 border-stone-100 h-10"
+                  />
+                </div>
+              )}
               <div className="space-y-1.5">
                 <Label className="text-[10px] uppercase font-bold text-stone-400">
                   Negara Asal
@@ -545,7 +568,7 @@ export default function NewProductPage() {
                           </div>
                         </>
                       )}
-                      {["apparel","pakaian"].includes((selectedTemplate?.type || "").toLowerCase()) && (
+                      {["apparel", "pakaian"].includes((selectedTemplate?.type || "").toLowerCase()) && (
                         <>
                           <div className="space-y-1">
                             <Label className="text-[10px] font-bold text-stone-500">LD (cm)</Label>
@@ -557,11 +580,29 @@ export default function NewProductPage() {
                           </div>
                         </>
                       )}
-                      {!["sepatu","apparel","pakaian"].includes((selectedTemplate?.type || "").toLowerCase()) && (
-                        <div className="space-y-1">
-                          <Label className="text-[10px] font-bold text-stone-500">Lingkar (cm)</Label>
-                          <Input value={lingkar} onChange={e => setLingkar(e.target.value)} placeholder="Cth: 18" type="number" step="0.5" className="h-9 bg-white border-orange-200 text-sm" />
-                        </div>
+                      {!["sepatu", "apparel", "pakaian"].includes((selectedTemplate?.type || "").toLowerCase()) && (
+                        <>
+                          <div className="space-y-1">
+                            <Label className="text-[10px] font-bold text-stone-500">Panjang (cm)</Label>
+                            <Input value={panjang} onChange={e => setPanjang(e.target.value)} placeholder="Cth: 30" type="number" step="0.1" className="h-9 bg-white border-orange-200 text-sm" />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-[10px] font-bold text-stone-500">Lebar (cm)</Label>
+                            <Input value={lebar} onChange={e => setLebar(e.target.value)} placeholder="Cth: 15" type="number" step="0.1" className="h-9 bg-white border-orange-200 text-sm" />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-[10px] font-bold text-stone-500">Tinggi (cm)</Label>
+                            <Input value={tinggi} onChange={e => setTinggi(e.target.value)} placeholder="Cth: 40" type="number" step="0.1" className="h-9 bg-white border-orange-200 text-sm" />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-[10px] font-bold text-stone-500">Lingkar (cm)</Label>
+                            <Input value={lingkar} onChange={e => setLingkar(e.target.value)} placeholder="Cth: 18" type="number" step="0.1" className="h-9 bg-white border-orange-200 text-sm" />
+                          </div>
+                          <div className="space-y-1 col-span-2">
+                            <Label className="text-[10px] font-bold text-stone-500">Detail / Volume / Keterangan</Label>
+                            <Input value={detailVal} onChange={e => setDetailVal(e.target.value)} placeholder="Cth: 60ml, All Size" className="h-9 bg-white border-orange-200 text-sm" />
+                          </div>
+                        </>
                       )}
                     </div>
 

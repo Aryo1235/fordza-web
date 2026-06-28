@@ -72,8 +72,14 @@ export async function PUT(
         if (field === "gender" && !["Man", "Woman", "Unisex"].includes(value as string)) {
           throw new AppError("Gender tidak valid. Harus 'Man', 'Woman', atau 'Unisex'", 400, "VALIDATION_ERROR", { field: "gender" });
         }
-        if (field === "productType" && !["shoes", "apparel", "accessories"].includes(value as string)) {
-          throw new AppError("Tipe produk tidak valid. Harus 'shoes', 'apparel', atau 'accessories'", 400, "VALIDATION_ERROR", { field: "productType" });
+        if (field === "productType") {
+          if (value === "" || value === "null" || value === "undefined") {
+            updateData[field] = null;
+            continue;
+          }
+          if (!["shoes", "sandal", "apparel", "accessories"].includes(value as string)) {
+            throw new AppError("Tipe produk tidak valid. Harus 'shoes', 'sandal', 'apparel', atau 'accessories'", 400, "VALIDATION_ERROR", { field: "productType" });
+          }
         }
         updateData[field] = value;
       }
@@ -87,10 +93,24 @@ export async function PUT(
 
     // Ukuran kustom per-produk (dikirim dari VariantManager saat tambah ukuran baru)
     if (formData.get("customSizes") !== null) {
-      updateData.customSizes = JSON.parse(formData.get("customSizes") as string);
+      const val = formData.get("customSizes") as string;
+      if (val !== "" && val !== "null" && val !== "undefined") {
+        try {
+          updateData.customSizes = JSON.parse(val);
+        } catch (e) {
+          logger.error({ val }, "Failed to parse customSizes JSON");
+        }
+      }
     }
     if (formData.get("customMeasurements") !== null) {
-      updateData.customMeasurements = JSON.parse(formData.get("customMeasurements") as string);
+      const val = formData.get("customMeasurements") as string;
+      if (val !== "" && val !== "null" && val !== "undefined") {
+        try {
+          updateData.customMeasurements = JSON.parse(val);
+        } catch (e) {
+          logger.error({ val }, "Failed to parse customMeasurements JSON");
+        }
+      }
     }
 
     if (categoryIds.length > 0) updateData.categoryIds = categoryIds;

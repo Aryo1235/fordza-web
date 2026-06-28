@@ -21,6 +21,7 @@ export interface ProductVariantForKasir {
   // Data promo otomatis dari backend
   additionalDiscount?: number;
   promoName?: string | null;
+  promos?: string[] | null;
   promoMinPurchase?: number | null; // ✅ Min purchase untuk promo conditional
   promoDiscountPercent?: number | null; // ✅ Persentase diskon promo
   finalPrice?: number;
@@ -54,6 +55,7 @@ export interface CartItem {
   quantity: number;
   discountAmount: number;  // Diskon nominal per item (Rp) - Sekarang otomatis dari Admin
   promoName: string | null; // Nama promo yang aktif
+  promos?: string[] | null; // Semua nama promo aktif yang cocok
   promoMinPurchase: number | null; // ✅ Min purchase untuk promo conditional
   promoDiscountPercent?: number | null; // ✅ Persentase diskon promo
   gimmickPriceAtSale: number | null; // Harga gimmick (coretan) saat transaksi

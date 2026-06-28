@@ -34,3 +34,11 @@ export interface CreatePromoInput {
   endDate: string;
   isActive?: boolean;
 }
+
+/** Filter untuk halaman publik promo */
+export interface PromoProductFilters {
+  page?: number;
+  limit?: number;
+  sortBy?: string;
+  search?: string;
+}

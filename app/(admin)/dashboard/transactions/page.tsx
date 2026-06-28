@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransactions } from "@/features/kasir/transactions";
+import { useTransactions } from "@/features/transactions";
 import { PageHeader } from "@/components/layout/admin/PageHeader";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -16,19 +16,28 @@ import {
   Eye,
   FileText,
   Printer,
+  X,
+  RotateCcw,
 } from "lucide-react";
 import { format, startOfMonth } from "date-fns";
 import { cn } from "@/lib/utils";
-import { Pagination } from "@/components/shared/Pagination";
+import { DataTable } from "@/components/shared/DataTable";
 import { downloadFile } from "@/lib/download";
+import { useCashiers } from "@/features/admin/users/hooks";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
 export default function AdminTransactionsPage() {
   const router = useRouter();
   const [dateFrom, setDateFrom] = useState<Date>(startOfMonth(new Date()));
   const [dateTo, setDateTo] = useState<Date>(new Date());
   const [search, setSearch] = useState("");
+  const [selectedKasirId, setSelectedKasirId] = useState<string>("ALL");
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
+
+  const { data: cashiersData } = useCashiers();
+  const cashiers = cashiersData?.data || [];
 
   const { data: transactionsData, isLoading } = useTransactions(
     dateFrom,
@@ -36,10 +45,111 @@ export default function AdminTransactionsPage() {
     page,
     limit,
     search,
+    selectedKasirId === "ALL" ? undefined : selectedKasirId,
   );
 
   const transactions = transactionsData?.data || [];
   const meta = transactionsData?.meta;
+
+  const columns = [
+    {
+      header: "Invoice",
+      cell: (tx: any) => (
+        <span className="font-mono font-bold text-[#3C3025] group-hover:text-amber-800 transition-colors whitespace-nowrap italic uppercase">
+          {tx.invoiceNo}
+        </span>
+      ),
+      className: "px-6 py-4",
+    },
+    {
+      header: "Waktu",
+      cell: (tx: any) => (
+        <span className="text-stone-500 text-xs whitespace-nowrap font-medium">
+          {format(new Date(tx.createdAt), "dd MMM yyyy, HH:mm")}
+        </span>
+      ),
+      className: "px-6 py-4 whitespace-nowrap",
+    },
+    {
+      header: "Kasir",
+      cell: (tx: any) => (
+        <span className="text-[#3C3025] font-bold whitespace-nowrap">
+          {tx.cashier || tx.kasir?.name || "-"}
+        </span>
+      ),
+      className: "px-6 py-4",
+    },
+    {
+      header: "Pembayaran",
+      cell: (tx: any) => (
+        <span
+          className={cn(
+            "inline-flex items-center px-1.5 py-0.5 rounded-sm font-black text-[9px] uppercase tracking-wide border",
+            tx.paymentMethod === "DEBIT"
+              ? "bg-blue-50 text-blue-700 border-blue-200"
+              : tx.paymentMethod === "QRIS"
+                ? "bg-purple-50 text-purple-700 border-purple-200"
+                : "bg-stone-50 text-stone-600 border-stone-200"
+          )}
+        >
+          {tx.paymentMethod || "CASH"}
+        </span>
+      ),
+      className: "px-6 py-4",
+    },
+    {
+      header: "Total",
+      cell: (tx: any) => (
+        <span className="font-black text-[#3C3025] whitespace-nowrap">
+          Rp {tx.totalPrice.toLocaleString("id-ID")}
+        </span>
+      ),
+      className: "text-right px-6 py-4",
+    },
+    {
+      header: "Status",
+      cell: (tx: any) => (
+        <span
+          className={cn(
+            "inline-flex px-2 py-0.5 rounded-sm text-[10px] font-black uppercase tracking-wider",
+            tx.status === "PAID"
+              ? "bg-green-100 text-green-700 border border-green-200"
+              : "bg-red-100 text-red-700 border border-red-200",
+          )}
+        >
+          {tx.status}
+        </span>
+      ),
+      className: "text-center px-6 py-4",
+    },
+    {
+      header: "Keterangan",
+      cell: (tx: any) =>
+        tx.status === "VOID" ? (
+          <div className="flex items-start gap-2 text-red-600/70 italic text-xs font-medium">
+            <ArrowRight className="w-3 h-3 mt-0.5 shrink-0" />
+            {tx.cancelReason || "Tanpa alasan"}
+          </div>
+        ) : (
+          <span className="text-stone-300">-</span>
+        ),
+      className: "px-6 py-4",
+    },
+    {
+      header: "Aksi",
+      cell: (tx: any) => (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 text-stone-400 hover:text-stone-900 transition-all hover:scale-110 active:scale-95"
+          onClick={() => router.push(`/dashboard/transactions/${tx.id}`)}
+        >
+          <Eye className="w-4 h-4" />
+        </Button>
+      ),
+      className: "text-right px-6 py-4",
+    },
+  ];
 
   const handleExportExcel = async () => {
     await downloadFile(
@@ -49,6 +159,7 @@ export default function AdminTransactionsPage() {
         from: format(dateFrom, "yyyy-MM-dd"),
         to: format(dateTo, "yyyy-MM-dd"),
         search,
+        kasirId: selectedKasirId === "ALL" ? undefined : selectedKasirId,
         format: "xlsx",
       },
     );
@@ -62,9 +173,18 @@ export default function AdminTransactionsPage() {
         from: format(dateFrom, "yyyy-MM-dd"),
         to: format(dateTo, "yyyy-MM-dd"),
         search,
+        kasirId: selectedKasirId === "ALL" ? undefined : selectedKasirId,
         format: "pdf",
       },
     );
+  };
+
+  const resetFilters = () => {
+    setSearch("");
+    setDateFrom(startOfMonth(new Date()));
+    setDateTo(new Date());
+    setSelectedKasirId("ALL");
+    setPage(1);
   };
 
   return (
@@ -99,48 +219,95 @@ export default function AdminTransactionsPage() {
       </div>
 
       {/* Filter Bar */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-white p-4 rounded-xl border border-stone-200 shadow-sm font-medium">
-        <div className="md:col-span-2 space-y-1.5">
-          <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">
-            Cari Invoice
-          </p>
+      <div className="bg-white border border-stone-200 rounded-md p-4 mb-6 flex flex-wrap gap-4 items-end shadow-sm">
+        <div className="flex-1 space-y-1.5">
+          <Label className="text-xs text-stone-500 font-medium">
+            Cari No. Invoice
+          </Label>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
             <Input
-              placeholder="Ketik nomor invoice..."
-              className="pl-10 h-10 border-stone-200 focus:ring-stone-200"
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
                 setPage(1);
               }}
+              placeholder="Ketik nomor invoice..."
+              className="pl-10"
             />
+            {search && (
+              <button
+                onClick={() => {
+                  setSearch("");
+                  setPage(1);
+                }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
           </div>
         </div>
-        <div className="space-y-1.5">
-          <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">
+
+        <div className="space-y-1.5 flex flex-col">
+          <Label className="text-xs text-stone-500 font-medium">
             Dari Tanggal
-          </p>
+          </Label>
           <DatePicker
             date={dateFrom}
             setDate={(d) => {
               d && setDateFrom(d);
               setPage(1);
             }}
+            placeholder="Mulai"
+            className="w-[140px]"
           />
         </div>
-        <div className="space-y-1.5">
-          <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">
+
+        <div className="space-y-1.5 flex flex-col">
+          <Label className="text-xs text-stone-500 font-medium">
             Sampai Tanggal
-          </p>
+          </Label>
           <DatePicker
             date={dateTo}
             setDate={(d) => {
               d && setDateTo(d);
               setPage(1);
             }}
+            placeholder="Selesai"
+            className="w-[140px]"
           />
         </div>
+
+        <div className="space-y-1.5">
+          <Label className="text-xs text-stone-500 font-medium">
+            Pilih Kasir
+          </Label>
+          <Select value={selectedKasirId} onValueChange={(val) => { setSelectedKasirId(val); setPage(1); }}>
+            <SelectTrigger className="w-[160px] bg-white">
+              <SelectValue placeholder="Pilih Kasir" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">Semua Kasir</SelectItem>
+              {cashiers.map((c: any) => (
+                <SelectItem key={c.id} value={c.id}>
+                  {c.name || c.username}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={resetFilters}
+          className="ml-auto text-stone-400 hover:text-red-500 hover:bg-red-50 gap-2 h-9"
+        >
+          <RotateCcw className="w-3.5 h-3.5" />
+          <span className="hidden sm:inline">Reset</span>
+        </Button>
       </div>
 
       <Card className="border-stone-200 shadow-sm overflow-hidden">
@@ -159,151 +326,24 @@ export default function AdminTransactionsPage() {
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-stone-50/50">
-                <tr className="border-b border-stone-100">
-                  <th className="text-left px-6 py-4 text-[10px] font-bold text-stone-400 uppercase">
-                    Invoice
-                  </th>
-                  <th className="text-left px-6 py-4 text-[10px] font-bold text-stone-400 uppercase">
-                    Waktu
-                  </th>
-                  <th className="text-left px-6 py-4 text-[10px] font-bold text-stone-400 uppercase">
-                    Kasir
-                  </th>
-                  <th className="text-left px-6 py-4 text-[10px] font-bold text-stone-400 uppercase">
-                    Pembayaran
-                  </th>
-                  <th className="text-right px-6 py-4 text-[10px] font-bold text-stone-400 uppercase">
-                    Total
-                  </th>
-                  <th className="text-center px-6 py-4 text-[10px] font-bold text-stone-400 uppercase">
-                    Status
-                  </th>
-                  <th className="text-left px-6 py-4 text-[10px] font-bold text-stone-400 uppercase">
-                    Keterangan
-                  </th>
-                  <th className="text-right px-6 py-4 text-[10px] font-bold text-stone-400 uppercase">
-                    Aksi
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-stone-100">
-                {isLoading ? (
-                  Array.from({ length: limit }).map((_, i) => (
-                    <tr key={i} className="animate-pulse">
-                      <td
-                        colSpan={8}
-                        className="px-6 py-4 h-12 bg-stone-50/30"
-                      />
-                    </tr>
-                  ))
-                ) : transactions.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={8}
-                      className="px-6 py-16 text-center text-stone-400"
-                    >
-                      <div className="flex flex-col items-center gap-2">
-                        <History className="w-8 h-8 opacity-20" />
-                        <p className="text-sm font-medium">
-                          Tidak ada data transaksi ditemukan.
-                        </p>
-                      </div>
-                    </td>
-                  </tr>
-                ) : (
-                  transactions.map((tx: any) => (
-                    <tr
-                      key={tx.id}
-                      className="hover:bg-stone-50 transition-colors group"
-                    >
-                      <td className="px-6 py-4">
-                        <span className="font-mono font-bold text-[#3C3025] group-hover:text-amber-800 transition-colors italic uppercase">
-                          {tx.invoiceNo}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-stone-500 text-xs whitespace-nowrap font-medium">
-                        {format(new Date(tx.createdAt), "dd MMM yyyy, HH:mm")}
-                      </td>
-                      <td className="px-6 py-4 text-[#3C3025] font-bold">
-                        {tx.cashier || tx.kasir?.name || "-"}
-                      </td>
-                      <td className="px-6 py-4 text-xs">
-                        <span
-                          className={cn(
-                            "inline-flex items-center px-1.5 py-0.5 rounded-sm font-black text-[9px] uppercase tracking-wide border",
-                            tx.paymentMethod === "DEBIT"
-                              ? "bg-blue-50 text-blue-700 border-blue-200"
-                              : tx.paymentMethod === "QRIS"
-                                ? "bg-purple-50 text-purple-700 border-purple-200"
-                                : "bg-stone-50 text-stone-600 border-stone-200"
-                          )}
-                        >
-                          {tx.paymentMethod || "CASH"}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-right font-black text-[#3C3025]">
-                        Rp {tx.totalPrice.toLocaleString("id-ID")}
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <span
-                          className={cn(
-                            "inline-flex px-2 py-0.5 rounded-sm text-[10px] font-black uppercase tracking-wider",
-                            tx.status === "PAID"
-                              ? "bg-green-100 text-green-700 border border-green-200"
-                              : "bg-red-100 text-red-700 border border-red-200",
-                          )}
-                        >
-                          {tx.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        {tx.status === "VOID" ? (
-                          <div className="flex items-start gap-2 text-red-600/70 italic text-xs font-medium">
-                            <ArrowRight className="w-3 h-3 mt-0.5 shrink-0" />
-                            {tx.cancelReason || "Tanpa alasan"}
-                          </div>
-                        ) : (
-                          <span className="text-stone-300">-</span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-stone-400 hover:text-stone-900 transition-all hover:scale-110 active:scale-95"
-                          onClick={() =>
-                            router.push(`/dashboard/transactions/${tx.id}`)
-                          }
-                        >
-                          <Eye className="w-4 h-4" />
-                        </Button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Pagination Footer */}
-          {meta && (
-            <Pagination
-              page={page}
-              totalPages={meta.totalPages}
-              totalItems={meta.total}
-              limit={limit}
-              onPageChange={setPage}
-              onLimitChange={(l) => {
-                setLimit(l);
-                setPage(1);
-              }}
-              isLoading={isLoading}
-              label="transaksi"
-            />
-          )}
+          <DataTable
+            columns={columns}
+            data={transactions}
+            isLoading={isLoading}
+            meta={meta ? {
+              currentPage: page,
+              totalPage: meta.totalPages,
+              totalItems: meta.total,
+              limit: limit
+            } : undefined}
+            onPageChange={setPage}
+            onLimitChange={(l) => {
+              setLimit(l);
+              setPage(1);
+            }}
+            emptyMessage="Tidak ada data transaksi ditemukan."
+            className="space-y-0 [&_.rounded-md.border]:border-none [&_.rounded-md.border]:shadow-none [&_.rounded-md.border]:rounded-none"
+          />
         </CardContent>
       </Card>
 

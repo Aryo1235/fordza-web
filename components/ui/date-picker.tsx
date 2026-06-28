@@ -28,7 +28,7 @@ export function DatePicker({ date, setDate, placeholder = "Pilih tanggal", class
         <Button
           variant="outline"
           className={cn(
-            "w-[200px] justify-between text-left font-normal",
+            " ",
             !date && "text-muted-foreground",
             className
           )}

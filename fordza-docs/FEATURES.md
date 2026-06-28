@@ -201,19 +201,18 @@ Dashboard & laporan penjualan lengkap.
 #### **Sales by Items**
 - Produk terlaris
 - Ukuran terlaris
-- Revenue per produk
-- Qty terjual per SKU
+- Revenue per produk & Qty terjual per SKU
+- Analisis metode pembayaran (`CASH`, `QRIS`, `DEBIT`) per produk
 
 #### **Filters:**
-- Date range
+- Rentang Tanggal (Mulai s.d Selesai)
 - Kasir
 - Produk
 - Status (PAID/VOID)
 
 **Features:**
-- **OLAP Table** - Pre-agregasi untuk performa
-- **Export Excel** - Export semua report ke Excel
-- **Real-time** - Data real-time dari transaksi
+- **Real-time Aggregation** - Agregasi data langsung dari riwayat transaksi dan detail item untuk tingkat akurasi tinggi
+- **Export PDF & Excel** - Ekspor data dengan filter tanggal aktif lengkap dengan baris total di bagian bawah dokumen
 - **Multi-Sheet Export** - Summary + Items + Transactions
 
 **Use Cases:**

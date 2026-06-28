@@ -45,9 +45,19 @@ import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 
 // ─── Sub-komponen: Row SKU ─────────────────────────────────
 
-function SkuRow({ sku, basePrice }: { sku: ProductSku; basePrice: number }) {
+function SkuRow({
+  sku,
+  basePrice,
+  productId,
+  sizeTemplates = [],
+}: {
+  sku: ProductSku;
+  basePrice: number;
+  productId: string;
+  sizeTemplates?: string[];
+}) {
   const effectivePrice = sku.priceOverride ?? basePrice;
-  const deleteSku = useDeleteSku(sku.variantId);
+  const deleteSku = useDeleteSku(productId);
   const [showConfirm, setShowConfirm] = useState(false);
 
   const onConfirmDelete = () => {
@@ -62,6 +72,8 @@ function SkuRow({ sku, basePrice }: { sku: ProductSku; basePrice: number }) {
       },
     });
   };
+
+  const isDeletable = !sizeTemplates.includes(sku.size);
 
   return (
     <div className="flex items-center gap-2 p-2 rounded-md hover:bg-stone-50 transition-colors group">
@@ -93,16 +105,18 @@ function SkuRow({ sku, basePrice }: { sku: ProductSku; basePrice: number }) {
           Nonaktif
         </Badge>
       )}
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon"
-        className="h-6 w-6 text-stone-300 opacity-0 group-hover:opacity-100 hover:text-red-500 transition-all"
-        onClick={() => setShowConfirm(true)}
-        disabled={deleteSku.isPending}
-      >
-        <Trash2 className="w-3 h-3" />
-      </Button>
+      {isDeletable && (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-6 w-6 text-stone-300 opacity-0 group-hover:opacity-100 hover:text-red-500 transition-all"
+          onClick={() => setShowConfirm(true)}
+          disabled={deleteSku.isPending}
+        >
+          <Trash2 className="w-3 h-3" />
+        </Button>
+      )}
 
       <ConfirmDialog
         open={showConfirm}
@@ -566,7 +580,13 @@ function VariantCard({
             variant.skus
               .sort((a, b) => Number(a.size) - Number(b.size))
               .map((sku) => (
-                <SkuRow key={sku.id} sku={sku} basePrice={variant.basePrice} />
+                <SkuRow
+                  key={sku.id}
+                  sku={sku}
+                  basePrice={variant.basePrice}
+                  productId={productId}
+                  sizeTemplates={sizeTemplates}
+                />
               ))
           )}
         </div>
@@ -882,19 +902,23 @@ function AddVariantForm({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-2">
-        <div className="space-y-1">
-          <Label className="text-xs">Harga Khusus Bigsize</Label>
-          <Input
-            type="text"
-            value={bigsizePrice ? formatNumber(Number(bigsizePrice)) : ""}
-            onChange={(e) => {
-              const val = parseNumber(e.target.value);
-              setBigsizePrice(val || "");
-            }}
-            placeholder="Rp"
-            className="h-9 border-amber-200 bg-amber-50"
-          />
-        </div>
+        {bigsizeSizes.length > 0 ? (
+          <div className="space-y-1">
+            <Label className="text-xs">Harga Khusus Bigsize</Label>
+            <Input
+              type="text"
+              value={bigsizePrice ? formatNumber(Number(bigsizePrice)) : ""}
+              onChange={(e) => {
+                const val = parseNumber(e.target.value);
+                setBigsizePrice(val || "");
+              }}
+              placeholder="Rp"
+              className="h-9 border-amber-200 bg-amber-50"
+            />
+          </div>
+        ) : (
+          <div />
+        )}
         <div className="flex items-end justify-end gap-2">
           <Button
             type="button"
@@ -1351,6 +1375,7 @@ function EditVariantForm({
           onToggleBigsize={handleToggleBigsize}
           onDelete={handleDeleteSku}
           deletingSize={deletingSize}
+          sizeTemplates={sizeTemplates}
         />
 
         {/* Form Tambah Ukuran (Hanya di mode Edit) */}
@@ -1369,21 +1394,23 @@ function EditVariantForm({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-2">
-        <div className="space-y-1">
-          <Label className="text-xs">Harga Khusus Bigsize</Label>
-          <Input
-            type="text"
-            value={bigsizePrice ? formatNumber(Number(bigsizePrice)) : ""}
-            onChange={(e) => {
-              const val = parseNumber(e.target.value);
-              setBigsizePrice(val || "");
-            }}
-            placeholder="Rp"
-            className="h-9 border-amber-200 bg-amber-50"
-          />
+      {bigsizeSizes.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-2">
+          <div className="space-y-1">
+            <Label className="text-xs">Harga Khusus Bigsize</Label>
+            <Input
+              type="text"
+              value={bigsizePrice ? formatNumber(Number(bigsizePrice)) : ""}
+              onChange={(e) => {
+                const val = parseNumber(e.target.value);
+                setBigsizePrice(val || "");
+              }}
+              placeholder="Rp"
+              className="h-9 border-amber-200 bg-amber-50"
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="flex flex-col items-end pt-4 border-t border-stone-100 gap-4">
         <div className="flex items-center gap-3 bg-stone-50 px-4 py-2 rounded-lg border border-stone-200">

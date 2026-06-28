@@ -31,6 +31,7 @@ export const ProductRepository = {
       minPrice,
       maxPrice,
       sortBy,
+      hasPromo,
       page = 1,
       limit = 10,
     } = filters;
@@ -72,6 +73,60 @@ export const ProductRepository = {
 
     if (minPrice !== undefined || maxPrice !== undefined) {
       where.price = { gte: minPrice || 0, lte: maxPrice || 999999999 };
+    }
+
+    // --- Filter Promo: hanya tampilkan produk yang punya promo aktif ---
+    if (hasPromo) {
+      const activePromos = await PromoRepository.getActive();
+
+      if (activePromos.length === 0) {
+        // Tidak ada promo aktif sama sekali → return kosong langsung
+        return {
+          products: [],
+          meta: { totalItems: 0, totalPage: 0, currentPage: page, limit },
+        };
+      }
+
+      const hasGlobalPromo = activePromos.some((p) => p.targetType === "GLOBAL");
+
+      if (!hasGlobalPromo) {
+        // Kumpulkan ID target dari semua promo aktif
+        const promoProductIds = activePromos
+          .filter((p) => p.targetType === "PRODUCT")
+          .flatMap((p) => p.targetIds);
+
+        const promoVariantIds = activePromos
+          .filter((p) => p.targetType === "VARIANT")
+          .flatMap((p) => p.targetIds);
+
+        const promoCategoryIds = activePromos
+          .filter((p) => p.targetType === "CATEGORY")
+          .flatMap((p) => p.targetIds);
+
+        const promoOrConditions: any[] = [];
+        if (promoProductIds.length > 0)
+          promoOrConditions.push({ id: { in: promoProductIds } });
+        if (promoVariantIds.length > 0)
+          promoOrConditions.push({ variants: { some: { id: { in: promoVariantIds }, deletedAt: null } } });
+        if (promoCategoryIds.length > 0)
+          promoOrConditions.push({ categories: { some: { categoryId: { in: promoCategoryIds } } } });
+
+        if (promoOrConditions.length === 0) {
+          return {
+            products: [],
+            meta: { totalItems: 0, totalPage: 0, currentPage: page, limit },
+          };
+        }
+
+        // Merge dengan OR condition yang sudah ada (jika ada filter lain)
+        if (where.OR) {
+          where.AND = [{ OR: where.OR }, { OR: promoOrConditions }];
+          delete where.OR;
+        } else {
+          where.OR = promoOrConditions;
+        }
+      }
+      // Jika hasGlobalPromo → semua produk qualify, tidak perlu tambah filter WHERE
     }
 
     let orderBy: any = { createdAt: "desc" };
@@ -167,17 +222,10 @@ export const ProductRepository = {
           let isConditional = false;
 
           if (bestPromo) {
-            console.log(`🎁 [ProductRepo] Variant "${v.color}":`, {
-              promoName: bestPromo.name,
-              minPurchase: bestPromo.minPurchase,
-              type: bestPromo.type,
-              value: bestPromo.value,
-            });
 
             if (Number(bestPromo.minPurchase || 0) > 0) {
               // ✅ FIX: Promo conditional, jangan apply discount di product list
               isConditional = true;
-              console.log(`✅ [ProductRepo] Promo CONDITIONAL - discount TIDAK apply di product list`);
               // additionalDiscount tetap 0, akan di-apply saat checkout
             } else {
               // Promo non-conditional, langsung apply
@@ -185,7 +233,6 @@ export const ProductRepository = {
                 additionalDiscount =
                   (basePrice * Number(bestPromo.value)) / 100;
               else additionalDiscount = Number(bestPromo.value);
-              console.log(`✅ [ProductRepo] Promo NON-CONDITIONAL - discount apply: ${additionalDiscount}`);
             }
           }
 
@@ -193,13 +240,6 @@ export const ProductRepository = {
           const finalPrice = isConditional
             ? basePrice
             : basePrice - Math.min(additionalDiscount, basePrice);
-
-          console.log(`💰 [ProductRepo] Variant "${v.color}":`, {
-            basePrice,
-            isConditional,
-            additionalDiscount,
-            finalPrice,
-          });
 
           let totalDiscountPercent = 0;
 
@@ -1265,15 +1305,6 @@ export const ProductRepository = {
         percent = (amount / basePrice) * 100;
       }
 
-      console.log(`🎁 [getForKasir] calculatePromo:`, {
-        promoName: bestPromo.name,
-        minPurchase,
-        isConditional,
-        basePrice,
-        amount,
-        percent,
-      });
-
       return {
         amount: Math.min(amount, basePrice),
         percent,
@@ -1424,9 +1455,9 @@ export const ProductRepository = {
       deletedAt: null,
       OR: search
         ? [
-            { name: { contains: search, mode: "insensitive" } },
-            { productCode: { contains: search, mode: "insensitive" } },
-          ]
+          { name: { contains: search, mode: "insensitive" } },
+          { productCode: { contains: search, mode: "insensitive" } },
+        ]
         : undefined,
     };
 

@@ -37,15 +37,36 @@ export async function POST(
     const data = validation.data;
 
     const sku = await prisma.$transaction(async (tx) => {
-      const created = await tx.productSku.create({
-        data: {
-          variantId,
-          size: data.size,
-          stock: data.stock,
-          priceOverride: data.priceOverride ?? null,
-          isActive: data.isActive,
-        },
+      const existingSku = await tx.productSku.findUnique({
+        where: { variantId_size: { variantId, size: data.size } },
       });
+
+      let created;
+      if (existingSku) {
+        if (existingSku.deletedAt === null) {
+          throw new AppError("Ukuran ini sudah ada di varian ini", 409, "CONFLICT");
+        }
+
+        created = await tx.productSku.update({
+          where: { id: existingSku.id },
+          data: {
+            stock: data.stock,
+            priceOverride: data.priceOverride ?? null,
+            isActive: data.isActive,
+            deletedAt: null,
+          },
+        });
+      } else {
+        created = await tx.productSku.create({
+          data: {
+            variantId,
+            size: data.size,
+            stock: data.stock,
+            priceOverride: data.priceOverride ?? null,
+            isActive: data.isActive,
+          },
+        });
+      }
 
       // Rekalkulasi cached stock di Product induk
       const totalStock = await tx.productSku.aggregate({

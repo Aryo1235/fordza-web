@@ -10,6 +10,7 @@ export async function getTransactionHistory(
     page?: number; 
     limit?: number; 
     search?: string;
+    kasirId?: string;
   }
 ) {
   try {

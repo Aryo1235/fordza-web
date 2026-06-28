@@ -51,7 +51,7 @@ export async function handleError(error: unknown) {
   if (error instanceof Prisma.PrismaClientKnownRequestError) {
     if (error.code === "P2002") {
       const target = error.meta?.target as string[] | string | undefined;
-      console.log("DEBUG P2002 TARGET:", target); // DEBUGGING!
+
 
       let message = "Data sudah ada dalam sistem";
 

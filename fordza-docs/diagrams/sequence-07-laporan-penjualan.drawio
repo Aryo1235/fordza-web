@@ -1,6 +1,6 @@
 <mxfile host="app.diagrams.net" agent="5.0">
   <diagram name="Sequence Diagram - Laporan Penjualan" id="seq-report">
-    <mxGraphModel dx="1216" dy="634" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="800" math="0" shadow="0">
+    <mxGraphModel dx="1287" dy="672" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="800" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -49,7 +49,7 @@
             <mxPoint x="650" y="760" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="lifeline5" edge="1" parent="1" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;" value="">
+        <mxCell id="lifeline5" edge="1" parent="1" source="Q_4KnnTEnOQfUNRYcYHG-1" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;" value="">
           <mxGeometry height="50" relative="1" width="50" as="geometry">
             <mxPoint x="840" y="180" as="sourcePoint" />
             <mxPoint x="840" y="760" as="targetPoint" />
@@ -97,8 +97,8 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="msg6" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;" value="6: Aggregate data (SUM, COUNT)">
-          <mxGeometry relative="1" x="-0.2" y="10" as="geometry">
-            <mxPoint as="offset" />
+          <mxGeometry relative="1" x="-0.125" y="28" as="geometry">
+            <mxPoint x="-8" y="-20" as="offset" />
             <Array as="points">
               <mxPoint x="910" y="400" />
               <mxPoint x="910" y="420" />
@@ -140,7 +140,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="section1" parent="1" style="text;html=1;strokeColor=none;fillColor=#e1d5e7;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=1" value="EXPORT TO EXCEL" vertex="1">
-          <mxGeometry height="30" width="140" x="40" y="640" as="geometry" />
+          <mxGeometry height="30" width="140" x="40" y="630" as="geometry" />
         </mxCell>
         <mxCell id="msg11" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;" value="11: Klik Export Excel">
           <mxGeometry relative="1" x="-0.2" y="10" as="geometry">
@@ -197,6 +197,15 @@
         </mxCell>
         <mxCell id="note1" parent="1" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;fillColor=#f8cecc;strokeColor=#b85450;size=15;" value="Note: Data diambil dari&#xa;SkuSalesSummary (OLAP)&#xa;untuk performa cepat" vertex="1">
           <mxGeometry height="80" width="180" x="960" y="400" as="geometry" />
+        </mxCell>
+        <mxCell id="Q_4KnnTEnOQfUNRYcYHG-2" edge="1" parent="1" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;" target="Q_4KnnTEnOQfUNRYcYHG-1" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="840" y="180" as="sourcePoint" />
+            <mxPoint x="840" y="760" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Q_4KnnTEnOQfUNRYcYHG-1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" value="" vertex="1">
+          <mxGeometry height="120" width="10" x="835" y="350" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>

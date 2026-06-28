@@ -1,0 +1,160 @@
+<mxfile host="app.diagrams.net" agent="5.0">
+  <diagram name="Activity Diagram - Katalog Produk &amp; Rekomendasi KNN" id="diagram-1">
+    <mxGraphModel dx="1054" dy="560" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1430" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="hdr_actor" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;align=center;strokeWidth=1;" value="Customer" vertex="1">
+          <mxGeometry height="40" width="200" x="40" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="hdr_system" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;align=center;strokeWidth=1;" value="Sistem (Frontend / Backend)" vertex="1">
+          <mxGeometry height="40" width="300" x="240" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="hdr_db" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;align=center;strokeWidth=1;" value="Database / KNN Engine" vertex="1">
+          <mxGeometry height="40" width="240" x="540" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="start" parent="1" style="ellipse;html=1;shape=startState;fillColor=#000000;strokeColor=none;" value="" vertex="1">
+          <mxGeometry height="30" width="30" x="125" y="90" as="geometry" />
+        </mxCell>
+        <mxCell id="act_open_cat" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Buka Katalog &amp; Terapkan Filter Produk" vertex="1">
+          <mxGeometry height="55" width="145" x="67.5" y="150" as="geometry" />
+        </mxCell>
+        <mxCell id="act_req_cat" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#d5e8d4;strokeColor=#82b366;" value="GET /api/public/products (search, gender, categoryIds, minPrice, maxPrice, sortBy)" vertex="1">
+          <mxGeometry height="55" width="170" x="305" y="210" as="geometry" />
+        </mxCell>
+        <mxCell id="db_cat" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#f8cecc;strokeColor=#b85450;" value="Query Products WHERE isActive=true + Filters &amp; Pagination" vertex="1">
+          <mxGeometry height="55" width="201" x="579" y="295" as="geometry" />
+        </mxCell>
+        <mxCell id="act_browse" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Telusuri Hasil Katalog &amp; Pilih Produk yang Diminati" vertex="1">
+          <mxGeometry height="55" width="160" x="60" y="380" as="geometry" />
+        </mxCell>
+        <mxCell id="act_click" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Klik Produk — Halaman Detail Mulai Dimuat" vertex="1">
+          <mxGeometry height="55" width="171" x="54.5" y="500" as="geometry" />
+        </mxCell>
+        <mxCell id="act_fetch_det" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#d5e8d4;strokeColor=#82b366;" value="GET /api/public/products/[id]" vertex="1">
+          <mxGeometry height="55" width="220" x="270" y="570" as="geometry" />
+        </mxCell>
+        <mxCell id="db_det" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#f8cecc;strokeColor=#b85450;" value="Query Produk + Varian + SKU (finalPrice &amp; promoName sudah ter-embed dari repo layer)" vertex="1">
+          <mxGeometry height="55" width="194.5" x="570" y="640" as="geometry" />
+        </mxCell>
+        <mxCell id="act_read" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Membaca Info Produk, Pilih Warna &amp; Ukuran" vertex="1">
+          <mxGeometry height="55" width="200" x="41" y="830" as="geometry" />
+        </mxCell>
+        <mxCell id="db_knn_one" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#f8cecc;strokeColor=#b85450;" value="prisma.product.findMany(isActive:true) — 1 Query Semua Produk Aktif" vertex="1">
+          <mxGeometry height="55" width="205" x="557.5" y="800" as="geometry" />
+        </mxCell>
+        <mxCell id="Bm-GhXgoy_bt0cJrzkHf-6" edge="1" parent="1" source="act_find_tgt" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="act_knn_fire">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="act_find_tgt" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#d5e8d4;strokeColor=#82b366;" value="Find targetProduct dari array di memori (.find() — bukan query DB tambahan)" vertex="1">
+          <mxGeometry height="55" width="220" x="271" y="885" as="geometry" />
+        </mxCell>
+        <mxCell id="act_feat_map" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#d5e8d4;strokeColor=#82b366;" value="Map ke ProductFeature[] — categoryIds, material, insole, gender, productType, price" vertex="1">
+          <mxGeometry height="55" width="231" x="260.5" y="1120" as="geometry" />
+        </mxCell>
+        <mxCell id="act_ext_dim" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#d5e8d4;strokeColor=#82b366;" value="extractUniqueDimensions() — Bangun Dimensi Adaptif untuk One-Hot Encoding" vertex="1">
+          <mxGeometry height="55" width="185" x="283.5" y="1220" as="geometry" />
+        </mxCell>
+        <mxCell id="act_vectorize" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#d5e8d4;strokeColor=#82b366;" value="buildProductVectors() — One-Hot Encode Kategori + Min-Max Normalisasi Harga" vertex="1">
+          <mxGeometry height="55" width="190" x="281" y="1315" as="geometry" />
+        </mxCell>
+        <mxCell id="act_knn_dist" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#d5e8d4;strokeColor=#82b366;" value="findKNearest() — Hitung Euclidean Distance, Ambil K=4 Terdekat" vertex="1">
+          <mxGeometry height="55" width="246.5" x="252.75" y="1410" as="geometry" />
+        </mxCell>
+        <mxCell id="act_fmt_out" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#d5e8d4;strokeColor=#82b366;" value="Format Output: Gabung Data Produk + distance Score (4 desimal)" vertex="1">
+          <mxGeometry height="55" width="250" x="251" y="1505" as="geometry" />
+        </mxCell>
+        <mxCell id="act_show" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Tampilkan Carousel Produk Serupa &amp; Badge Skor Kemiripan" vertex="1">
+          <mxGeometry height="55" width="170" x="42.5" y="1630" as="geometry" />
+        </mxCell>
+        <mxCell id="end" parent="1" style="ellipse;html=1;shape=endState;fillColor=#000000;strokeColor=#000000;" value="" vertex="1">
+          <mxGeometry height="30" width="30" x="112.5" y="1750" as="geometry" />
+        </mxCell>
+        <mxCell id="pool_left" parent="1" style="line;strokeWidth=1;fillColor=none;align=left;dashed=0;strokeColor=#666666;direction=south;" value="" vertex="1">
+          <mxGeometry height="1720" width="1" x="40" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="pool_div1" parent="1" style="line;strokeWidth=1;fillColor=none;align=left;dashed=0;strokeColor=#666666;direction=south;" value="" vertex="1">
+          <mxGeometry height="1720" width="1" x="239" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="pool_div2" parent="1" style="line;strokeWidth=1;fillColor=none;align=left;dashed=0;strokeColor=#666666;direction=south;" value="" vertex="1">
+          <mxGeometry height="1720" width="1" x="540" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="pool_right" parent="1" style="line;strokeWidth=1;fillColor=none;align=left;dashed=0;strokeColor=#666666;direction=south;" value="" vertex="1">
+          <mxGeometry height="1720" width="1" x="780" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="pool_bottom" parent="1" style="line;strokeWidth=1;fillColor=none;align=left;dashed=0;strokeColor=#666666;direction=east;" value="" vertex="1">
+          <mxGeometry height="1" width="740" x="40" y="1800" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_1" edge="1" parent="1" source="start" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" target="act_open_cat" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_2" edge="1" parent="1" source="act_open_cat" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" target="act_req_cat" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_3" edge="1" parent="1" source="act_req_cat" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" target="db_cat" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_4" edge="1" parent="1" source="db_cat" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;exitX=0.5;entryX=1;" target="act_browse" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_5" edge="1" parent="1" source="act_browse" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" target="act_click" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_6" edge="1" parent="1" source="act_click" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" target="act_fetch_det" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_7" edge="1" parent="1" source="act_fetch_det" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" target="db_det" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_8" edge="1" parent="1" source="db_det" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;exitX=0.5;entryX=1;" target="act_render" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_9" edge="1" parent="1" source="act_render" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" target="act_read" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_10" edge="1" parent="1" source="act_read" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" target="act_knn_fire" value="async (paralel saat halaman mount)">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_12" edge="1" parent="1" source="act_render" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;exitX=0.5;entryX=1;" target="act_find_tgt" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_13" edge="1" parent="1" source="act_knn_fire" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" target="act_feat_map" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_14" edge="1" parent="1" source="act_feat_map" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" target="act_ext_dim" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_15" edge="1" parent="1" source="act_ext_dim" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" target="act_vectorize" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_16" edge="1" parent="1" source="act_vectorize" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" target="act_knn_dist" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_17" edge="1" parent="1" source="act_knn_dist" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" target="act_fmt_out" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_19" edge="1" parent="1" source="act_show" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" target="end" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Bm-GhXgoy_bt0cJrzkHf-1" edge="1" parent="1" source="db_knn_one" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;exitX=0.5;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="act_render" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="535" y="637" as="sourcePoint" />
+            <mxPoint x="390" y="710" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="act_render" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#d5e8d4;strokeColor=#82b366;" value="Render Detail: finalPrice, promoName, highestPrice, galeri, stok per ukuran" vertex="1">
+          <mxGeometry height="55" width="250" x="255" y="725" as="geometry" />
+        </mxCell>
+        <mxCell id="act_knn_fire" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=30;fillColor=#d5e8d4;strokeColor=#82b366;" value="React Query: GET /api/recommend/[id] (async, paralel saat halaman dimuat)" vertex="1">
+          <mxGeometry height="55" width="270" x="241" y="1020" as="geometry" />
+        </mxCell>
+        <mxCell id="Bm-GhXgoy_bt0cJrzkHf-5" edge="1" parent="1" source="act_knn_fire" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.581;entryY=0.971;entryDx=0;entryDy=0;entryPerimeter=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" target="db_knn_one">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Bm-GhXgoy_bt0cJrzkHf-7" edge="1" parent="1" source="act_fmt_out" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.471;entryY=0.033;entryDx=0;entryDy=0;entryPerimeter=0;" target="act_show">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -40,11 +40,7 @@ export function CategoryForm({ initialData, onSubmit, isLoading }: CategoryFormP
     },
   });
 
-  useEffect(() => {
-    if (Object.keys(errors).length > 0) {
-      console.log("❌ Form Errors:", errors);
-    }
-  }, [errors]);
+
 
   const handleUploadTemp = async (uploadedFile: File) => {
     setFile(uploadedFile);

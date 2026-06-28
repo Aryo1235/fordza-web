@@ -522,117 +522,57 @@ Product: Oxford Classic Black
 
 ## 📜 History Stok
 
-### **Stock Logs (Product Level)**
+### Stock Logs (Product Level) & SKU Stock Logs
 
 **Menu:** Dashboard → Stock History
 
 **Fitur:**
-- List semua perubahan stok produk
-- Filter by:
-  - Produk
-  - Tipe (SALE, VOID, RESTOCK, ADJUSTMENT)
-  - Tanggal
-  - Operator
-- Export ke Excel
-
-**Kolom Tabel:**
-| Column | Description |
-|--------|-------------|
-| Tanggal | Waktu perubahan |
-| Produk | Nama produk |
-| Delta | Perubahan stok (+/-) |
-| Stok Sekarang | Stok setelah perubahan |
-| Tipe | SALE/VOID/RESTOCK/ADJUSTMENT |
-| Notes | Catatan (invoice no, dll) |
-| Operator | User yang melakukan |
-
-**Tipe Log:**
-- **SALE:** Stok berkurang karena transaksi
-- **VOID:** Stok bertambah karena void transaksi
-- **RESTOCK:** Stok bertambah (restock manual)
-- **ADJUSTMENT:** Stok berubah (opname, edit produk)
-
----
-
-### **SKU Stock Logs (SKU Level)**
-
-**Menu:** Dashboard → Stock History → SKU Logs
-
-**Fitur:**
-- List perubahan stok per SKU (per ukuran)
-- Filter sama seperti product logs
-- Export ke Excel
-
-**Kolom Tambahan:**
-- Warna (varian)
-- Ukuran (SKU)
-
-**Use Case:**
-- Audit trail detail
-- Tracking stok per ukuran
-- Analisis ukuran terlaris
+- List semua perubahan stok produk (Ringkasan Produk) maupun detail per SKU (Detail Varian & Ukuran).
+- **Filter Bar Komprehensif:**
+  - **Pencarian** produk, kode, atau catatan (dengan tombol hapus pencarian `X`).
+  - **Dari Tanggal** (DatePicker awal periode) dan **Sampai Tanggal** (DatePicker akhir periode).
+  - **Tipe Aktivitas** (SALE, RESTOCK, VOID, ADJUSTMENT).
+  - Tombol **Reset** dengan ikon `RotateCcw` untuk mengembalikan semua filter ke kondisi awal.
+- **Ekspor Laporan:** Mendukung ekspor ke Excel & PDF yang secara otomatis menyaring data sesuai dengan rentang periode dan filter aktif.
 
 ---
 
 ## 📈 Laporan Penjualan
 
-### **Sales Report Summary**
-
 **Menu:** Dashboard → Reports
 
-**Fitur:**
-- Summary penjualan per periode
-- Filter by:
-  - Tanggal (start - end)
-  - Kasir
-- Chart penjualan harian
-- Export ke Excel
+Halaman ini menyajikan dua bagian analisis utama untuk memantau performa bisnis:
 
-**Metrics:**
-| Metric | Description |
-|--------|-------------|
-| Total Revenue | Total penjualan (Rp) |
-| Total Transaksi | Jumlah transaksi |
-| Total Items | Jumlah item terjual |
-| Avg Transaction | Rata-rata nilai transaksi |
+### **1. Ringkasan Penjualan (Summary)**
+- **Metrik Utama:** Total Pendapatan (lunas/PAID), Jumlah Transaksi, dan Rata-rata Nilai Order per pelanggan.
+- **Tren Harian:** Grafik garis (Line Chart) untuk memantau fluktuasi pendapatan harian.
+- **Produk Terlaris:** Daftar 5 produk terpopuler berdasarkan unit penjualan tertinggi.
+- **Export Ringkasan:** Menyediakan tombol ekspor laporan ringkasan ke format Excel dan PDF.
 
-**Chart:**
-- Line chart revenue per hari
-- Bar chart jumlah transaksi per hari
-
----
-
-### **Sales Report Items**
-
-**Menu:** Dashboard → Reports → Items
-
-**Fitur:**
-- Laporan produk terlaris
-- Filter by:
-  - Tanggal
-  - Kasir
-  - Produk
-- Sort by:
-  - Qty terjual
-  - Revenue
-  - Jumlah order
-- Export ke Excel
-
-**Kolom Tabel:**
-| Column | Description |
-|--------|-------------|
-| Produk | Nama produk |
-| Kode | Product code |
-| Warna | Varian color |
-| Ukuran | SKU size |
-| Qty Terjual | Total quantity |
-| Revenue | Total revenue (Rp) |
-| Jumlah Order | Berapa kali dibeli |
-
-**Use Case:**
-- Analisis produk terlaris
-- Analisis ukuran terlaris
-- Restock planning
+### **2. Tabel Penjualan Item**
+Menyajikan analisis penjualan detail per kombinasi SKU produk dan metode pembayaran.
+- **Data Source:** Dihitung real-time dari data transaksi dan rincian item belanja.
+- **Filter & Urutan:**
+  - Rentang Tanggal (Dari s.d Sampai Tanggal)
+  - Pencarian Nama/Kode produk
+  - Minimal Qty terjual
+  - Pengurutan (Qty terbesar, Revenue terbesar, Nama A-Z)
+- **Kolom Tabel:**
+  | Column | Description |
+  |--------|-------------|
+  | # | Nomor urut |
+  | Kode Produk | Kode unik produk |
+  | Kode Variant | Kode unik varian warna produk |
+  | Produk | Nama produk |
+  | Varian | Detail Warna dan Ukuran |
+  | Metode | Metode pembayaran yang digunakan (`CASH`, `QRIS`, `DEBIT`) |
+  | Qty Terjual | Total kuantitas produk terjual |
+  | Harga Satuan | Harga satuan item saat transaksi |
+  | Total Diskon | Total diskon/potongan harga yang diberikan |
+  | Revenue | Total pendapatan bersih setelah dikurangi diskon |
+- **Export Laporan:**
+  - Mendukung ekspor data tabel penjualan item ke format Excel dan PDF.
+  - Laporan ekspor menyertakan **baris TOTAL** untuk total Qty dan Revenue terkumpul di bagian bawah dokumen.
 
 ---
 
@@ -869,28 +809,22 @@ Sizes: 39,40,41,42,43,44,45
 
 ## 📊 Manajemen Transaksi
 
-### **List Transaksi**
+### List Transaksi
 
 **Menu:** Dashboard → Transactions
 
 **Fitur:**
-- List semua transaksi (dari semua kasir)
-- Filter by:
-  - Status (PAID/VOID)
-  - Kasir
-  - Tanggal
-  - Invoice number
-- Export ke Excel
-
-**Kolom Tabel:**
-| Column | Description |
-|--------|-------------|
-| Invoice No | Nomor invoice |
-| Tanggal | Waktu transaksi |
-| Kasir | Nama kasir |
-| Total | Total harga |
-| Status | PAID/VOID |
-| Actions | View Detail |
+- List semua transaksi yang dilakukan oleh seluruh kasir.
+- **Filter Bar Komprehensif** (Menyelaraskan visual & fitur dengan menu kasir):
+  - Pencarian nomor invoice (dengan tombol clear `X`).
+  - **Dari Tanggal** dan **Sampai Tanggal** (DatePicker).
+  - **Pilih Kasir** (Dropdown dinamis berisi daftar semua kasir).
+  - Tombol **Reset** dengan ikon `RotateCcw` untuk membatalkan seluruh filter.
+- **Penyajian Metode Pembayaran:**
+  - Kolom **Metode** menampilkan badge khusus sesuai metode yang digunakan saat transaksi: `DEBIT` (badge biru), `QRIS` (badge ungu), atau `CASH` (badge stone).
+- **Export Laporan (Excel & PDF):**
+  - Menyertakan kolom **Metode Pembayaran** pada rincian ringkasan maupun detail item.
+  - Dokumen PDF menyertakan baris **GRAND TOTAL** di bawah tabel untuk total Qty dan nominal Revenue terkumpul.
 
 ---
 

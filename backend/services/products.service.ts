@@ -23,6 +23,10 @@ export const ProductService = {
     return await ProductRepository.getAllAdmin(filters);
   },
 
+  async getAllPromo(filters: any) {
+    return await ProductRepository.getAll({ ...filters, hasPromo: true });
+  },
+
   async getAllAdminExport(filters: any) {
     return await ProductRepository.getAllAdminExport(filters);
   },

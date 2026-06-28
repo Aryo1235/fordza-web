@@ -8,7 +8,7 @@ export const productSchema = z.object({
   name: z.string().min(3, "Nama produk minimal 3 karakter"),
   // price & stock tidak lagi di form induk — dikelola per SKU di VariantManager
   shortDescription: z.string().min(5),
-  productType: z.enum(["shoes", "apparel", "accessories"]),
+  productType: z.enum(["shoes", "sandal", "apparel", "accessories"]).optional().nullable(),
   gender: z.enum(["Man", "Woman", "Unisex"]).default("Unisex"),
 
   description: z.string().default("").optional().nullable(),

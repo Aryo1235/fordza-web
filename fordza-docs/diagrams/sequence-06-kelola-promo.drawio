@@ -1,6 +1,6 @@
 <mxfile host="app.diagrams.net" agent="5.0">
   <diagram name="Sequence Diagram - Kelola Promo" id="seq-promo">
-    <mxGraphModel dx="359" dy="187" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="800" math="0" shadow="0">
+    <mxGraphModel dx="1563" dy="816" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="800" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -46,7 +46,7 @@
             <mxPoint x="670" y="760" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="lifeline5" edge="1" parent="1" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;" value="">
+        <mxCell id="lifeline5" edge="1" parent="1" source="kVadItNK1S0YY5KuISL_-1" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;" value="">
           <mxGeometry height="50" relative="1" width="50" as="geometry">
             <mxPoint x="860" y="180" as="sourcePoint" />
             <mxPoint x="860" y="760" as="targetPoint" />
@@ -115,21 +115,21 @@
             <mxPoint x="465" y="520" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="msg10" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;" value="10: Validate input (Zod)">
+        <mxCell id="msg10" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;" value="10: Verify Admin Role">
           <mxGeometry relative="1" x="-0.2" y="10" as="geometry">
             <mxPoint as="offset" />
             <mxPoint x="470" y="560" as="sourcePoint" />
             <mxPoint x="670" y="560" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="msg11" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;" value="11: Validate target IDs exist">
+        <mxCell id="msg11" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;" value="11: Find user and verify role">
           <mxGeometry relative="1" x="-0.2" y="10" as="geometry">
             <mxPoint as="offset" />
             <mxPoint x="670" y="600" as="sourcePoint" />
             <mxPoint x="860" y="600" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="msg12" edge="1" parent="1" style="endArrow=open;endFill=0;html=1;dashed=1;" value="12: Return validation result">
+        <mxCell id="msg12" edge="1" parent="1" style="endArrow=open;endFill=0;html=1;dashed=1;" value="12: Return user role data">
           <mxGeometry relative="1" x="-0.2" y="10" as="geometry">
             <mxPoint as="offset" />
             <mxPoint x="860" y="630" as="sourcePoint" />
@@ -168,6 +168,15 @@
         </mxCell>
         <mxCell id="note1" parent="1" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;fillColor=#fff2cc;strokeColor=#d6b656;size=15;" value="Note: Promo Hierarchy&#xa;VARIANT (highest)&#xa;→ PRODUCT&#xa;→ CATEGORY&#xa;→ GLOBAL (lowest)" vertex="1">
           <mxGeometry height="100" width="180" x="920" y="200" as="geometry" />
+        </mxCell>
+        <mxCell id="kVadItNK1S0YY5KuISL_-2" edge="1" parent="1" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;" target="kVadItNK1S0YY5KuISL_-1" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="860" y="180" as="sourcePoint" />
+            <mxPoint x="860" y="760" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="kVadItNK1S0YY5KuISL_-1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" value="" vertex="1">
+          <mxGeometry height="140" width="10" x="855" y="590" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
