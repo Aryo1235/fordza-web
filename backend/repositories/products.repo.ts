@@ -222,17 +222,10 @@ export const ProductRepository = {
           let isConditional = false;
 
           if (bestPromo) {
-            console.log(`🎁 [ProductRepo] Variant "${v.color}":`, {
-              promoName: bestPromo.name,
-              minPurchase: bestPromo.minPurchase,
-              type: bestPromo.type,
-              value: bestPromo.value,
-            });
 
             if (Number(bestPromo.minPurchase || 0) > 0) {
               // ✅ FIX: Promo conditional, jangan apply discount di product list
               isConditional = true;
-              console.log(`✅ [ProductRepo] Promo CONDITIONAL - discount TIDAK apply di product list`);
               // additionalDiscount tetap 0, akan di-apply saat checkout
             } else {
               // Promo non-conditional, langsung apply
@@ -240,7 +233,6 @@ export const ProductRepository = {
                 additionalDiscount =
                   (basePrice * Number(bestPromo.value)) / 100;
               else additionalDiscount = Number(bestPromo.value);
-              console.log(`✅ [ProductRepo] Promo NON-CONDITIONAL - discount apply: ${additionalDiscount}`);
             }
           }
 
@@ -248,13 +240,6 @@ export const ProductRepository = {
           const finalPrice = isConditional
             ? basePrice
             : basePrice - Math.min(additionalDiscount, basePrice);
-
-          console.log(`💰 [ProductRepo] Variant "${v.color}":`, {
-            basePrice,
-            isConditional,
-            additionalDiscount,
-            finalPrice,
-          });
 
           let totalDiscountPercent = 0;
 
@@ -1320,15 +1305,6 @@ export const ProductRepository = {
         percent = (amount / basePrice) * 100;
       }
 
-      console.log(`🎁 [getForKasir] calculatePromo:`, {
-        promoName: bestPromo.name,
-        minPurchase,
-        isConditional,
-        basePrice,
-        amount,
-        percent,
-      });
-
       return {
         amount: Math.min(amount, basePrice),
         percent,
@@ -1479,9 +1455,9 @@ export const ProductRepository = {
       deletedAt: null,
       OR: search
         ? [
-            { name: { contains: search, mode: "insensitive" } },
-            { productCode: { contains: search, mode: "insensitive" } },
-          ]
+          { name: { contains: search, mode: "insensitive" } },
+          { productCode: { contains: search, mode: "insensitive" } },
+        ]
         : undefined,
     };
 

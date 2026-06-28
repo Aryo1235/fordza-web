@@ -48,24 +48,17 @@ export default function CartDrawer({
 }: CartDrawerProps) {
   // ✅ FIX: Hitung subtotal dulu untuk cek minPurchase dengan konversi tipe yang aman
   const subtotal = items.reduce((sum, item) => sum + Number(item.price ?? 0) * item.quantity, 0);
-  
-  console.log("🛒 [CartDrawer] Subtotal:", subtotal);
-  console.log("🛒 [CartDrawer] Items:", items.map(item => ({
-    name: item.name,
-    price: Number(item.price ?? 0),
-    qty: item.quantity,
-    discountAmount: Number(item.discountAmount ?? 0),
-    promoName: item.promoName,
-    promoMinPurchase: Number(item.promoMinPurchase ?? 0),
-  })));
-  
+
+
+
+
   // ✅ Hitung diskon item langsung (non-conditional fixed + percentage)
   const itemDiscountTotal = items.reduce((sum, item) => {
     const discountAmt = Number(item.discountAmount ?? 0);
     const minP = Number(item.promoMinPurchase ?? 0);
     const isPercentage = Number(item.promoDiscountPercent ?? 0) > 0;
     const isConditionalFixed = minP > 0 && !isPercentage;
-    
+
     if (discountAmt > 0 && !isConditionalFixed) {
       return sum + discountAmt * item.quantity;
     }
@@ -79,7 +72,7 @@ export default function CartDrawer({
     const isPercentage = Number(item.promoDiscountPercent ?? 0) > 0;
     const isConditionalFixed = minP > 0 && !isPercentage;
     const meetsRequirement = minP > 0 ? subtotal >= minP : true;
-    
+
     if (discountAmt > 0 && isConditionalFixed && meetsRequirement) {
       return sum + discountAmt;
     }
@@ -88,9 +81,7 @@ export default function CartDrawer({
 
   // ✅ FIX: Hitung total dengan validasi minPurchase
   const total = subtotal - itemDiscountTotal - promoDiscountTotal;
-  
-  console.log("🛒 [CartDrawer] Total setelah discount:", total);
-  
+
   const change = amountPaid - total;
   const remainingPayment = Math.max(total - amountPaid, 0);
   const hasInvalidDiscount = items.some((item) => item.discountAmount > item.price * item.quantity || item.discountAmount < 0);
@@ -134,19 +125,19 @@ export default function CartDrawer({
           ) : (
             items.map((item) => {
               const itemKey = item.skuId ? `${item.id}-${item.skuId}` : item.id;
-              
+
               // Hitung diskon aktif berdasarkan minPurchase dengan konversi tipe yang aman
               const itemPrice = Number(item.price ?? 0);
               const discountAmt = Number(item.discountAmount ?? 0);
               const minP = Number(item.promoMinPurchase ?? 0);
               const meetsRequirement = minP > 0 ? subtotal >= minP : true;
-              
+
               const isPercentage = Number(item.promoDiscountPercent ?? 0) > 0;
               const isConditionalFixed = minP > 0 && !isPercentage;
-              
+
               let lineDiscount = 0;
               let lineDiscountAmt = 0;
-              
+
               if (discountAmt > 0) {
                 if (isConditionalFixed) {
                   lineDiscountAmt = discountAmt;
@@ -158,88 +149,87 @@ export default function CartDrawer({
               }
 
               return (
-              <div
-                key={itemKey}
-                className={`flex flex-col gap-2 pb-3 border-b border-stone-100 last:border-0 rounded-md transition-colors ${
-                  highlightedProductId === itemKey ? "bg-amber-50/70" : ""
-                }`}
-              >
-                <div className="flex items-start gap-2">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-stone-800 leading-tight mb-0.5 truncate" title={item.name}>{item.name}</p>
-                    {item.variantCode && (
-                       <div className="flex items-center gap-1.5 mb-1.5 font-mono">
+                <div
+                  key={itemKey}
+                  className={`flex flex-col gap-2 pb-3 border-b border-stone-100 last:border-0 rounded-md transition-colors ${highlightedProductId === itemKey ? "bg-amber-50/70" : ""
+                    }`}
+                >
+                  <div className="flex items-start gap-2">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-stone-800 leading-tight mb-0.5 truncate" title={item.name}>{item.name}</p>
+                      {item.variantCode && (
+                        <div className="flex items-center gap-1.5 mb-1.5 font-mono">
                           <span className="text-[9px] bg-stone-100 px-1 rounded text-stone-500 font-bold uppercase">{item.variantCode}</span>
                           <span className="text-[10px] text-stone-400">{item.variantColor} / {item.skuSize}</span>
-                       </div>
-                    )}
-                    <p className="text-xs text-stone-500 font-semibold">Rp {itemPrice.toLocaleString("id-ID")}</p>
-                  </div>
-                  
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => onRemove(item.id, item.skuId || undefined)}
-                      className="h-8 w-8"
-                    >
-                      <Minus className="w-4 h-4" />
-                    </Button>
-                    <span className="w-6 text-center text-sm font-bold">{item.quantity}</span>
-                    <Button
-                      size="icon"
-                      onClick={() => onAdd(item.id, item.skuId || undefined)}
-                      disabled={item.quantity >= item.stock}
-                      className="h-8 w-8 bg-[#3C3025] hover:bg-[#5a4a38] text-white"
-                    >
-                      <Plus className="w-4 h-4" />
-                    </Button>
-                  </div>
-                  
-                  <div className="text-sm font-bold w-24 text-right text-[#3C3025]">
-                    <p>Rp {(itemPrice * item.quantity).toLocaleString("id-ID")}</p>
-                    {!isConditionalFixed && lineDiscount > 0 ? (
-                      <p className="text-[11px] text-red-500">- Rp {lineDiscount.toLocaleString("id-ID")}</p>
-                    ) : !isConditionalFixed && lineDiscountAmt > 0 ? (
-                      <p className="text-[11px] text-stone-400 line-through">- Rp {lineDiscountAmt.toLocaleString("id-ID")}</p>
-                    ) : null}
-                  </div>
-                  
-                  <button
-                    onClick={() => onDelete(item.id, item.skuId || undefined)}
-                    className="text-red-300 hover:text-red-500 ml-1 p-1"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
+                        </div>
+                      )}
+                      <p className="text-xs text-stone-500 font-semibold">Rp {itemPrice.toLocaleString("id-ID")}</p>
+                    </div>
 
-                {discountAmt > 0 && (
-                  <div className="flex items-center gap-2 pl-1">
-                    <div className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tight ${
-                      lineDiscount > 0
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => onRemove(item.id, item.skuId || undefined)}
+                        className="h-8 w-8"
+                      >
+                        <Minus className="w-4 h-4" />
+                      </Button>
+                      <span className="w-6 text-center text-sm font-bold">{item.quantity}</span>
+                      <Button
+                        size="icon"
+                        onClick={() => onAdd(item.id, item.skuId || undefined)}
+                        disabled={item.quantity >= item.stock}
+                        className="h-8 w-8 bg-[#3C3025] hover:bg-[#5a4a38] text-white"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </Button>
+                    </div>
+
+                    <div className="text-sm font-bold w-24 text-right text-[#3C3025]">
+                      <p>Rp {(itemPrice * item.quantity).toLocaleString("id-ID")}</p>
+                      {!isConditionalFixed && lineDiscount > 0 ? (
+                        <p className="text-[11px] text-red-500">- Rp {lineDiscount.toLocaleString("id-ID")}</p>
+                      ) : !isConditionalFixed && lineDiscountAmt > 0 ? (
+                        <p className="text-[11px] text-stone-400 line-through">- Rp {lineDiscountAmt.toLocaleString("id-ID")}</p>
+                      ) : null}
+                    </div>
+
+                    <button
+                      onClick={() => onDelete(item.id, item.skuId || undefined)}
+                      className="text-red-300 hover:text-red-500 ml-1 p-1"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  {discountAmt > 0 && (
+                    <div className="flex items-center gap-2 pl-1">
+                      <div className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tight ${lineDiscount > 0
                         ? "bg-red-50 text-red-600"
                         : "bg-stone-100 text-stone-400"
-                    }`}>
-                      {item.promoName || "Promo Admin"}{" - "}
-                      {isPercentage 
-                        ? `Diskon ${Math.round(Number(item.promoDiscountPercent ?? 0))}% ` 
-                        : isConditionalFixed
-                          ? `Potongan Flat Rp ${discountAmt.toLocaleString("id-ID")} `
-                          : `Potongan Rp ${discountAmt.toLocaleString("id-ID")} `
-                      }
-                      {isConditionalFixed
-                        ? lineDiscount > 0
-                          ? `(Aktif di Total)`
-                          : `(Min. Rp ${minP.toLocaleString("id-ID")} - Belum Terpenuhi)`
-                        : lineDiscount > 0
-                          ? `(-Rp ${lineDiscount.toLocaleString("id-ID")})`
-                          : `(Min. Rp ${minP.toLocaleString("id-ID")} - Belum Terpenuhi)`
-                      }
+                        }`}>
+                        {item.promoName || "Promo Admin"}{" - "}
+                        {isPercentage
+                          ? `Diskon ${Math.round(Number(item.promoDiscountPercent ?? 0))}% `
+                          : isConditionalFixed
+                            ? `Potongan Flat Rp ${discountAmt.toLocaleString("id-ID")} `
+                            : `Potongan Rp ${discountAmt.toLocaleString("id-ID")} `
+                        }
+                        {isConditionalFixed
+                          ? lineDiscount > 0
+                            ? `(Aktif di Total)`
+                            : `(Min. Rp ${minP.toLocaleString("id-ID")} - Belum Terpenuhi)`
+                          : lineDiscount > 0
+                            ? `(-Rp ${lineDiscount.toLocaleString("id-ID")})`
+                            : `(Min. Rp ${minP.toLocaleString("id-ID")} - Belum Terpenuhi)`
+                        }
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
-            )})
+                  )}
+                </div>
+              )
+            })
           )}
         </div>
 
@@ -247,7 +237,7 @@ export default function CartDrawer({
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label className="text-[10px] text-stone-500 uppercase font-black">Pelanggan</Label>
-              <Input 
+              <Input
                 placeholder="Nama"
                 value={customerName}
                 onChange={(e) => onCustomerNameChange(e.target.value)}
@@ -256,7 +246,7 @@ export default function CartDrawer({
             </div>
             <div className="space-y-1">
               <Label className="text-[10px] text-stone-500 uppercase font-black">No. HP</Label>
-              <Input 
+              <Input
                 placeholder="08..."
                 value={customerPhone}
                 onChange={(e) => onCustomerPhoneChange(e.target.value)}
@@ -284,13 +274,13 @@ export default function CartDrawer({
                   <span>- Rp {promoDiscountTotal.toLocaleString("id-ID")}</span>
                 </div>
               )}
-              
+
               <div className="flex justify-between font-bold text-sm pt-2 border-t border-stone-150">
                 <span className="text-stone-500">Total Akhir</span>
                 <span className="text-[#3C3025] text-base font-black">Rp {total.toLocaleString("id-ID")}</span>
               </div>
             </div>
-            
+
             {/* Metode Pembayaran */}
             <div className="space-y-1.5">
               <Label className="text-[10px] text-stone-500 uppercase font-black">Metode Pembayaran</Label>
@@ -350,11 +340,10 @@ export default function CartDrawer({
           <Button
             onClick={onCheckout}
             disabled={!canCheckout}
-            className={`w-full py-6 text-sm font-black tracking-wide ${
-              canCheckout
-                ? "bg-[#3C3025] hover:bg-[#5a4a38] text-white"
-                : "bg-stone-200 text-stone-500"
-            }`}
+            className={`w-full py-6 text-sm font-black tracking-wide ${canCheckout
+              ? "bg-[#3C3025] hover:bg-[#5a4a38] text-white"
+              : "bg-stone-200 text-stone-500"
+              }`}
           >
             {isLoading
               ? "MEMPROSES..."

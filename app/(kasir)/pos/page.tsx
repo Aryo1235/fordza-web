@@ -106,14 +106,6 @@ export default function POSPage() {
     promoMinPurchase: number | null = null, // ✅ Tambah parameter
     promoDiscountPercent: number | null = null // ✅ Tambah parameter persentase
   ) => {
-    console.log('🛒 [addToCart] Called with:', {
-      productName: product.name,
-      promoName,
-      additionalDiscount,
-      promoMinPurchase,
-      promoDiscountPercent,
-      hasPromoMinPurchase: promoMinPurchase !== null && promoMinPurchase !== undefined,
-    });
     // Kunci unik: productId + skuId (jika ada varian)
     const cartKey = skuId ? `${product.id}__${skuId}` : product.id;
     setJustAddedProductId(cartKey);
@@ -814,12 +806,7 @@ export default function POSPage() {
                   ? (originalPrice * promoPercent) / 100
                   : (variant.additionalDiscount ?? 0);
 
-                console.log('🔍 [POS] Before addToCart:', {
-                  variantColor: variant.color,
-                  promoName: variant.promoName,
-                  promoMinPurchase: variant.promoMinPurchase,
-                  hasPromoMinPurchase: 'promoMinPurchase' in variant,
-                });
+
 
                 addToCart(
                   p,

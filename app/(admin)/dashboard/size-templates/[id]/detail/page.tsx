@@ -45,14 +45,6 @@ export default function SizeTemplateDetailPage({ params }: { params: Promise<{ i
       limit,
     };
 
-  // Debug logs
-  useEffect(() => {
-    console.log("SizeTemplateDetailPage - detailResponse:", detailResponse);
-    console.log("SizeTemplateDetailPage - isWrapped:", isWrapped);
-    console.log("SizeTemplateDetailPage - template:", template);
-    console.log("SizeTemplateDetailPage - associatedProducts:", associatedProducts);
-    console.log("SizeTemplateDetailPage - meta:", meta);
-  }, [detailResponse, isWrapped, template, associatedProducts, meta]);
 
   // Handle errors
   useEffect(() => {

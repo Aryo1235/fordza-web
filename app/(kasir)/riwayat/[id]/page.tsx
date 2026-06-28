@@ -153,7 +153,7 @@ export default function TransactionDetailPage() {
                 </div>
                 <div>
                   <p className="text-[10px] uppercase font-bold text-stone-400">Total Belanja</p>
-                  <p className="text-xl font-black text-stone-900">Rp {transaction.totalPrice.toLocaleString("id-ID")}</p>
+                  <p className="text-xl font-black text-stone-900">Rp {Number(transaction.totalPrice).toLocaleString("id-ID")}</p>
                 </div>
               </div>
             </div>
@@ -232,14 +232,14 @@ export default function TransactionDetailPage() {
                     <tr>
                       <td colSpan={3} className="px-4 py-2 pt-4 text-right text-stone-500 font-bold text-[10px]">TOTAL PROMO DISKON</td>
                       <td className="px-4 py-2 pt-4 text-right font-bold text-red-600 text-sm">
-                        - Rp {totalDiscount.toLocaleString("id-ID")}
+                        - Rp {Number(totalDiscount).toLocaleString("id-ID")}
                       </td>
                     </tr>
                   )}
                   <tr>
                     <td colSpan={3} className={cn("px-4 text-right text-stone-500 font-bold uppercase text-[10px]", totalDiscount > 0 ? "py-2" : "py-4")}>Total Akhir</td>
                     <td className="px-4 py-4 text-right font-black text-stone-900 text-lg">
-                      Rp {transaction.totalPrice.toLocaleString("id-ID")}
+                      Rp {Number(transaction.totalPrice).toLocaleString("id-ID")}
                     </td>
                   </tr>
                   <tr>
@@ -251,13 +251,13 @@ export default function TransactionDetailPage() {
                   <tr>
                     <td colSpan={3} className="px-4 py-2 text-right text-stone-500 text-[10px]">Bayar</td>
                     <td className="px-4 py-2 text-right text-stone-600 font-bold text-sm">
-                      Rp {transaction.amountPaid.toLocaleString("id-ID")}
+                      Rp {Number(transaction.amountPaid).toLocaleString("id-ID")}
                     </td>
                   </tr>
                   <tr>
                     <td colSpan={3} className="px-4 py-2 text-right text-stone-500 text-[10px]">Kembali</td>
                     <td className="px-4 py-2 text-right text-stone-600 font-bold text-sm">
-                      Rp {transaction.change.toLocaleString("id-ID")}
+                      Rp {Number(transaction.change).toLocaleString("id-ID")}
                     </td>
                   </tr>
                 </tfoot>

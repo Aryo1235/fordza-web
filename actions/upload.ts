@@ -89,7 +89,6 @@ export async function deleteFileFromS3(fileKey: string) {
     });
 
     await s3Client.send(command);
-    console.log(`Rollback: Berhasil menghapus ${fileKey}`);
     return { success: true };
   } catch (error) {
     console.error(`Gagal menghapus file ${fileKey}:`, error);

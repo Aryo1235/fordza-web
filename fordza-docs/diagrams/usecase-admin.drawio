@@ -1,16 +1,12 @@
 <mxfile host="app.diagrams.net" agent="5.0">
   <diagram name="Use Case - Admin" id="uc-admin">
-    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+    <mxGraphModel dx="1460" dy="775" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-        
-        <!-- System Boundary -->
         <mxCell id="system" parent="1" style="swimlane;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;fontStyle=1" value="Fordza-Web (Admin Panel)" vertex="1">
           <mxGeometry height="930" width="300" x="200" y="50" as="geometry" />
         </mxCell>
-        
-        <!-- Use Cases inside System (relative coordinates to system) -->
         <mxCell id="uc1" parent="system" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" value="Kelola Produk" vertex="1">
           <mxGeometry height="60" width="160" x="70" y="50" as="geometry" />
         </mxCell>
@@ -41,16 +37,9 @@
         <mxCell id="uc10" parent="system" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" value="Kelola Transaksi &amp; Void" vertex="1">
           <mxGeometry height="60" width="160" x="70" y="770" as="geometry" />
         </mxCell>
-        <mxCell id="uc11" parent="system" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" value="Kelola Testimoni" vertex="1">
-          <mxGeometry height="60" width="160" x="70" y="850" as="geometry" />
-        </mxCell>
-        
-        <!-- Actor Admin -->
         <mxCell id="actor-admin" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;fontStyle=1" value="Admin" vertex="1">
           <mxGeometry height="120" width="60" x="60" y="455" as="geometry" />
         </mxCell>
-        
-        <!-- Associations from Actor to Use Cases -->
         <mxCell id="assoc1" edge="1" parent="1" source="actor-admin" style="endArrow=none;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="uc1" value="">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
@@ -79,9 +68,6 @@
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="assoc10" edge="1" parent="1" source="actor-admin" style="endArrow=none;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="uc10" value="">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="assoc11" edge="1" parent="1" source="actor-admin" style="endArrow=none;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="uc11" value="">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
       </root>

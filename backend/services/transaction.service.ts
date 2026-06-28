@@ -94,19 +94,9 @@ export const TransactionService = {
       subtotalBeforeDiscount += price * item.quantity;
     }
 
-    console.log("💰 [Checkout] Subtotal Before Discount:", subtotalBeforeDiscount);
-
     // STEP 2: Get active promos untuk re-calculate discount
     const { PromoRepository } = await import("@/backend/repositories/promo.repo");
     const activePromos = await PromoRepository.getActive();
-    
-    console.log("🎁 [Checkout] Active Promos:", activePromos.map(p => ({
-      name: p.name,
-      type: p.type,
-      value: p.value,
-      targetType: p.targetType,
-      minPurchase: p.minPurchase,
-    })));
 
     // STEP 3: Validasi stok & hitung total dengan discount yang di-calculate ulang
     let totalPrice = 0;
@@ -182,15 +172,8 @@ export const TransactionService = {
         );
       }
       if (!bestPromo) {
-        // Cari kategori produk
-        const productWithCategories = await import("@/backend/repositories/products.repo").then(
-          m => m.ProductRepository
-        );
-        const fullProduct = await prisma.product.findUnique({
-          where: { id: item.productId },
-          include: { categories: { select: { categoryId: true } } }
-        });
-        const categoryIds = fullProduct?.categories.map(c => c.categoryId) || [];
+        // Gunakan data categories dari dbProduct yang sudah di-fetch di awal (tidak ada query DB tambahan)
+        const categoryIds = dbProduct.categories?.map((c: any) => c.categoryId) || [];
         
         bestPromo = activePromos.find(
           (promo) => promo.targetType === "CATEGORY" && promo.targetIds.some(id => categoryIds.includes(id))
@@ -203,15 +186,6 @@ export const TransactionService = {
       // Hitung discount jika ada promo
       if (bestPromo) {
         const minPurchase = Number(bestPromo.minPurchase || 0);
-        
-        console.log(`🎁 [Checkout] Item "${dbProduct.name}":`, {
-          bestPromo: bestPromo.name,
-          promoType: bestPromo.type,
-          promoValue: bestPromo.value,
-          minPurchase,
-          subtotalBeforeDiscount,
-          meetsRequirement: minPurchase === 0 || subtotalBeforeDiscount >= minPurchase,
-        });
         
         // Cek apakah memenuhi minPurchase
         if (minPurchase === 0 || subtotalBeforeDiscount >= minPurchase) {
@@ -229,12 +203,7 @@ export const TransactionService = {
             }
           }
           promoName = bestPromo.name;
-          console.log(`✅ [Checkout] Promo APPLY: discount = ${discount}`);
-        } else {
-          console.log(`❌ [Checkout] Promo TIDAK apply (subtotal ${subtotalBeforeDiscount} < minPurchase ${minPurchase})`);
         }
-      } else {
-        console.log(`ℹ️ [Checkout] Item "${dbProduct.name}": Tidak ada promo`);
       }
 
       // Validasi discount tidak boleh lebih besar dari subtotal

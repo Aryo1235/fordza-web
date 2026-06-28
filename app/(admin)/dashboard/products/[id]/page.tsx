@@ -145,11 +145,7 @@ export default function EditProductPage({
     (t: any) => t.id === watchSizeTemplateId,
   );
 
-  useEffect(() => {
-    if (Object.keys(errors).length > 0) {
-      console.log("❌ Form Errors:", errors);
-    }
-  }, [errors]);
+
 
   const handleUploadImage = async (file: File | Blob) => {
     // Karena ImageUpload mengembalikan Blob hasil kompresi, kita bungkus jadi File
@@ -369,12 +365,7 @@ export default function EditProductPage({
                           </SelectTrigger>
                           <SelectContent>
                             {categories.map((c: any) => {
-                              if (field.value?.includes(c.id)) {
-                                console.log(
-                                  "✅ Match Found for Category:",
-                                  c.name,
-                                );
-                              }
+
                               return (
                                 <SelectItem key={c.id} value={c.id}>
                                   {c.name}
@@ -463,12 +454,6 @@ export default function EditProductPage({
                           </SelectTrigger>
                           <SelectContent>
                             {templates.map((t: any) => {
-                              if (field.value === t.id) {
-                                console.log(
-                                  "✅ Match Found for Template:",
-                                  t.name,
-                                );
-                              }
                               return (
                                 <SelectItem key={t.id} value={t.id}>
                                   {t.name}

@@ -49,7 +49,7 @@ export default function NewProductPage() {
   const { data: templatesData } = useSizeTemplatesAdmin();
   const categories = categoriesData?.data || [];
   const templates = templatesData?.data || [];
-  console.log("files state: ", files, setFiles);
+
   const {
     register,
     handleSubmit,

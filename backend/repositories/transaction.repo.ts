@@ -69,6 +69,9 @@ export const TransactionRepository = {
           where: { isActive: true },
           include: { skus: { where: { isActive: true } } },
         },
+        // Include categories sekaligus untuk menghindari N+1 query
+        // saat service mencari promo berbasis kategori
+        categories: { select: { categoryId: true } },
       },
     });
   },
@@ -247,6 +250,12 @@ export const TransactionRepository = {
       );
 
       return newTransaction;
+    }, {
+      // Timeout ditingkatkan dari default 5 detik ke 15 detik.
+      // Diperlukan di production karena ada latensi jaringan (RTT) antara
+      // app server dan database server yang tidak ada di environment lokal.
+      maxWait: 10000,  // Maks. waktu tunggu antrian koneksi DB (10 detik)
+      timeout: 15000,  // Maks. waktu eksekusi seluruh transaksi (15 detik)
     });
   },
 
@@ -488,6 +497,10 @@ export const TransactionRepository = {
           }
         }),
       );
+    }, {
+      // Sama seperti checkout: timeout dinaikkan untuk toleransi latensi jaringan production
+      maxWait: 10000,
+      timeout: 15000,
     });
   },
 
