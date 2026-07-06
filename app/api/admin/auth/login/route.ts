@@ -17,9 +17,12 @@ export async function POST(req: Request) {
   const traceId = headerList.get("x-request-id") || "unknown";
 
   try {
-    // Rate limiting (5 attempts per minute per IP)
+    // Rate limiting (5 attempts per minute per IP) - disabled in non-production
     const ip = req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "unknown";
-    const rateLimitResult = loginLimiter.check(5, ip);
+    const isProduction = process.env.NODE_ENV === "production";
+    const rateLimitResult = isProduction
+      ? loginLimiter.check(5, ip)
+      : { success: true, limit: 5, remaining: 5, reset: new Date() };
 
     if (!rateLimitResult.success) {
       logger.warn({ traceId, ip }, "Login rate limit exceeded");

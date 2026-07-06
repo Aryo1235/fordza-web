@@ -68,7 +68,7 @@ export const AdminRepository = {
   },
 
   async findAll() {
-    return await prisma.admin.findMany({
+    const users = await prisma.admin.findMany({
       where: { deletedAt: null },
       select: {
         id: true,
@@ -76,8 +76,17 @@ export const AdminRepository = {
         name: true,
         role: true,
         createdAt: true,
+        pin: true,
       },
       orderBy: { createdAt: "desc" },
+    });
+
+    return users.map(user => {
+      const { pin, ...rest } = user;
+      return {
+        ...rest,
+        hasPin: !!pin,
+      };
     });
   },
 

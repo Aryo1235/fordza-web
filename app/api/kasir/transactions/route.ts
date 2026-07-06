@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { TransactionService } from "@/backend/services/transaction.service";
 import { handleError } from "@/lib/error-handler";
+import { ValidationError, UnauthorizedError } from "@/lib/errors";
 import { logger } from "@/lib/logger";
 import { headers } from "next/headers";
 
@@ -42,25 +43,16 @@ export async function POST(request: Request) {
 
     // Validasi level Controller (header/auth) — bukan tugas Service
     if (!kasirId) {
-      return NextResponse.json(
-        { success: false, message: "Sesi kasir tidak valid" },
-        { status: 401 }
-      );
+      throw new UnauthorizedError("Sesi kasir tidak valid");
     }
 
     if (!items || !Array.isArray(items) || items.length === 0) {
-      return NextResponse.json(
-        { success: false, message: "Keranjang belanja kosong" },
-        { status: 400 }
-      );
+      throw new ValidationError("Keranjang belanja kosong");
     }
 
     const method = paymentMethod || "CASH";
     if (method === "CASH" && (!amountPaid || amountPaid <= 0)) {
-      return NextResponse.json(
-        { success: false, message: "Nominal pembayaran tidak valid" },
-        { status: 400 }
-      );
+      throw new ValidationError("Nominal pembayaran tidak valid");
     }
 
     // Serahkan seluruh logika bisnis ke TransactionService

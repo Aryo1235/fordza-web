@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { PromoService } from "@/backend/services/promo.service";
+import { handleError } from "@/lib/error-handler";
 
 export async function GET(
   req: Request,
@@ -16,11 +17,7 @@ export async function GET(
     }
     return NextResponse.json({ success: true, data: promo });
   } catch (error: any) {
-    console.error("GET PROMO ID ERROR:", error.message);
-    return NextResponse.json(
-      { success: false, message: "Gagal mengambil data promo" },
-      { status: 500 }
-    );
+    return await handleError(error);
   }
 }
 
@@ -37,12 +34,7 @@ export async function PATCH(
     
     return NextResponse.json({ success: true, data: promo });
   } catch (error: any) {
-    console.error("PATCH PROMO ERROR:", error.message);
-    const isDeny = error.message.includes("Akses Ditolak");
-    return NextResponse.json(
-      { success: false, message: isDeny ? error.message : "Gagal memperbarui promo. Silakan periksa kembali data Anda." },
-      { status: isDeny ? 403 : 500 }
-    );
+    return await handleError(error);
   }
 }
 
@@ -58,11 +50,6 @@ export async function DELETE(
     
     return NextResponse.json({ success: true, message: "Promo berhasil dihapus" });
   } catch (error: any) {
-    console.error("DELETE PROMO ERROR:", error.message);
-    const isDeny = error.message.includes("Akses Ditolak");
-    return NextResponse.json(
-      { success: false, message: isDeny ? error.message : "Gagal menghapus promo" },
-      { status: isDeny ? 403 : 500 }
-    );
+    return await handleError(error);
   }
 }

@@ -63,7 +63,7 @@ export const TransactionService = {
       paymentMethod,
     } = data;
 
-    // ✅ KEPUTUSAN BISNIS #1: Pisahkan item SKU-based dan product-based
+    //  KEPUTUSAN BISNIS #1: Pisahkan item SKU-based dan product-based
     const skuIds = items.filter((i) => i.skuId).map((i) => i.skuId as string);
     const productIds = items.map((i) => i.productId);
 
@@ -74,10 +74,10 @@ export const TransactionService = {
         : Promise.resolve([]),
     ]);
 
-    // ✅ KEPUTUSAN BISNIS #2: Validasi stok & hitung total
+    //  KEPUTUSAN BISNIS #2: Validasi stok & hitung total
     // STEP 1: Hitung subtotal dulu (tanpa discount) untuk cek minPurchase
     let subtotalBeforeDiscount = 0;
-    
+
     for (const item of items) {
       const dbProduct = dbProducts.find((p) => p.id === item.productId);
       if (!dbProduct) throw new AppError(`Produk tidak ditemukan: ${item.productId}`, 404, "NOT_FOUND");
@@ -90,7 +90,7 @@ export const TransactionService = {
       } else {
         price = Number(dbProduct.price ?? 0);
       }
-      
+
       subtotalBeforeDiscount += price * item.quantity;
     }
 
@@ -148,7 +148,7 @@ export const TransactionService = {
         price = Number(dbProduct.price ?? 0);
       }
 
-      // ✅ Validasi stok
+      //  Validasi stok
       if (actualStock < item.quantity) {
         const label = skuSize
           ? `${dbProduct.name} (${variantColor} / Size ${skuSize})`
@@ -157,11 +157,11 @@ export const TransactionService = {
       }
 
       const itemSubtotal = price * item.quantity;
-      
-      // ✅ FIX: IGNORE discountAmount dari frontend, hitung ulang berdasarkan promo
+
+      //  FIX: IGNORE discountAmount dari frontend, hitung ulang berdasarkan promo
       let discount = 0;
       let promoName: string | null = null;
-      
+
       // Cari promo terbaik (hierarchy: VARIANT → PRODUCT → CATEGORY → GLOBAL)
       let bestPromo: any = activePromos.find(
         (promo) => promo.targetType === "VARIANT" && item.variantId && promo.targetIds.includes(item.variantId)
@@ -174,7 +174,7 @@ export const TransactionService = {
       if (!bestPromo) {
         // Gunakan data categories dari dbProduct yang sudah di-fetch di awal (tidak ada query DB tambahan)
         const categoryIds = dbProduct.categories?.map((c: any) => c.categoryId) || [];
-        
+
         bestPromo = activePromos.find(
           (promo) => promo.targetType === "CATEGORY" && promo.targetIds.some(id => categoryIds.includes(id))
         );
@@ -182,11 +182,11 @@ export const TransactionService = {
       if (!bestPromo) {
         bestPromo = activePromos.find((promo) => promo.targetType === "GLOBAL");
       }
-      
+
       // Hitung discount jika ada promo
       if (bestPromo) {
         const minPurchase = Number(bestPromo.minPurchase || 0);
-        
+
         // Cek apakah memenuhi minPurchase
         if (minPurchase === 0 || subtotalBeforeDiscount >= minPurchase) {
           // Apply promo
@@ -214,7 +214,7 @@ export const TransactionService = {
 
       validatedItems.push({
         productId: item.productId,
-        productCode: item.skuId 
+        productCode: item.skuId
           ? dbSkus.find(s => s.id === item.skuId)?.variant.variantCode || dbProduct.productCode || "-"
           : dbProduct.productCode || "-",
         quantity: item.quantity,
@@ -241,7 +241,7 @@ export const TransactionService = {
       }
     }
 
-    // ✅ KEPUTUSAN BISNIS #4: Uang yang dibayar harus >= total belanja
+    //  KEPUTUSAN BISNIS #4: Uang yang dibayar harus >= total belanja
     const method = paymentMethod || "CASH";
     if (!["CASH", "DEBIT", "QRIS"].includes(method)) {
       throw new AppError("Metode pembayaran tidak valid", 400, "BAD_REQUEST");
@@ -265,16 +265,16 @@ export const TransactionService = {
       change = 0;
     }
 
-    // ✅ KEPUTUSAN BISNIS #5: Pastikan Kasir Memiliki Laci Shift yang Aktif
+    // KEPUTUSAN BISNIS #5: Pastikan Kasir Memiliki Laci Shift yang Aktif
     const currentShift = await ShiftRepository.findOpenShiftByAdmin(kasirId);
     if (!currentShift) {
-        throw new AppError("Laci Kasir belum dibuka! Silakan muat ulang dan masukkan Modal Awal terlebih dahulu.", 400, "BAD_REQUEST");
+      throw new AppError("Laci Kasir belum dibuka! Silakan muat ulang dan masukkan Modal Awal terlebih dahulu.", 400, "BAD_REQUEST");
     }
 
-    // ✅ KEPUTUSAN BISNIS #6: Generate nomor invoice unik harian
+    //  KEPUTUSAN BISNIS #6: Generate nomor invoice unik harian
     const invoiceNo = await this.generateInvoiceNo();
 
-    // ✅ Semua validasi lulus → serahkan ke Repository untuk disimpan
+    //  Semua validasi lulus → serahkan ke Repository untuk disimpan
     return await TransactionRepository.createWithStockDecrement({
       invoiceNo,
       totalPrice,
@@ -362,10 +362,10 @@ export const TransactionService = {
       customerPhone: t.customerPhone,
       kasir: t.kasir
         ? {
-            name: t.kasir.name,
-            username: t.kasir.username,
-            role: t.kasir.role,
-          }
+          name: t.kasir.name,
+          username: t.kasir.username,
+          role: t.kasir.role,
+        }
         : null,
       items: (t.items || []).map((i: any) => ({
         productId: i.productId,
@@ -400,10 +400,10 @@ export const TransactionService = {
       customerPhone: transaction.customerPhone,
       kasir: transaction.kasir
         ? {
-            name: transaction.kasir.name,
-            username: transaction.kasir.username,
-            role: transaction.kasir.role,
-          }
+          name: transaction.kasir.name,
+          username: transaction.kasir.username,
+          role: transaction.kasir.role,
+        }
         : null,
       items: (transaction.items || []).map((i) => ({
         id: i.id,
@@ -436,6 +436,34 @@ export const TransactionService = {
     // ✅ Validasi bisnis: tidak boleh void transaksi yang sudah void
     if (transaction.status === "VOID") {
       throw new AppError("Transaksi sudah berstatus VOID", 400, "BAD_REQUEST");
+    }
+
+    // ✅ Validasi bisnis: Hanya boleh void jika shift kasir pada transaksi tersebut masih OPEN (Kecuali dilakukan oleh ADMIN)
+    if (transaction.shiftId) {
+      const shift = await prisma.cashierShift.findUnique({
+        where: { id: transaction.shiftId },
+      });
+      if (shift && shift.status === "CLOSED") {
+        // Cek apakah operator yang memproses void adalah ADMIN
+        let isAdmin = false;
+        if (operatorId) {
+          const operator = await prisma.admin.findUnique({
+            where: { id: operatorId },
+            select: { role: true },
+          });
+          if (operator && operator.role === "ADMIN") {
+            isAdmin = true;
+          }
+        }
+
+        if (!isAdmin) {
+          throw new AppError(
+            "Transaksi tidak dapat dibatalkan (VOID) karena shift kasir pada transaksi ini sudah ditutup. Hanya Admin/Owner yang dapat membatalkan transaksi dari shift yang sudah tutup.",
+            403,
+            "FORBIDDEN"
+          );
+        }
+      }
     }
 
     const items = await TransactionRepository.findItemsByTransactionId(id);

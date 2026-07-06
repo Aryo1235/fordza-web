@@ -147,7 +147,7 @@ export default function UsersManagementPage() {
       header: "PIN Otorisasi",
       cell: (u: any) => (
         <code className="text-[11px] px-1.5 py-0.5 bg-stone-100 rounded font-bold border border-stone-200">
-          {u.role === "KASIR" ? "-" : (u.pin || "BELUM DISESET")}
+          {u.role === "KASIR" ? "-" : (u.hasPin ? "SUDAH DISET" : "BELUM DISET")}
         </code>
       ),
     },

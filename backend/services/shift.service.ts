@@ -3,6 +3,11 @@ import { AppError } from "@/lib/error-handler";
 
 export const ShiftService = {
   async openShift(adminId: string, startingCash: number, notes?: string) {
+    // Validasi modal awal tidak boleh negatif
+    if (startingCash < 0) {
+      throw new AppError("Modal awal (starting cash) tidak boleh bernilai negatif.", 400, "BAD_REQUEST");
+    }
+
     // 1. Validasi: Jangan izinkan buka laci baru jika laci lama belum ditutup
     const existingOpenShift = await ShiftRepository.findOpenShiftByAdmin(adminId);
     
@@ -23,6 +28,11 @@ export const ShiftService = {
   },
 
   async closeShift(adminId: string, actualEndingCash: number) {
+    // Validasi uang aktual tidak boleh negatif
+    if (actualEndingCash < 0) {
+      throw new AppError("Uang aktual di laci (actual ending cash) tidak boleh bernilai negatif.", 400, "BAD_REQUEST");
+    }
+
     // 1. Cari shift yang masih Open untuk Kasir tersebut
     const currentShift = await ShiftRepository.findOpenShiftByAdmin(adminId);
     

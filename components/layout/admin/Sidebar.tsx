@@ -85,7 +85,7 @@ export function AdminSidebar() {
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="bg-[#3C3025] px-2 pt-1 pb-4">
+      <SidebarContent className="bg-[#3C3025] px-2 pt-1 pb-4 sidebar-scrollbar">
         <SidebarMenu className="gap-1.5">
           {navItems.map((item) => {
             const Icon = item.icon;

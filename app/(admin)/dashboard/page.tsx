@@ -5,20 +5,24 @@ import {
   ShoppingBag,
   FolderOpen,
   Image as ImageIcon,
-  MessageSquare,
   Loader2,
   ArrowRight,
   Plus,
   Upload,
-  Star,
   AlertCircle,
   Clock,
   Sparkles,
   ChevronRight,
-  Ruler
+  Ruler,
+  Percent,
+  PackageOpen,
+  TrendingUp,
+  TrendingDown,
+  Tag
 } from "lucide-react";
 import { useDashboardStats } from "@/features/admin/dashboard";
 import { useSizeTemplatesAdmin } from "@/features/admin/size-templates";
+import { usePromosAdmin } from "@/features/promo/hooks";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import Link from "next/link";
 
@@ -73,7 +77,15 @@ const CustomChartTooltip = ({ active, payload, maxTotal }: any) => {
 export default function DashboardPage() {
   const { data: stats, isLoading } = useDashboardStats();
   const { data: templatesData, isLoading: isTemplatesLoading } = useSizeTemplatesAdmin();
+  const { data: promosData } = usePromosAdmin();
   const sizeTemplates = templatesData?.data || [];
+
+  const now = new Date();
+  const activePromos = (promosData || []).filter((p: any) => {
+    const start = new Date(p.startDate);
+    const end = new Date(p.endDate);
+    return p.isActive && start <= now && end >= now;
+  });
 
   if (isLoading) {
     return (
@@ -197,15 +209,15 @@ export default function DashboardPage() {
               </div>
             </Link>
 
-            <Link href="/dashboard/testimonials" className="group">
+            <Link href="/dashboard/promo" className="group">
               <div className="p-4 rounded-xl border border-stone-150 bg-stone-50/40 hover:bg-[#FEF4E8] hover:border-[#f0d4bd] transition-all flex items-center justify-between">
                 <div className="flex items-center gap-3.5">
                   <div className="h-9 w-9 rounded-lg bg-stone-100 group-hover:bg-white flex items-center justify-center text-[#3C3025] transition-colors shrink-0">
-                    <MessageSquare className="h-5 w-5" />
+                    <Percent className="h-5 w-5" />
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold text-[#3C3025] group-hover:text-[#3C3025] transition-colors">Moderasi Ulasan</h4>
-                    <p className="text-[10px] text-stone-400 mt-0.5">Kurasi ulasan pelanggan</p>
+                    <h4 className="text-xs font-bold text-[#3C3025] group-hover:text-[#3C3025] transition-colors">Kelola Promo</h4>
+                    <p className="text-[10px] text-stone-400 mt-0.5">{activePromos.length} promo aktif saat ini</p>
                   </div>
                 </div>
                 <ArrowRight className="h-4 w-4 text-stone-400 group-hover:translate-x-1 transition-transform" />
@@ -255,10 +267,10 @@ export default function DashboardPage() {
             </div>
 
             <div className="p-3.5 rounded-xl border border-stone-100 bg-stone-50/20 flex flex-col justify-between">
-              <span className="text-[10px] text-stone-400 font-bold uppercase tracking-wider block">Ulasan</span>
+              <span className="text-[10px] text-stone-400 font-bold uppercase tracking-wider block">Promo Aktif</span>
               <div>
-                <span className="text-2xl font-black text-[#3C3025] block leading-tight">{stats?.totalTestimonials || 0}</span>
-                <Link href="/dashboard/testimonials" className="text-xs font-semibold text-[#3C3025] hover:text-stone-600 inline-flex items-center gap-0.5 mt-1">
+                <span className="text-2xl font-black text-[#3C3025] block leading-tight">{activePromos.length}</span>
+                <Link href="/dashboard/promo" className="text-xs font-semibold text-[#3C3025] hover:text-stone-600 inline-flex items-center gap-0.5 mt-1">
                   Kelola <ChevronRight className="h-2.5 w-2.5" />
                 </Link>
               </div>
@@ -268,62 +280,72 @@ export default function DashboardPage() {
         </Card>
 
 
-        {/* ROW 3 - BLOCK 2: Ulasan Pelanggan Terbaru (Col-span 4) */}
+        {/* ROW 3 - BLOCK 2: Aktivitas Stok Terkini (Col-span 4) */}
         <Card className="lg:col-span-4 md:col-span-2 border-stone-200 shadow-sm flex flex-col overflow-hidden lg:h-[430px] md:h-[400px] h-[360px]">
           <CardHeader className="pb-2 border-b border-stone-50 bg-stone-50/20">
             <CardTitle className="text-xs font-bold uppercase tracking-wider text-[#3C3025] flex items-center gap-2">
-              <Clock className="h-4 w-4 text-stone-400" /> Ulasan Pelanggan Terbaru
+              <Clock className="h-4 w-4 text-stone-400" /> Aktivitas Stok Terkini
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4 flex-1 flex flex-col justify-between overflow-hidden">
-            {stats?.latestTestimonials && stats.latestTestimonials.length > 0 ? (
-              <div className="space-y-3 flex-1 overflow-y-auto pr-1 custom-scrollbar">
-                {stats.latestTestimonials.map((t: any) => (
-                  <div key={t.id} className="p-3 rounded-xl border border-stone-150 bg-stone-50/30 space-y-1.5 hover:bg-stone-50/60 transition-colors">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-stone-850 truncate max-w-[120px]" title={t.customerName}>
-                        {t.customerName}
-                      </span>
-                      <div className="flex items-center gap-0.5 text-amber-500 shrink-0">
-                        {Array.from({ length: 5 }).map((_, i) => (
-                          <Star
-                            key={i}
-                            className={`h-3 w-3 ${i < t.rating ? "fill-amber-400 text-amber-400" : "text-stone-200"
-                              }`}
-                          />
-                        ))}
+            {stats?.latestStockLogs && stats.latestStockLogs.length > 0 ? (
+              <div className="space-y-2.5 flex-1 overflow-y-auto pr-1 sidebar-scrollbar">
+                {stats.latestStockLogs.map((log: any) => {
+                  const isPositive = log.delta > 0;
+                  return (
+                    <div key={log.id} className="p-3 rounded-xl border border-stone-100 bg-stone-50/30 hover:bg-stone-50/60 transition-colors">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className={`h-7 w-7 rounded-lg flex items-center justify-center shrink-0 ${
+                            isPositive ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-500"
+                          }`}>
+                            {isPositive
+                              ? <TrendingUp className="h-3.5 w-3.5" />
+                              : <TrendingDown className="h-3.5 w-3.5" />}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-[11px] font-bold text-stone-800 truncate" title={log.productName}>
+                              {log.productName}
+                            </p>
+                            <p className="text-[9px] text-stone-400 font-mono mt-0.5">
+                              {log.color} · Size {log.size}
+                            </p>
+                          </div>
+                        </div>
+                        <span className={`text-xs font-black shrink-0 ${
+                          isPositive ? "text-emerald-600" : "text-red-500"
+                        }`}>
+                          {isPositive ? "+" : ""}{log.delta}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center mt-2 pt-1.5 border-t border-stone-100/60">
+                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-stone-100 text-stone-500 font-mono">
+                          {log.type}
+                        </span>
+                        <span className="text-[9px] text-stone-400">
+                          {log.operatorName} · {new Date(log.createdAt).toLocaleDateString("id-ID", { day: 'numeric', month: 'short' })}
+                        </span>
                       </div>
                     </div>
-                    <p className="text-[11px] text-stone-500 leading-relaxed italic line-clamp-2">
-                      "{t.content}"
-                    </p>
-                    <div className="flex justify-between items-center text-[9px] text-stone-400 pt-1 border-t border-stone-100/50">
-                      <span className="truncate max-w-[150px]" title={t.productName}>Produk: <b>{t.productName}</b></span>
-                      <span>
-                        {new Date(t.createdAt).toLocaleDateString("id-ID", {
-                          day: 'numeric', month: 'short'
-                        })}
-                      </span>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center p-12 text-center flex-1 gap-2">
-                <MessageSquare className="h-8 w-8 text-stone-300" />
+                <PackageOpen className="h-8 w-8 text-stone-300" />
                 <div>
-                  <h5 className="text-xs font-bold text-stone-800">Belum Ada Ulasan</h5>
-                  <p className="text-[10px] text-stone-400 mt-0.5">Ulasan baru akan muncul secara real-time.</p>
+                  <h5 className="text-xs font-bold text-stone-800">Belum Ada Aktivitas Stok</h5>
+                  <p className="text-[10px] text-stone-400 mt-0.5">Log perubahan stok akan muncul di sini.</p>
                 </div>
               </div>
             )}
 
             <div className="pt-3 border-t border-stone-100 mt-3 shrink-0">
               <Link
-                href="/dashboard/testimonials"
+                href="/dashboard/stock-history"
                 className="w-full py-2 px-4 rounded-xl border border-stone-200 hover:border-[#3C3025] hover:bg-stone-50 text-stone-600 hover:text-[#3C3025] font-bold text-[11px] flex items-center justify-center gap-1.5 transition-all"
               >
-                Lihat Semua Ulasan <ArrowRight className="h-3.5 w-3.5" />
+                Lihat Histori Stok <ArrowRight className="h-3.5 w-3.5" />
               </Link>
             </div>
           </CardContent>

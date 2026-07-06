@@ -11,17 +11,20 @@ import { PromoRepository } from "@/backend/repositories/promo.repo";
 import { AdminService } from "@/backend/services/admin.service";
 import { Role } from "@/app/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
+import { AppError } from "@/lib/error-handler";
 
 export const PromoService = {
   /**
    * Helper untuk memastikan hanya ADMIN yang bisa mengelola promo.
    */
   async verifyAdmin(userId: string | null) {
-    if (!userId) throw new Error("Otentikasi diperlukan");
+    if (!userId) {
+      throw new AppError("Otentikasi diperlukan", 401, "UNAUTHORIZED");
+    }
 
     const user = await AdminService.findById(userId);
     if (!user || user.role !== Role.ADMIN) {
-      throw new Error("Akses Ditolak: Hanya Admin yang dapat mengelola promo");
+      throw new AppError("Akses Ditolak: Hanya Admin yang dapat mengelola promo", 403, "FORBIDDEN");
     }
     return user;
   },
@@ -45,19 +48,70 @@ export const PromoService = {
     }));
   },
 
+  async validateOverlap(data: any, excludeId?: string) {
+    const startDate = new Date(data.startDate);
+    const endDate = new Date(data.endDate);
+
+    // Set endDate ke akhir hari (23:59:59.999) agar pengecekan overlap akurat
+    endDate.setHours(23, 59, 59, 999);
+
+    if (data.isActive === false) return;
+
+    // Cari promo lain yang aktif, bertipe target sama, dan rentang tanggalnya bertabrakan
+    const overlappingPromos = await prisma.promo.findMany({
+      where: {
+        id: excludeId ? { not: excludeId } : undefined,
+        isActive: true,
+        targetType: data.targetType,
+        startDate: { lte: endDate },
+        endDate: { gte: startDate },
+      },
+    });
+
+    if (overlappingPromos.length === 0) return;
+
+    if (data.targetType === "GLOBAL") {
+      throw new AppError(
+        `Bentrok: Sudah ada promo GLOBAL aktif ("${overlappingPromos[0].name}") di periode tanggal yang dipilih.`,
+        400,
+        "BAD_REQUEST"
+      );
+    }
+
+    // Untuk target non-global (CATEGORY, PRODUCT, VARIANT), cek jika ada ID target yang sama
+    const newTargetIds = data.targetIds || [];
+    for (const promo of overlappingPromos) {
+      const commonIds = promo.targetIds.filter((id: string) => newTargetIds.includes(id));
+      if (commonIds.length > 0) {
+        throw new AppError(
+          `Bentrok: Target promo ini bertabrakan dengan promo aktif "${promo.name}" pada periode tanggal yang dipilih.`,
+          400,
+          "BAD_REQUEST"
+        );
+      }
+    }
+  },
+
   async create(data: any, userId: string | null) {
     //  Security: Hanya Admin
     await this.verifyAdmin(userId);
 
-    //  Transformasi Data
+    // Normalisasi input tanggal (endDate diset ke jam 23:59:59.999)
+    const startDate = new Date(data.startDate);
+    const endDate = new Date(data.endDate);
+    endDate.setHours(23, 59, 59, 999);
+
     const formattedData = {
       ...data,
       value: Number(data.value),
       minPurchase: Number(data.minPurchase || 0),
-      startDate: new Date(data.startDate),
-      endDate: new Date(data.endDate),
+      startDate,
+      endDate,
       createdById: userId, // Simpan ID pembuat
     };
+
+    // Validasi bentrok tanggal & target
+    await this.validateOverlap(formattedData);
 
     return await PromoRepository.create(formattedData);
   },
@@ -66,12 +120,34 @@ export const PromoService = {
     // Security: Hanya Admin
     await this.verifyAdmin(userId);
 
+    // Ambil data promo saat ini untuk menggabungkan data parsial demi kebutuhan validasi
+    const currentPromo = await PromoRepository.getById(id);
+    if (!currentPromo) {
+      throw new AppError("Promo tidak ditemukan", 404, "NOT_FOUND");
+    }
+
+    const startDate = data.startDate ? new Date(data.startDate) : currentPromo.startDate;
+    const endDate = data.endDate ? new Date(data.endDate) : currentPromo.endDate;
+    
+    // Normalisasi endDate ke akhir hari jika diubah atau diperbarui
+    endDate.setHours(23, 59, 59, 999);
+
+    const mergedData = {
+      targetType: data.targetType ?? currentPromo.targetType,
+      targetIds: data.targetIds ?? currentPromo.targetIds,
+      startDate,
+      endDate,
+      isActive: data.isActive !== undefined ? data.isActive : currentPromo.isActive,
+    };
+
+    await this.validateOverlap(mergedData, id);
+
     // Transformasi Data
     const updateData: any = { ...data };
     if (data.value !== undefined) updateData.value = Number(data.value);
     if (data.minPurchase !== undefined) updateData.minPurchase = Number(data.minPurchase);
-    if (data.startDate) updateData.startDate = new Date(data.startDate);
-    if (data.endDate) updateData.endDate = new Date(data.endDate);
+    if (data.startDate) updateData.startDate = startDate;
+    if (data.endDate) updateData.endDate = endDate;
     updateData.updatedById = userId; // Simpan ID pengubah
 
     return await PromoRepository.update(id, updateData);
