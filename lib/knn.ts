@@ -170,18 +170,7 @@ export function euclideanDistance(
   return Math.sqrt(sumOfSquares);
 }
 
-// ============================================================
-//  LANGKAH 4: PENCARIAN KNN TERDEKAT
-// ============================================================
 
-/**
- * Menghitung jarak Target ke SEMUA produk menggunakan rumus Euclidean Distance,
- * lalu mengembalikan "k" jumlah tetangga terdekat dengan jarak paling minimum.
- *
- * @param targetId ID Produk yang sedang dilihat User.
- * @param vectors List Vektor (Biner One-Hot) milik seluruh katalog Produk (termasuk Target).
- * @param k Jumlah "Produk Serupa" / Rekomendasi yang akan dikembalikan (Default: 4).
- */
 export function findKNearest(
   targetId: string,
   vectors: ProductVector[],

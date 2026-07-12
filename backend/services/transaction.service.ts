@@ -422,7 +422,7 @@ export const TransactionService = {
   /**
    * VOID transaksi — hanya bisa dilakukan Admin.
    *
-   * ✅ KEPUTUSAN BISNIS:
+   *  KEPUTUSAN BISNIS:
    * - Transaksi yang sudah VOID tidak boleh di-VOID lagi
    * - Stok WAJIB dikembalikan saat transaksi dibatalkan
    */
@@ -433,12 +433,12 @@ export const TransactionService = {
       throw new AppError("Transaksi tidak ditemukan", 404, "NOT_FOUND");
     }
 
-    // ✅ Validasi bisnis: tidak boleh void transaksi yang sudah void
+    //  Validasi bisnis: tidak boleh void transaksi yang sudah void
     if (transaction.status === "VOID") {
       throw new AppError("Transaksi sudah berstatus VOID", 400, "BAD_REQUEST");
     }
 
-    // ✅ Validasi bisnis: Hanya boleh void jika shift kasir pada transaksi tersebut masih OPEN (Kecuali dilakukan oleh ADMIN)
+    //  Validasi bisnis: Hanya boleh void jika shift kasir pada transaksi tersebut masih OPEN (Kecuali dilakukan oleh ADMIN)
     if (transaction.shiftId) {
       const shift = await prisma.cashierShift.findUnique({
         where: { id: transaction.shiftId },
