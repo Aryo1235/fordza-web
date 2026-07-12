@@ -111,7 +111,7 @@ export default function UsersManagementPage() {
           toast.success("User berhasil dihapus");
           setDeleteId(null);
         },
-        onError: () => toast.error("Gagal menghapus user")
+        onError: (err: any) => toast.error(err.message || "Gagal menghapus user")
       });
     }
   };
@@ -167,7 +167,13 @@ export default function UsersManagementPage() {
           <Button variant="ghost" size="icon" onClick={() => handleOpenEditModal(u)} className="h-8 w-8 text-stone-500 hover:text-stone-800">
             <Edit2 className="h-3.5 w-3.5" />
           </Button>
-          <Button variant="ghost" size="icon" onClick={() => setDeleteId(u.id)} className="h-8 w-8 text-stone-400 hover:text-red-600">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setDeleteId(u.id)}
+            disabled={u.username === "admin"}
+            className="h-8 w-8 text-stone-400 hover:text-red-600 disabled:opacity-30 disabled:hover:text-stone-400 disabled:cursor-not-allowed"
+          >
             <Trash2 className="h-3.5 w-3.5" />
           </Button>
         </div>

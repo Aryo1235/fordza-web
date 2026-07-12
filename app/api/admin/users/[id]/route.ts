@@ -46,6 +46,23 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
+
+    // Ambil detail user terlebih dahulu untuk memeriksa username
+    const user = await AdminService.findById(id);
+    if (!user) {
+      return NextResponse.json(
+        { success: false, message: "User tidak ditemukan" },
+        { status: 404 }
+      );
+    }
+
+    if (user.username === "admin") {
+      return NextResponse.json(
+        { success: false, message: "User admin utama tidak dapat dihapus" },
+        { status: 400 }
+      );
+    }
+
     await AdminService.deleteUser(id);
 
     return NextResponse.json({
