@@ -26,6 +26,7 @@ import { downloadFile } from "@/lib/download";
 import { useCashiers } from "@/features/admin/users/hooks";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { VoidTransactionDialog } from "@/features/kasir";
 
 export default function AdminTransactionsPage() {
   const router = useRouter();
@@ -35,6 +36,7 @@ export default function AdminTransactionsPage() {
   const [selectedKasirId, setSelectedKasirId] = useState<string>("ALL");
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
+  const [txToVoid, setTxToVoid] = useState<{ id: string; invoiceNo: string } | null>(null);
 
   const { data: cashiersData } = useCashiers();
   const cashiers = cashiersData?.data || [];
@@ -138,14 +140,34 @@ export default function AdminTransactionsPage() {
     {
       header: "Aksi",
       cell: (tx: any) => (
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 text-stone-400 hover:text-stone-900 transition-all hover:scale-110 active:scale-95"
-          onClick={() => router.push(`/dashboard/transactions/${tx.id}`)}
-        >
-          <Eye className="w-4 h-4" />
-        </Button>
+        <div className="flex items-center justify-end gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-stone-400 hover:text-stone-900 transition-all hover:scale-110 active:scale-95"
+            onClick={() => router.push(`/dashboard/transactions/${tx.id}`)}
+            title="Lihat Detail Audit"
+          >
+            <Eye className="w-4 h-4" />
+          </Button>
+
+          {tx.status !== "VOID" && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-stone-400 hover:text-red-600 hover:bg-red-50 transition-all hover:scale-110 active:scale-95"
+              onClick={() =>
+                setTxToVoid({
+                  id: tx.id,
+                  invoiceNo: tx.invoiceNo,
+                })
+              }
+              title="Batalkan Transaksi (VOID)"
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          )}
+        </div>
       ),
       className: "text-right px-6 py-4",
     },
@@ -363,6 +385,13 @@ export default function AdminTransactionsPage() {
           </p>
         </div>
       </div>
+
+      <VoidTransactionDialog
+        isOpen={!!txToVoid}
+        transactionId={txToVoid?.id || null}
+        invoiceNo={txToVoid?.invoiceNo || null}
+        onClose={() => setTxToVoid(null)}
+      />
     </div>
   );
 }

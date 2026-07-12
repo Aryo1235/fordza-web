@@ -253,7 +253,7 @@ export default function ReportsPage() {
             <p className="text-3xl font-bold text-stone-800">
               {isSummaryLoading
                 ? "..."
-                : `Rp ${Math.round(summaryData?.summary.averageOrderValue).toLocaleString("id-ID")}`}
+                : `Rp ${Math.round(summaryData?.summary.averageOrderValue ?? 0).toLocaleString("id-ID")}`}
             </p>
             <p className="text-[10px] text-stone-500 mt-1">
               Tiket per Pelanggan

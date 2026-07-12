@@ -15,7 +15,7 @@ import {
 import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
 import { useTransactionDetail } from "@/features/transactions";
-import { InvoiceModal } from "@/features/kasir";
+import { InvoiceModal, VoidTransactionDialog } from "@/features/kasir";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useState } from "react";
@@ -26,6 +26,7 @@ export default function AdminTransactionDetailPage() {
   const { id } = useParams();
   const router = useRouter();
   const [showInvoice, setShowInvoice] = useState(false);
+  const [showVoidDialog, setShowVoidDialog] = useState(false);
 
   const { data: transaction, isLoading, error } = useTransactionDetail(id as string, true);
 
@@ -92,6 +93,16 @@ export default function AdminTransactionDetailPage() {
         </div>
 
         <div className="flex gap-3 relative z-10">
+          {transaction.status !== "VOID" && (
+            <Button 
+              variant="destructive"
+              className="gap-2 font-bold text-xs uppercase h-11 px-6 shadow-lg shadow-red-100"
+              onClick={() => setShowVoidDialog(true)}
+            >
+              <Ban className="w-4 h-4" />
+              Batalkan (VOID)
+            </Button>
+          )}
           <Button 
             className="bg-stone-900 hover:bg-stone-800 text-white gap-2 font-bold text-xs uppercase h-11 px-6 shadow-lg shadow-stone-200"
             onClick={() => setShowInvoice(true)}
@@ -276,6 +287,13 @@ export default function AdminTransactionDetailPage() {
           onClose={() => setShowInvoice(false)}
         />
       )}
+
+      <VoidTransactionDialog
+        isOpen={showVoidDialog}
+        transactionId={transaction.id}
+        invoiceNo={transaction.invoiceNo}
+        onClose={() => setShowVoidDialog(false)}
+      />
     </div>
   );
 }

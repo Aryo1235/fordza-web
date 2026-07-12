@@ -4,9 +4,12 @@ import { pinLimiter } from "@/lib/rate-limit";
 
 export async function POST(req: Request) {
   try {
-    // Rate limiting (3 attempts per minute per IP)
+    // Rate limiting (3 attempts per minute per IP) - disabled in non-production
     const ip = req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "unknown";
-    const rateLimitResult = pinLimiter.check(3, ip);
+    const isProduction = process.env.NODE_ENV === "production";
+    const rateLimitResult = isProduction
+      ? pinLimiter.check(3, ip)
+      : { success: true, limit: 3, remaining: 3, reset: new Date() };
 
     if (!rateLimitResult.success) {
       return NextResponse.json(

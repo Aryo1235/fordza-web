@@ -49,7 +49,7 @@ export function DataTable<T>({
   return (
     <div className={className}>
       <div className="rounded-md border bg-white shadow-sm overflow-hidden">
-        <div className="overflow-auto">
+        <div className="overflow-auto custom-scrollbar">
           <Table>
           <TableHeader className="bg-muted/50">
             <TableRow>

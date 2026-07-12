@@ -162,6 +162,11 @@ export const TransactionRepository = {
               data: { stock: { decrement: i.quantity } },
             });
 
+            // Cegah stok negatif (Race Condition)
+            if (updatedSku.stock < 0) {
+              throw new Error(`Stok tidak mencukupi untuk varian ${i.variantColor || ""} ukuran ${i.skuSize || ""}`);
+            }
+
             // LANGKAH 3: SINKRONISASI SUMMARY TABLE (per SKU)
             await tx.skuSalesSummary.upsert({
               where: {
@@ -234,6 +239,11 @@ export const TransactionRepository = {
               where: { id: i.productId },
               data: { stock: { decrement: i.quantity } },
             });
+
+            // Cegah stok negatif (Race Condition)
+            if (updatedProduct.stock < 0) {
+              throw new Error(`Stok tidak mencukupi untuk produk ${i.productName}`);
+            }
 
             await tx.stockLog.create({
               data: {
@@ -389,6 +399,11 @@ export const TransactionRepository = {
       });
       await Promise.all(
         items.map(async (i) => {
+          // Jika produk sudah dihapus dari database (productId null), lewati pemulihan stok & audit penjualan
+          if (!i.productId) {
+            return;
+          }
+
           const originalItem = transaction.items.find(item => item.productId === i.productId && (i.skuId ? item.skuId === i.skuId : true));
           const basePriceAtSale = originalItem?.basePriceAtSale || 0;
           const discountAmount = originalItem?.discountAmount || 0;

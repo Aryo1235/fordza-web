@@ -656,18 +656,6 @@ export default function PromoPage() {
         </DialogContent>
       </Dialog>
 
-      <style jsx global>{`
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: #fef4e8;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: #c4a882;
-          border-radius: 10px;
-        }
-      `}</style>
     </div>
   );
 }

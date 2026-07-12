@@ -1,0 +1,1 @@
+ubah logic dari managemen user agar user dengan id pertama tidak bisa di hapus 
