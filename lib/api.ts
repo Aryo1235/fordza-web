@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://fordza-web.vercel.app";
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 // Simpan access token di memory (bukan localStorage — lebih aman dari XSS)
 let accessToken: string | null = null;
@@ -77,7 +77,7 @@ api.interceptors.response.use(
           .post(
             `${BASE_URL}/api/admin/auth/refresh`,
             {},
-            { withCredentials: true }
+            { withCredentials: true },
           )
           .then((res) => {
             const newToken = res.data?.data?.accessToken;
@@ -87,7 +87,9 @@ api.interceptors.response.use(
               processQueue(null, newToken); // bebaskan antrean
               resolve(api(originalRequest));
             } else {
-              processQueue(new Error("Token refresh returned empty access token"));
+              processQueue(
+                new Error("Token refresh returned empty access token"),
+              );
               reject(error);
             }
           })
@@ -106,7 +108,7 @@ api.interceptors.response.use(
     }
 
     return Promise.reject(error);
-  }
+  },
 );
 
 export default api;
