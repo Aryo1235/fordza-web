@@ -22,7 +22,10 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Generate or forward request ID
-  const requestId = request.headers.get("x-request-id") || uuidv4();
+  const requestId =
+    request.headers.get("x-nf-request-id") ||
+    request.headers.get("x-request-id") ||
+    uuidv4();
 
   // Tentukan jenis rute
   const isApiRoute = pathname.startsWith("/api");
@@ -32,31 +35,25 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith("/riwayat") ||
     pathname.startsWith("/cetak-ulang");
 
-  // Jika bukan rute yang perlu diproteksi, biarkan lewat
   if (!isApiRoute && !isAdminPage && !isKasirPage) {
-    const response = NextResponse.next();
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set("x-request-id", requestId);
+
+    const response = NextResponse.next({
+      request: { headers: requestHeaders }, // ✅ Ini kuncinya!
+    });
     response.headers.set("x-request-id", requestId);
     return response;
   }
 
-  //Public APi :hanya inject traceid, tanpa auth
-  const isPublicApi = PUBLIC_API_PREFIXES.some((prefix) => pathname.startsWith(prefix));
-  if (isPublicApi) {
+  // Terapkan hal yang sama persis untuk PUBLIC_ROUTES
+  if (isApiRoute && PUBLIC_ROUTES.includes(pathname)) {
     const requestHeaders = new Headers(request.headers);
     requestHeaders.set("x-request-id", requestId);
+
     const response = NextResponse.next({
-      request: {
-        headers: requestHeaders,
-      }
+      request: { headers: requestHeaders }, // ✅ Kunci agar API bisa baca
     });
-    return response;
-  }
-
-
-
-  // Skip auth untuk public API routes
-  if (isApiRoute && PUBLIC_ROUTES.includes(pathname)) {
-    const response = NextResponse.next();
     response.headers.set("x-request-id", requestId);
     return response;
   }
@@ -78,13 +75,15 @@ export async function proxy(request: NextRequest) {
   if (!payload) {
     // 🔐 KEAMANAN API: Jika rute API, langsung kembalikan 401 tanpa kompromi (tidak boleh bypass pakai refresh token)
     if (isApiRoute) {
-      console.warn(`[MIDDLEWARE] Sesi habis/Token tidak valid untuk API Route. TraceID: ${requestId}`);
+      console.warn(
+        `[MIDDLEWARE] Sesi habis/Token tidak valid untuk API Route. TraceID: ${requestId}`,
+      );
       return NextResponse.json(
         {
           success: false,
           message: "Sesi habis. Silakan login kembali.",
           code: "UNAUTHORIZED",
-          traceId: requestId
+          traceId: requestId,
         },
         { status: 401 },
       );
@@ -108,7 +107,10 @@ export async function proxy(request: NextRequest) {
   // Jika payload belum ada (karena baru aja expire), kita ambil dari refresh token saja.
   const authPayload =
     payload ||
-    (await verifyToken(request.cookies.get(REFRESH_COOKIE_NAME)?.value!, "refresh"));
+    (await verifyToken(
+      request.cookies.get(REFRESH_COOKIE_NAME)?.value!,
+      "refresh",
+    ));
 
   if (!authPayload) {
     return NextResponse.redirect(new URL("/login", request.url));
@@ -123,13 +125,15 @@ export async function proxy(request: NextRequest) {
 
   const isKasirApi = pathname.startsWith("/api/kasir");
   if (isKasirApi && role !== "ADMIN" && role !== "KASIR") {
-    console.warn(`[MIDDLEWARE] Akses Ditolak (Kasir API). Role: ${role}. TraceID: ${requestId}`);
+    console.warn(
+      `[MIDDLEWARE] Akses Ditolak (Kasir API). Role: ${role}. TraceID: ${requestId}`,
+    );
     return NextResponse.json(
       {
         success: false,
         message: "Akses ditolak.",
         code: "FORBIDDEN",
-        traceId: requestId
+        traceId: requestId,
       },
       { status: 403 },
     );
@@ -151,13 +155,15 @@ export async function proxy(request: NextRequest) {
     isShiftEndpoint;
 
   if (isAdminApi && role !== "ADMIN" && !isKasirAllowedApi) {
-    console.warn(`[MIDDLEWARE] Akses Ditolak (Admin API). Role: ${role}. TraceID: ${requestId}`);
+    console.warn(
+      `[MIDDLEWARE] Akses Ditolak (Admin API). Role: ${role}. TraceID: ${requestId}`,
+    );
     return NextResponse.json(
       {
         success: false,
         message: "Akses ditolak.",
         code: "FORBIDDEN",
-        traceId: requestId
+        traceId: requestId,
       },
       { status: 403 },
     );
