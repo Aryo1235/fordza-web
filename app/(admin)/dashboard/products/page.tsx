@@ -59,7 +59,7 @@ export default function ProductsPage() {
         <div className="flex flex-wrap gap-1">
           {item.categories?.map((c: any) => (
             <span
-              key={c.categoryId}
+              key={c.category?.id}
               className="px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800 whitespace-nowrap"
             >
               {c.category?.name}

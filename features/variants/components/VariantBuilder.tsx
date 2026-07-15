@@ -738,30 +738,26 @@ export function VariantBuilder({
   const [editingLocalId, setEditingLocalId] = useState<string | null>(null);
 
   const addVariant = (newVariant: PendingVariant) => {
-    setVariants((currentVariants) => {
-      const updatedVariants = editingLocalId
-        ? currentVariants.map((existing) =>
-            existing.localId === newVariant.localId ? newVariant : existing,
-          )
-        : [...currentVariants, newVariant];
+    const updatedVariants = editingLocalId
+      ? variants.map((existing) =>
+          existing.localId === newVariant.localId ? newVariant : existing,
+        )
+      : [...variants, newVariant];
 
-      // Kirim hasil update terbaru ke parent (page.tsx)
-      onChange(updatedVariants);
-      return updatedVariants;
-    });
+    setVariants(updatedVariants);
+    // Kirim hasil update terbaru ke parent (page.tsx)
+    onChange(updatedVariants);
 
     setShowForm(false);
     setEditingLocalId(null);
   };
 
   const removeVariant = (targetLocalId: string) => {
-    setVariants((currentVariants) => {
-      const updatedVariants = currentVariants.filter(
-        (v) => v.localId !== targetLocalId,
-      );
-      onChange(updatedVariants);
-      return updatedVariants;
-    });
+    const updatedVariants = variants.filter(
+      (v) => v.localId !== targetLocalId,
+    );
+    setVariants(updatedVariants);
+    onChange(updatedVariants);
   };
 
   const startEdit = (localId: string) => {
