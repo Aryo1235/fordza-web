@@ -46,8 +46,9 @@ export async function proxy(request: NextRequest) {
     return response;
   }
 
-  // Terapkan hal yang sama persis untuk PUBLIC_ROUTES
-  if (isApiRoute && PUBLIC_ROUTES.includes(pathname)) {
+  // Terapkan hal yang sama persis untuk PUBLIC_ROUTES & PUBLIC_API_PREFIXES
+  const isPublicApi = PUBLIC_API_PREFIXES.some(prefix => pathname.startsWith(prefix));
+  if (isApiRoute && (PUBLIC_ROUTES.includes(pathname) || isPublicApi)) {
     const requestHeaders = new Headers(request.headers);
     requestHeaders.set("x-request-id", requestId);
 
@@ -200,9 +201,6 @@ export const config = {
     "/pos/:path*",
     "/riwayat/:path*",
     "/cetak-ulang/:path*",
-    // Public API routes (hanya inject traceId)
-    "/api/public/:path*",
-    "/api/recommend/:path*",
-    "/api/health/:path*",
+
   ],
 };

@@ -75,7 +75,7 @@ api.interceptors.response.use(
       return new Promise((resolve, reject) => {
         axios
           .post(
-            `${BASE_URL}/api/admin/auth/refresh`,
+            `${BASE_URL || ""}/api/admin/auth/refresh`,
             {},
             { withCredentials: true },
           )

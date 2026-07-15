@@ -74,6 +74,32 @@ const CustomChartTooltip = ({ active, payload, maxTotal }: any) => {
   );
 };
 
+const getLogTypeLabel = (type: string) => {
+  switch (type) {
+    case "SALE":
+      return "JUAL";
+    case "RESTOCK":
+      return "MASUK";
+    case "VOID":
+      return "VOID";
+    default:
+      return "ADJ";
+  }
+};
+
+const getLogTypeStyle = (type: string) => {
+  switch (type) {
+    case "SALE":
+      return "bg-red-50 text-red-600 border border-red-100/60";
+    case "RESTOCK":
+      return "bg-emerald-50 text-emerald-600 border border-emerald-100/60";
+    case "VOID":
+      return "bg-amber-50 text-amber-600 border border-amber-100/60";
+    default:
+      return "bg-stone-50 text-stone-500 border border-stone-200/60";
+  }
+};
+
 export default function DashboardPage() {
   const { data: stats, isLoading } = useDashboardStats();
   const { data: templatesData, isLoading: isTemplatesLoading } = useSizeTemplatesAdmin();
@@ -319,8 +345,8 @@ export default function DashboardPage() {
                         </span>
                       </div>
                       <div className="flex justify-between items-center mt-2 pt-1.5 border-t border-stone-100/60">
-                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-stone-100 text-stone-500 font-mono">
-                          {log.type}
+                        <span className={`text-[9px] px-1.5 py-0.5 rounded font-mono font-bold ${getLogTypeStyle(log.type)}`}>
+                          {getLogTypeLabel(log.type)}
                         </span>
                         <span className="text-[9px] text-stone-400">
                           {log.operatorName} · {new Date(log.createdAt).toLocaleDateString("id-ID", { day: 'numeric', month: 'short' })}

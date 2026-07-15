@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { handleError } from "@/lib/error-handler";
+import { handleError, AppError } from "@/lib/error-handler";
 import { bannerSchema } from "@/lib/zod-schemas";
 import { uploadFileToS3, deleteFileFromS3 } from "@/actions/upload";
 import { BannerService } from "@/backend/services/banner.service";
@@ -50,10 +50,7 @@ export async function POST(req: Request) {
 
     const uploadRes = await uploadFileToS3(uploadFormData, "banners");
     if (!uploadRes.success) {
-      return NextResponse.json(
-        { success: false, message: "Gagal upload gambar banner", traceId },
-        { status: 500 },
-      );
+      throw new AppError(uploadRes.message || "Gagal upload gambar banner", 400, "VALIDATION_ERROR");
     }
 
     uploadedImageKey = uploadRes.fileName as string;
