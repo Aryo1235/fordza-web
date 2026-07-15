@@ -59,14 +59,16 @@ export async function PUT(
       uploadFormData.append("file", image);
       const uploadRes = await uploadFileToS3(uploadFormData, "categories");
 
-      if (uploadRes.success) {
-        // Hapus gambar lama
-        if (existing.imageKey) {
-          await deleteFileFromS3(existing.imageKey);
-        }
-        updateData.imageUrl = uploadRes.url;
-        updateData.imageKey = uploadRes.fileName;
+      if (!uploadRes.success) {
+        throw new AppError(uploadRes.message || "Gagal upload gambar kategori", 400, "VALIDATION_ERROR");
       }
+
+      // Hapus gambar lama
+      if (existing.imageKey) {
+        await deleteFileFromS3(existing.imageKey);
+      }
+      updateData.imageUrl = uploadRes.url;
+      updateData.imageKey = uploadRes.fileName;
     }
 
     const headerList = await headers();

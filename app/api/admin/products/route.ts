@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"; // trigger recompilation
 import { productSchema } from "@/features/products/schemas";
 import { ProductService } from "@/backend/services/products.service";
 import { uploadFileToS3, deleteFileFromS3 } from "@/actions/upload";
-import { handleError } from "@/lib/error-handler";
+import { handleError, AppError } from "@/lib/error-handler";
 import { logger } from "@/lib/logger";
 import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
@@ -168,11 +168,12 @@ export async function POST(req: Request) {
           uploadFormData.append("file", file);
           // Upload ke folder ID produk
           const res = await uploadFileToS3(uploadFormData, `products/${productId}`);
-          if (res.success) {
-            const key = res.fileName as string;
-            uploadedImages.push({ url: res.url as string, key });
-            allUploadedKeys.push(key);
+          if (!res.success) {
+            throw new AppError(res.message || "Gagal upload gambar produk", 400, "VALIDATION_ERROR");
           }
+          const key = res.fileName as string;
+          uploadedImages.push({ url: res.url as string, key });
+          allUploadedKeys.push(key);
         }
       }
     }
@@ -191,11 +192,12 @@ export async function POST(req: Request) {
             uploadFormData.append("file", file);
             // Upload ke sub-folder variants di bawah ID produk
             const res = await uploadFileToS3(uploadFormData, `products/${productId}/variants`);
-            if (res.success) {
-              const key = res.fileName as string;
-              variantImages.push({ url: res.url as string, key });
-              allUploadedKeys.push(key);
+            if (!res.success) {
+              throw new AppError(res.message || "Gagal upload gambar varian produk", 400, "VALIDATION_ERROR");
             }
+            const key = res.fileName as string;
+            variantImages.push({ url: res.url as string, key });
+            allUploadedKeys.push(key);
           }
         } 
         // Jika sudah ada gambar sebelumnya (existing)

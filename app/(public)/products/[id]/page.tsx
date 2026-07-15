@@ -333,7 +333,7 @@ export default function ProductDetailPage({
                 ))}
               </div>
 
-              <h1 className="text-2xl font-black text-[#4A3B2E] sm:text-3xl md:text-4xl tracking-tight leading-none mb-3">
+              <h1 className="text-2xl font-black text-[#4A3B2E] sm:text-2xl md:text-3xl tracking-tight leading-none mb-3">
                 {product.name}
               </h1>
               <p className="text-base md:text-lg text-[#4A3B2E]/60 font-medium">

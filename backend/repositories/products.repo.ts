@@ -172,7 +172,7 @@ export const ProductRepository = {
             },
           },
           detail: {
-            select: { material: true },
+            select: { material: true, insole: true },
           },
         },
         orderBy,

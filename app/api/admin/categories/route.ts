@@ -2,8 +2,7 @@ import { NextResponse } from "next/server";
 import { categorySchema } from "@/features/categories";
 import { CategoryService } from "@/backend/services/category.service";
 import { uploadFileToS3, deleteFileFromS3 } from "@/actions/upload";
-import { handleError } from "@/lib/error-handler";
-
+import { handleError, AppError } from "@/lib/error-handler";
 import { headers } from "next/headers";
 import { logger } from "@/lib/logger";
 
@@ -24,10 +23,7 @@ export async function GET(req: Request) {
       { status: 200 },
     );
   } catch (error: any) {
-    return NextResponse.json(
-      { success: false, message: error.message },
-      { status: 500 },
-    );
+    return await handleError(error);
   }
 }
 
@@ -54,10 +50,7 @@ export async function POST(req: Request) {
 
     const uploadRes = await uploadFileToS3(uploadFormData, "categories");
     if (!uploadRes.success) {
-      return NextResponse.json(
-        { success: false, message: "Gagal upload gambar kategori", traceId },
-        { status: 500 },
-      );
+      throw new AppError(uploadRes.message || "Gagal upload gambar kategori", 400, "VALIDATION_ERROR");
     }
 
     uploadedImageKey = uploadRes.fileName as string;

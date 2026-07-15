@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { uploadFileToS3, deleteFileFromS3 } from "@/actions/upload";
 import { prisma } from "@/lib/prisma";
+import { handleError, AppError } from "@/lib/error-handler";
 
 // POST /api/admin/products/[id]/images — Tambah 1 gambar baru ke produk
 // Body: FormData { image: File }
@@ -38,10 +39,7 @@ export async function POST(
     const res = await uploadFileToS3(uploadForm, `products/${id}`);
 
     if (!res.success) {
-      return NextResponse.json(
-        { success: false, message: res.message || "Gagal upload gambar ke S3" },
-        { status: 500 },
-      );
+      throw new AppError(res.message || "Gagal upload gambar produk", 400, "VALIDATION_ERROR");
     }
 
     uploadedKey = res.fileName as string;
@@ -63,9 +61,6 @@ export async function POST(
   } catch (error: any) {
     // Rollback: hapus dari S3 kalau gagal simpan ke DB
     if (uploadedKey) await deleteFileFromS3(uploadedKey);
-    return NextResponse.json(
-      { success: false, message: error.message },
-      { status: 500 },
-    );
+    return await handleError(error);
   }
 }

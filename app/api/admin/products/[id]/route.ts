@@ -124,9 +124,10 @@ export async function PUT(
           const uploadFormData = new FormData();
           uploadFormData.append("file", file);
           const res = await uploadFileToS3(uploadFormData, "products");
-          if (res.success) {
-            uploadedImages.push({ url: res.url as string, key: res.fileName as string });
+          if (!res.success) {
+            throw new AppError(res.message || "Gagal upload gambar produk", 400, "VALIDATION_ERROR");
           }
+          uploadedImages.push({ url: res.url as string, key: res.fileName as string });
         }
       }
       if (uploadedImages.length > 0) updateData.images = uploadedImages;
