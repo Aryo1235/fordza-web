@@ -61,6 +61,8 @@ export interface ProductVariant {
   promoDiscountPercent?: number | null; // Diskon promo murni
   promoName?: string | null;            // Nama promo aktif
   promos?: string[] | null;             // Semua nama promo aktif yang cocok
+  promoMinPurchase?: number | null;     // ✅ Minimal belanja promo
+  promoType?: "PERCENTAGE" | "NOMINAL" | null; // ✅ Tipe promo asli
   isPromoConditional?: boolean;         // Flag jika butuh minPurchase
   isActive: boolean;
   skus: ProductSku[];
@@ -78,6 +80,8 @@ export interface Product {
   totalDiscountPercent?: number | null; // Diskon tertinggi untuk lencana kartu
   promoName?: string | null;            // Nama promo aktif (lead)
   promos?: string[] | null;             // Semua nama promo aktif yang cocok (lead)
+  promoMinPurchase?: number | null;     // ✅ Minimal belanja promo (lead)
+  promoType?: "PERCENTAGE" | "NOMINAL" | null; // ✅ Tipe promo (lead)
   stock: number;
   productType: string;
   gender: string;

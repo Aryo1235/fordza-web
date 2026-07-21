@@ -31,6 +31,13 @@ export default function SizeTemplatesPage() {
   const [isMultiSize, setIsMultiSize] = useState(false);
   const [sizesStr, setSizesStr] = useState("");
   const [measurements, setMeasurements] = useState<Record<string, any>>({});
+  const [accessorySubtype, setAccessorySubtype] = useState("tas");
+
+  const tType = type.toLowerCase();
+  const isSepatu = tType === "sepatu" || tType === "shoes";
+  const isApparel = tType === "apparel" || tType === "pakaian";
+  const isAksesoris = tType === "aksesoris" || tType === "accessories" || tType === "gelang";
+  const isParfum = tType === "parfum" || tType === "perfume";
 
   const { data, isLoading } = useSizeTemplatesAdmin();
   const createMutation = useCreateSizeTemplate();
@@ -43,6 +50,7 @@ export default function SizeTemplatesPage() {
     setType("Sepatu");
     setSizesStr("");
     setMeasurements({});
+    setAccessorySubtype("tas");
     setIsMultiSize(false);
     setIsFormOpen(true);
   };
@@ -59,6 +67,7 @@ export default function SizeTemplatesPage() {
       setSizesStr(item.sizes.join(", "));
     }
     setMeasurements(item.measurements || {});
+    setAccessorySubtype(item.measurements?._subtype || "tas");
     setIsFormOpen(true);
   };
 
@@ -93,9 +102,13 @@ export default function SizeTemplatesPage() {
   };
 
   const handleSizesStrChange = (val: string) => {
-    if (type === "Sepatu") {
+    if (isSepatu) {
       // Allow only numbers, commas, spaces
       const cleanVal = val.replace(/[^0-9,\s]/g, "");
+      setSizesStr(cleanVal);
+    } else if (isParfum) {
+      // Allow letters, numbers, commas, spaces, dot, and don't force uppercase
+      const cleanVal = val.replace(/[^a-zA-Z0-9,\s.]/g, "");
       setSizesStr(cleanVal);
     } else {
       setSizesStr(val.toUpperCase());
@@ -104,8 +117,12 @@ export default function SizeTemplatesPage() {
 
   const handleTypeChange = (newType: string) => {
     setType(newType);
-    if (newType === "Sepatu") {
+    const lowerType = newType.toLowerCase();
+    if (lowerType === "sepatu" || lowerType === "shoes") {
       const cleanVal = sizesStr.replace(/[^0-9,\s]/g, "");
+      setSizesStr(cleanVal);
+    } else if (lowerType === "parfum" || lowerType === "perfume") {
+      const cleanVal = sizesStr.replace(/[^a-zA-Z0-9,\s.]/g, "");
       setSizesStr(cleanVal);
     } else {
       setSizesStr(sizesStr.toUpperCase());
@@ -127,7 +144,7 @@ export default function SizeTemplatesPage() {
       return;
     }
 
-    const needsSizesStr = type === "Sepatu" || isMultiSize;
+    const needsSizesStr = isSepatu || isParfum || isMultiSize;
     if (needsSizesStr && !sizesStr) {
       toast.error("Ukuran wajib diisi!");
       return;
@@ -143,6 +160,9 @@ export default function SizeTemplatesPage() {
     }
 
     const filteredMeasurements: Record<string, any> = {};
+    if (isAksesoris) {
+      filteredMeasurements._subtype = accessorySubtype;
+    }
     sizes.forEach(size => {
       if (measurements[size]) {
         filteredMeasurements[size] = measurements[size];
@@ -320,18 +340,36 @@ export default function SizeTemplatesPage() {
               <div className="space-y-1.5">
                 <Label>Tipe Template</Label>
                 <select
-                  value={type}
+                  value={isSepatu ? "Sepatu" : isApparel ? "Apparel" : isAksesoris ? "Aksesoris" : isParfum ? "Parfum" : type}
                   onChange={(e) => handleTypeChange(e.target.value)}
                   className="flex h-9 w-full rounded-md border border-stone-200 bg-white px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-stone-400"
                 >
                   <option value="Sepatu">Sepatu</option>
                   <option value="Apparel">Apparel (Pakaian)</option>
                   <option value="Aksesoris">Aksesoris / Gelang</option>
+                  <option value="Parfum">Parfum</option>
                   <option value="Lainnya">Lainnya</option>
                 </select>
               </div>
 
-              {type !== "Sepatu" && (
+              {isAksesoris && (
+                <div className="space-y-1.5">
+                  <Label>Sub-Tipe Aksesoris</Label>
+                  <select
+                    value={accessorySubtype}
+                    onChange={(e) => setAccessorySubtype(e.target.value)}
+                    className="flex h-9 w-full rounded-md border border-stone-200 bg-white px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-stone-400"
+                  >
+                    <option value="tas">Tas & Dompet (P x L x T)</option>
+                    <option value="gelang">Gelang (Lingkar)</option>
+                    <option value="tali">Tali Sepatu (Panjang)</option>
+                    <option value="klip">Klip & Barang Kecil (P x L)</option>
+                    <option value="lainnya">Lainnya (Bebas / Kaos Kaki)</option>
+                  </select>
+                </div>
+              )}
+
+              {!isSepatu && !isParfum && (
                 <div className="flex items-center gap-2 py-1">
                   <input
                     type="checkbox"
@@ -351,26 +389,32 @@ export default function SizeTemplatesPage() {
                 </div>
               )}
 
-              {(type === "Sepatu" || isMultiSize) && (
+              {(isSepatu || isParfum || isMultiSize) && (
                 <div className="space-y-1.5">
                   <Label>Daftar Ukuran</Label>
                   <Input 
                     value={sizesStr} 
                     onChange={(e) => handleSizesStrChange(e.target.value)} 
                     placeholder={
-                      type === "Sepatu" 
+                      isSepatu 
                         ? "Cth: 39, 40, 41, 42, 43" 
-                        : type === "Apparel" 
+                        : isApparel 
                         ? "Cth: S, M, L, XL atau 28, 30, 32"
-                        : type === "Aksesoris"
+                        : isAksesoris
                         ? "Cth: S, M, L atau 15, 16, 17"
+                        : isParfum
+                        ? "Cth: 30ml, 50ml, 100ml"
                         : "Cth: S, M, L, XL"
                     } 
                     required 
                   />
-                  {type === "Sepatu" ? (
+                  {isSepatu ? (
                     <p className="text-[11px] text-amber-600 font-semibold flex items-center gap-1">
                       ⚠️ Tipe Sepatu hanya mendukung ukuran berupa angka (huruf otomatis diblokir).
+                    </p>
+                  ) : isParfum ? (
+                    <p className="text-[11px] text-stone-500 font-semibold flex items-center gap-1">
+                      ℹ️ Masukkan ukuran botol parfum dalam satuan ml. Pisahkan dengan koma (,).
                     </p>
                   ) : (
                     <p className="text-[11px] text-stone-500 font-medium">
@@ -382,7 +426,7 @@ export default function SizeTemplatesPage() {
             </div>
 
             {(() => {
-              const needsSizesStr = type === "Sepatu" || isMultiSize;
+              const needsSizesStr = isSepatu || isParfum || isMultiSize;
               const activeSizes = needsSizesStr 
                 ? sizesStr.split(",").map(s => s.trim()).filter(Boolean)
                 : ["All Size"];
@@ -401,7 +445,7 @@ export default function SizeTemplatesPage() {
                           {size}
                         </span>
                         <div className="flex-1 grid grid-cols-2 gap-2">
-                          {type === "Sepatu" && (
+                           {isSepatu && (
                             <>
                               <div>
                                 <Label className="text-[10px] text-stone-500 uppercase">Panjang Insole (cm)</Label>
@@ -431,7 +475,7 @@ export default function SizeTemplatesPage() {
                               </div>
                             </>
                           )}
-                          {type === "Apparel" && (
+                          {isApparel && (
                             <>
                               <div>
                                 <Label className="text-[10px] text-stone-500 uppercase">Lebar Dada (cm)</Label>
@@ -461,76 +505,155 @@ export default function SizeTemplatesPage() {
                               </div>
                             </>
                           )}
-                          {type === "Aksesoris" && (
+                          {isAksesoris && (
                             <div className="col-span-2 space-y-2">
-                              <div className="grid grid-cols-3 gap-1.5">
-                                <div>
-                                  <Label className="text-[9px] text-stone-500 uppercase">P (cm)</Label>
-                                  <Input
-                                    type="text"
-                                    inputMode="decimal"
-                                    pattern="[0-9.]*"
-                                    onKeyDown={blockInvalidChar}
-                                    placeholder="Panjang"
-                                    className="h-8 text-[11px] bg-white px-1.5"
-                                    value={measurements[size]?.panjang || ""}
-                                    onChange={(e) => handleNumericChange(size, "panjang", e.target.value)}
-                                  />
+                              {accessorySubtype === "tas" && (
+                                <div className="grid grid-cols-3 gap-1.5">
+                                  <div>
+                                    <Label className="text-[9px] text-stone-500 uppercase">P (cm)</Label>
+                                    <Input
+                                      type="text"
+                                      inputMode="decimal"
+                                      pattern="[0-9.]*"
+                                      onKeyDown={blockInvalidChar}
+                                      placeholder="Panjang"
+                                      className="h-8 text-[11px] bg-white px-1.5"
+                                      value={measurements[size]?.panjang || ""}
+                                      onChange={(e) => handleNumericChange(size, "panjang", e.target.value)}
+                                    />
+                                  </div>
+                                  <div>
+                                    <Label className="text-[9px] text-stone-500 uppercase">L (cm)</Label>
+                                    <Input
+                                      type="text"
+                                      inputMode="decimal"
+                                      pattern="[0-9.]*"
+                                      onKeyDown={blockInvalidChar}
+                                      placeholder="Lebar"
+                                      className="h-8 text-[11px] bg-white px-1.5"
+                                      value={measurements[size]?.lebar || ""}
+                                      onChange={(e) => handleNumericChange(size, "lebar", e.target.value)}
+                                    />
+                                  </div>
+                                  <div>
+                                    <Label className="text-[9px] text-stone-500 uppercase">T (cm)</Label>
+                                    <Input
+                                      type="text"
+                                      inputMode="decimal"
+                                      pattern="[0-9.]*"
+                                      onKeyDown={blockInvalidChar}
+                                      placeholder="Tinggi"
+                                      className="h-8 text-[11px] bg-white px-1.5"
+                                      value={measurements[size]?.tinggi || ""}
+                                      onChange={(e) => handleNumericChange(size, "tinggi", e.target.value)}
+                                    />
+                                  </div>
                                 </div>
+                              )}
+                              {accessorySubtype === "gelang" && (
                                 <div>
-                                  <Label className="text-[9px] text-stone-500 uppercase">L (cm)</Label>
+                                  <Label className="text-[10px] text-stone-500 uppercase">Lingkar (cm)</Label>
                                   <Input
                                     type="text"
                                     inputMode="decimal"
                                     pattern="[0-9.]*"
                                     onKeyDown={blockInvalidChar}
-                                    placeholder="Lebar"
-                                    className="h-8 text-[11px] bg-white px-1.5"
-                                    value={measurements[size]?.lebar || ""}
-                                    onChange={(e) => handleNumericChange(size, "lebar", e.target.value)}
-                                  />
-                                </div>
-                                <div>
-                                  <Label className="text-[9px] text-stone-500 uppercase">T (cm)</Label>
-                                  <Input
-                                    type="text"
-                                    inputMode="decimal"
-                                    pattern="[0-9.]*"
-                                    onKeyDown={blockInvalidChar}
-                                    placeholder="Tinggi"
-                                    className="h-8 text-[11px] bg-white px-1.5"
-                                    value={measurements[size]?.tinggi || ""}
-                                    onChange={(e) => handleNumericChange(size, "tinggi", e.target.value)}
-                                  />
-                                </div>
-                              </div>
-                              <div className="grid grid-cols-2 gap-2">
-                                <div>
-                                  <Label className="text-[9px] text-stone-500 uppercase">Lingkar (cm)</Label>
-                                  <Input
-                                    type="text"
-                                    inputMode="decimal"
-                                    pattern="[0-9.]*"
-                                    onKeyDown={blockInvalidChar}
-                                    placeholder="Gelang/Cincin"
-                                    className="h-8 text-[11px] bg-white"
+                                    placeholder="Cth: 17.5"
+                                    className="h-8 text-xs bg-white"
                                     value={measurements[size]?.lingkar || ""}
                                     onChange={(e) => handleNumericChange(size, "lingkar", e.target.value)}
                                   />
                                 </div>
+                              )}
+                              {accessorySubtype === "tali" && (
                                 <div>
-                                  <Label className="text-[9px] text-stone-500 uppercase">Detail / Volume</Label>
+                                  <Label className="text-[10px] text-stone-500 uppercase">Panjang Tali (cm)</Label>
                                   <Input
-                                    placeholder="Cth: 60ml, All Size"
-                                    className="h-8 text-[11px] bg-white"
+                                    type="text"
+                                    inputMode="decimal"
+                                    pattern="[0-9.]*"
+                                    onKeyDown={blockInvalidChar}
+                                    placeholder="Cth: 120"
+                                    className="h-8 text-xs bg-white"
+                                    value={measurements[size]?.panjangTali || ""}
+                                    onChange={(e) => handleNumericChange(size, "panjangTali", e.target.value)}
+                                  />
+                                </div>
+                              )}
+                              {accessorySubtype === "klip" && (
+                                <div className="grid grid-cols-2 gap-2">
+                                  <div>
+                                    <Label className="text-[10px] text-stone-500 uppercase">Panjang (cm)</Label>
+                                    <Input
+                                      type="text"
+                                      inputMode="decimal"
+                                      pattern="[0-9.]*"
+                                      onKeyDown={blockInvalidChar}
+                                      placeholder="Panjang"
+                                      className="h-8 text-xs bg-white"
+                                      value={measurements[size]?.panjang || ""}
+                                      onChange={(e) => handleNumericChange(size, "panjang", e.target.value)}
+                                    />
+                                  </div>
+                                  <div>
+                                    <Label className="text-[10px] text-stone-500 uppercase">Lebar (cm)</Label>
+                                    <Input
+                                      type="text"
+                                      inputMode="decimal"
+                                      pattern="[0-9.]*"
+                                      onKeyDown={blockInvalidChar}
+                                      placeholder="Lebar"
+                                      className="h-8 text-xs bg-white"
+                                      value={measurements[size]?.lebar || ""}
+                                      onChange={(e) => handleNumericChange(size, "lebar", e.target.value)}
+                                    />
+                                  </div>
+                                </div>
+                              )}
+                              {accessorySubtype === "lainnya" && (
+                                <div>
+                                  <Label className="text-[10px] text-stone-500 uppercase">Keterangan Detail</Label>
+                                  <Input
+                                    placeholder="Cth: Ukuran sepatu 39-44"
+                                    className="h-8 text-xs bg-white"
                                     value={measurements[size]?.detail || ""}
                                     onChange={(e) => updateMeasurement(size, "detail", e.target.value)}
                                   />
                                 </div>
-                              </div>
+                              )}
                             </div>
                           )}
-                          {type !== "Sepatu" && type !== "Apparel" && type !== "Aksesoris" && (
+                          {isParfum && (
+                            <>
+                              <div>
+                                <Label className="text-[10px] text-stone-500 uppercase">Volume Bersih (ml)</Label>
+                                <Input
+                                  type="text"
+                                  inputMode="decimal"
+                                  pattern="[0-9.]*"
+                                  onKeyDown={blockInvalidChar}
+                                  placeholder="Cth: 50"
+                                  className="h-8 text-xs bg-white"
+                                  value={measurements[size]?.volume || ""}
+                                  onChange={(e) => handleNumericChange(size, "volume", e.target.value)}
+                                />
+                              </div>
+                              <div>
+                                <Label className="text-[10px] text-stone-500 uppercase">Berat Estimasi + Botol (gr)</Label>
+                                <Input
+                                  type="text"
+                                  inputMode="decimal"
+                                  pattern="[0-9.]*"
+                                  onKeyDown={blockInvalidChar}
+                                  placeholder="Cth: 150"
+                                  className="h-8 text-xs bg-white"
+                                  value={measurements[size]?.berat || ""}
+                                  onChange={(e) => handleNumericChange(size, "berat", e.target.value)}
+                                />
+                              </div>
+                            </>
+                          )}
+                          {!isSepatu && !isApparel && !isAksesoris && !isParfum && (
                             <div className="col-span-2">
                               <Label className="text-[10px] text-stone-500 uppercase">Keterangan Detail (CM / Custom)</Label>
                               <Input

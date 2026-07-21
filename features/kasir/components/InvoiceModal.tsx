@@ -137,7 +137,8 @@ export default function InvoiceModal({ transaction, onClose }: InvoiceModalProps
     y += lineH * 0.8;
 
     for (const item of (transaction.items || [])) {
-      const netPrice = item.basePriceAtSale - item.discountAmount;
+      const unitDiscount = item.quantity > 0 ? (item.discountAmount / item.quantity) : 0;
+      const netPrice = item.basePriceAtSale - unitDiscount;
       const gimmick = item.gimmickPriceAtSale || item.basePriceAtSale;
       const hasGimmick = gimmick > netPrice;
 
@@ -370,7 +371,8 @@ export default function InvoiceModal({ transaction, onClose }: InvoiceModalProps
 
             <div className="border-t border-dashed border-stone-300 pt-2 mb-2">
               {transaction.items?.map((item) => {
-                const netPrice = item.basePriceAtSale - item.discountAmount;
+                const unitDiscount = item.quantity > 0 ? (item.discountAmount / item.quantity) : 0;
+                const netPrice = item.basePriceAtSale - unitDiscount;
                 const gimmick = item.gimmickPriceAtSale || item.basePriceAtSale;
                 const hasGimmick = gimmick > netPrice;
 

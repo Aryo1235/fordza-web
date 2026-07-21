@@ -282,10 +282,10 @@ export default function ProductDetailAdminPage({ params }: { params: Promise<{ i
                         </div>
                     </div>
                     <div className="text-right">
-                        <p className="text-lg font-black text-[#3C3025]">{formatRupiah(variant.finalPrice || variant.basePrice)}</p>
+                        <p className="text-lg font-black text-[#3C3025]">{formatRupiah(variant.basePrice)}</p>
                         {variant.finalPrice < variant.basePrice && (
-                            <p className="text-xs text-stone-400 line-through font-medium opacity-70">
-                              Asli: {formatRupiah(variant.basePrice)}
+                            <p className="text-[10px] text-emerald-700 font-bold bg-emerald-50 border border-emerald-100 px-1.5 py-0.5 rounded mt-1 inline-block">
+                              Promo: {formatRupiah(variant.finalPrice)}
                             </p>
                         )}
                     </div>

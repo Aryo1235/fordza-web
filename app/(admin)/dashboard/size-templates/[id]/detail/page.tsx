@@ -147,7 +147,56 @@ export default function SizeTemplateDetailPage({ params }: { params: Promise<{ i
         </span>
       );
     }
-    if (tType === "aksesoris" || tType === "gelang") {
+    if (tType === "parfum") {
+      return (
+        <span className="text-[9.5px] text-stone-600 block font-semibold mt-0.5 leading-tight">
+          Vol: {meas.volume || "-"} ml<br />
+          Berat: {meas.berat || "-"} gr
+        </span>
+      );
+    }
+    if (tType === "aksesoris" || tType === "gelang" || tType === "accessories") {
+      const subtype = template.measurements?._subtype || "";
+      if (subtype === "tas") {
+        return (
+          <span className="text-[9.5px] text-stone-600 block font-semibold mt-0.5 leading-tight">
+            P: {meas.panjang || "-"} cm<br />
+            L: {meas.lebar || "-"} cm<br />
+            T: {meas.tinggi || "-"} cm
+          </span>
+        );
+      }
+      if (subtype === "gelang") {
+        return (
+          <span className="text-[9.5px] text-stone-600 block font-semibold mt-0.5">
+            Lingkar: {meas.lingkar || "-"} cm
+          </span>
+        );
+      }
+      if (subtype === "tali") {
+        return (
+          <span className="text-[9.5px] text-stone-600 block font-semibold mt-0.5">
+            P. Tali: {meas.panjangTali || "-"} cm
+          </span>
+        );
+      }
+      if (subtype === "klip") {
+        return (
+          <span className="text-[9.5px] text-stone-600 block font-semibold mt-0.5 leading-tight">
+            P: {meas.panjang || "-"} cm<br />
+            L: {meas.lebar || "-"} cm
+          </span>
+        );
+      }
+      if (subtype === "lainnya") {
+        return (
+          <span className="text-[9.5px] text-stone-600 block font-semibold mt-0.5 max-w-[80px] truncate" title={meas.detail}>
+            {meas.detail || "-"}
+          </span>
+        );
+      }
+
+      // Legacy fallback
       if (meas.panjang || meas.lebar || meas.tinggi) {
         return (
           <span className="text-[9.5px] text-stone-600 block font-semibold mt-0.5 leading-tight">

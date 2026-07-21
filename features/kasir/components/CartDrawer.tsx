@@ -46,41 +46,31 @@ export default function CartDrawer({
   paymentMethod = "CASH",
   onPaymentMethodChange,
 }: CartDrawerProps) {
-  // ✅ FIX: Hitung subtotal dulu untuk cek minPurchase dengan konversi tipe yang aman
+  // Subtotal kotor (tanpa diskon) — basis untuk cek minPurchase
   const subtotal = items.reduce((sum, item) => sum + Number(item.price ?? 0) * item.quantity, 0);
 
+  // Total diskon dihitung langsung dari lineDiscount dari items (processedCart)
+  const totalDiscount = items.reduce((sum, item) => sum + Number((item as any).lineDiscount ?? 0), 0);
 
-
-
-  // ✅ Hitung diskon item langsung (non-conditional fixed + percentage)
+  // Pisahkan diskon produk (non-conditional) dan diskon promo (conditional/global nominal) untuk breakdown
   const itemDiscountTotal = items.reduce((sum, item) => {
-    const discountAmt = Number(item.discountAmount ?? 0);
     const minP = Number(item.promoMinPurchase ?? 0);
-    const isPercentage = Number(item.promoDiscountPercent ?? 0) > 0;
-    const isConditionalFixed = minP > 0 && !isPercentage;
-
-    if (discountAmt > 0 && !isConditionalFixed) {
-      return sum + discountAmt * item.quantity;
-    }
-    return sum;
+    const isGlobalNominal = item.promoTargetType === "GLOBAL" && Number(item.promoDiscountPercent ?? 0) === 0;
+    if (minP > 0 || isGlobalNominal) return sum;
+    return sum + Number((item as any).lineDiscount ?? 0);
   }, 0);
 
-  // ✅ Hitung diskon promo bersyarat (conditional fixed)
   const promoDiscountTotal = items.reduce((sum, item) => {
-    const discountAmt = Number(item.discountAmount ?? 0);
     const minP = Number(item.promoMinPurchase ?? 0);
-    const isPercentage = Number(item.promoDiscountPercent ?? 0) > 0;
-    const isConditionalFixed = minP > 0 && !isPercentage;
-    const meetsRequirement = minP > 0 ? subtotal >= minP : true;
-
-    if (discountAmt > 0 && isConditionalFixed && meetsRequirement) {
-      return sum + discountAmt;
+    const isGlobalNominal = item.promoTargetType === "GLOBAL" && Number(item.promoDiscountPercent ?? 0) === 0;
+    if (minP > 0 || isGlobalNominal) {
+      return sum + Number((item as any).lineDiscount ?? 0);
     }
     return sum;
   }, 0);
 
-  // ✅ FIX: Hitung total dengan validasi minPurchase
-  const total = subtotal - itemDiscountTotal - promoDiscountTotal;
+  // Total akhir setelah semua diskon
+  const total = subtotal - totalDiscount;
 
   const change = amountPaid - total;
   const remainingPayment = Math.max(total - amountPaid, 0);

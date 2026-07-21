@@ -222,21 +222,19 @@ export const ProductRepository = {
           let isConditional = false;
 
           if (bestPromo) {
+            const minP = Number(bestPromo.minPurchase || 0);
+            const isGlobal = bestPromo.targetType === "GLOBAL";
+            
+            // Tandai bersyarat jika ada minimal belanja atau bertipe global
+            isConditional = minP > 0 || isGlobal;
 
-            if (Number(bestPromo.minPurchase || 0) > 0) {
-              // ✅ FIX: Promo conditional, jangan apply discount di product list
-              isConditional = true;
-              // additionalDiscount tetap 0, akan di-apply saat checkout
+            if (bestPromo.type === "PERCENTAGE") {
+              additionalDiscount = (basePrice * Number(bestPromo.value)) / 100;
             } else {
-              // Promo non-conditional, langsung apply
-              if (bestPromo.type === "PERCENTAGE")
-                additionalDiscount =
-                  (basePrice * Number(bestPromo.value)) / 100;
-              else additionalDiscount = Number(bestPromo.value);
+              additionalDiscount = Number(bestPromo.value);
             }
           }
 
-          // ✅ FIX: finalPrice hanya apply discount jika non-conditional
           const finalPrice = isConditional
             ? basePrice
             : basePrice - Math.min(additionalDiscount, basePrice);
@@ -253,7 +251,7 @@ export const ProductRepository = {
                 : basePrice;
               let skuDiscount = 0;
 
-              // ✅ FIX: Hanya hitung discount jika promo non-conditional
+              //  FIX: Hanya hitung discount jika promo non-conditional
               if (!isConditional && bestPromo) {
                 if (bestPromo.type === "PERCENTAGE") {
                   skuDiscount = (skuBasePrice * Number(bestPromo.value)) / 100;
@@ -284,9 +282,10 @@ export const ProductRepository = {
             finalPrice: minFinalPrice,
             totalDiscountPercent,
             promoName: bestPromo?.name || null,
-            promoMinPurchase: bestPromo?.minPurchase
+             promoMinPurchase: bestPromo?.minPurchase
               ? Number(bestPromo.minPurchase)
               : null, // ✅ FIX: Return null instead of 0
+            promoType: bestPromo?.type || null, // ✅ Simpan promoType asli
             isPromoConditional: isConditional,
             skus: v.skus.map((sku: any) => ({
               ...sku,
@@ -303,7 +302,7 @@ export const ProductRepository = {
 
         return {
           ...p,
-          price: p.price ? Number(p.price) : null,
+          price: cheapestVariant ? cheapestVariant.basePrice : (p.price ? Number(p.price) : null),
           variants,
           finalPrice: cheapestVariant
             ? cheapestVariant.finalPrice
@@ -315,6 +314,8 @@ export const ProductRepository = {
             ? cheapestVariant.totalDiscountPercent
             : 0,
           promoName: cheapestVariant?.promoName || null,
+          promoMinPurchase: cheapestVariant?.promoMinPurchase || null, // ✅ Simpan minPurchase lead
+          promoType: cheapestVariant?.promoType || null, // ✅ Simpan promoType lead
         };
       }),
       meta: {
@@ -593,32 +594,37 @@ export const ProductRepository = {
 
       let additionalDiscount = 0;
       let isConditional = false;
-      let promoDiscountPercent = 0; // Simpan persentase diskon promo murni
+      let promoDiscountPercent = 0;
 
       if (bestPromo) {
-        if (Number(bestPromo.minPurchase || 0) > 0) {
-          isConditional = true;
+        const minP = Number(bestPromo.minPurchase || 0);
+        const isGlobal = bestPromo.targetType === "GLOBAL";
+        
+        isConditional = minP > 0 || isGlobal;
+
+        if (bestPromo.type === "PERCENTAGE") {
+          promoDiscountPercent = Number(bestPromo.value);
+          additionalDiscount = (basePrice * promoDiscountPercent) / 100;
         } else {
-          if (bestPromo.type === "PERCENTAGE") {
-            promoDiscountPercent = Number(bestPromo.value);
-            additionalDiscount = (basePrice * promoDiscountPercent) / 100;
-          } else {
-            additionalDiscount = Number(bestPromo.value);
-            // Hitung ekuivalen persentase untuk promo nominal (opsional tapi berguna)
-            promoDiscountPercent = (additionalDiscount / basePrice) * 100;
-          }
+          additionalDiscount = Number(bestPromo.value);
+          promoDiscountPercent = (additionalDiscount / basePrice) * 100;
         }
       }
 
-      const finalPrice = basePrice - Math.min(additionalDiscount, basePrice);
+      // finalPrice hanya dipotong jika tidak bersyarat (direct promo)
+      const finalPrice = isConditional
+        ? basePrice
+        : basePrice - Math.min(additionalDiscount, basePrice);
 
       // --- LOGIKA BARU: Terapkan promo ke setiap SKU (Bigsize) ---
       const skus = v.skus.map((sku: any) => {
         const skuBasePrice = sku.priceOverride
           ? Number(sku.priceOverride)
           : basePrice;
-        // Jika ada promo, potong harga SKU (Bigsize) dengan persentase promo varian
-        const skuFinalPrice = skuBasePrice * (1 - promoDiscountPercent / 100);
+        
+        // Hanya potong harga SKU jika promo non-conditional (direct promo)
+        const effectivePercent = isConditional ? 0 : promoDiscountPercent;
+        const skuFinalPrice = skuBasePrice * (1 - effectivePercent / 100);
         return {
           ...sku,
           priceOverride: sku.priceOverride ? Number(sku.priceOverride) : null,
@@ -644,7 +650,8 @@ export const ProductRepository = {
         promoName: bestPromo?.name || null,
         promoMinPurchase: bestPromo?.minPurchase
           ? Number(bestPromo.minPurchase)
-          : 0,
+          : null, // ✅ FIX: null instead of 0
+        promoType: bestPromo?.type || null, // ✅ Kirim promoType
         isPromoConditional: isConditional,
         skus,
       };
@@ -666,6 +673,8 @@ export const ProductRepository = {
         ? cheapestVariant.totalDiscountPercent
         : 0,
       promoName: cheapestVariant?.promoName || null,
+      promoMinPurchase: cheapestVariant?.promoMinPurchase || null, // ✅ Simpan minPurchase lead
+      promoType: cheapestVariant?.promoType || null, // ✅ Simpan promoType lead
     };
   },
 
@@ -816,7 +825,10 @@ export const ProductRepository = {
           let promoDiscountPercent = 0;
 
           if (bestPromo) {
-            if (Number(bestPromo.minPurchase || 0) > 0) {
+            const minP = Number(bestPromo.minPurchase || 0);
+            const isGlobal = bestPromo.targetType === "GLOBAL";
+            
+            if (minP > 0 || isGlobal) {
               isConditional = true;
             } else {
               if (bestPromo.type === "PERCENTAGE") {
@@ -837,8 +849,9 @@ export const ProductRepository = {
             const skuBasePrice = sku.priceOverride
               ? Number(sku.priceOverride)
               : basePrice;
+            const effectivePercent = isConditional ? 0 : promoDiscountPercent;
             const skuFinalPrice =
-              skuBasePrice * (1 - promoDiscountPercent / 100);
+              skuBasePrice * (1 - effectivePercent / 100);
             return {
               ...sku,
               finalPrice: Math.round(skuFinalPrice),
@@ -890,7 +903,7 @@ export const ProductRepository = {
           detail: p.detail,
           stock: p.stock,
           isActive: p.isActive,
-          price: p.price ? Number(p.price) : null,
+          price: cheapestVariant ? cheapestVariant.basePrice : (p.price ? Number(p.price) : null),
           variantCount: variants.length,
           finalPrice: cheapestVariant
             ? cheapestVariant.finalPrice
@@ -1291,9 +1304,9 @@ export const ProductRepository = {
 
       if (!bestPromo) return { amount: 0, percent: 0, name: null, minPurchase: null, isConditional: false };
 
-      // Cek apakah promo conditional (minPurchase > 0)
       const minPurchase = Number(bestPromo.minPurchase || 0);
-      const isConditional = minPurchase > 0;
+      const isGlobal = bestPromo.targetType === "GLOBAL";
+      const isConditional = minPurchase > 0 || isGlobal;
 
       let amount = 0;
       let percent = 0;
@@ -1311,6 +1324,8 @@ export const ProductRepository = {
         name: bestPromo.name,
         minPurchase: minPurchase > 0 ? minPurchase : null,
         isConditional,
+        targetType: bestPromo.targetType, // ✅ Sertakan tipe target promo
+        type: bestPromo.type, // ✅ Sertakan promo type asli dari DB
       };
     };
 
@@ -1393,7 +1408,7 @@ export const ProductRepository = {
           hasVariants,
           variants: p.variants.map((v: any) => {
             const basePrice = Number(v.basePrice);
-            const { amount, percent, name, minPurchase, isConditional } = calculatePromo(
+            const { amount, percent, name, minPurchase, isConditional, targetType, type } = calculatePromo(
               p,
               v.id,
               basePrice,
@@ -1425,10 +1440,13 @@ export const ProductRepository = {
               comparisonPrice: v.comparisonPrice
                 ? Number(v.comparisonPrice)
                 : null,
-              additionalDiscount: amount, // Selalu berisi nilai diskon potensial!
+              additionalDiscount: amount,
               promoName: name,
-              promoMinPurchase: minPurchase, // ✅ Tambah minPurchase
-              promoDiscountPercent: percent, // Tambahkan persentase untuk frontend
+              promoMinPurchase: minPurchase,
+              promoDiscountPercent: percent,
+              promoTargetType: targetType, // ✅ Kirim target type (GLOBAL/PRODUCT/VARIANT/CATEGORY)
+              promoType: type, // ✅ Kirim promo type asli dari DB (PERCENTAGE/NOMINAL)
+              isPromoConditional: isConditional,
               finalPrice,
               discountPercent: v.discountPercent,
               images: v.images,

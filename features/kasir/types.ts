@@ -22,8 +22,11 @@ export interface ProductVariantForKasir {
   additionalDiscount?: number;
   promoName?: string | null;
   promos?: string[] | null;
-  promoMinPurchase?: number | null; // ✅ Min purchase untuk promo conditional
+  promoMinPurchase?: number | null; // ✅ Min purchase promo
   promoDiscountPercent?: number | null; // ✅ Persentase diskon promo
+  isPromoConditional?: boolean; // ✅ TRUE = GLOBAL NOMINAL atau punya minPurchase, jangan hitung per-item
+  promoTargetType?: string; // ✅ Target type promo
+  promoType?: "PERCENTAGE" | "NOMINAL"; // ✅ Tipe promo asli dari DB
   finalPrice?: number;
 }
 
@@ -58,6 +61,9 @@ export interface CartItem {
   promos?: string[] | null; // Semua nama promo aktif yang cocok
   promoMinPurchase: number | null; // ✅ Min purchase untuk promo conditional
   promoDiscountPercent?: number | null; // ✅ Persentase diskon promo
+  isPromoConditional?: boolean; // ✅ TRUE jika promo bersyarat/global nominal
+  promoTargetType?: string | null; // ✅ Target type promo (GLOBAL/PRODUCT/VARIANT/CATEGORY)
+  promoType?: "PERCENTAGE" | "NOMINAL" | null; // ✅ Tipe promo asli dari DB
   gimmickPriceAtSale: number | null; // Harga gimmick (coretan) saat transaksi
 
   // Referensi varian & SKU
