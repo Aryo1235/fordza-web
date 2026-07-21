@@ -75,51 +75,26 @@ export const TransactionService = {
     ]);
 
     //  KEPUTUSAN BISNIS #2: Validasi stok & hitung total
-    // STEP 1: Hitung subtotal dulu (tanpa discount) untuk cek minPurchase
+    // ─────────────────────────────────────────────────────────────────────
+    // STEP 1: Validasi produk & hitung subtotal kotor (tanpa diskon apapun)
+    //         Digunakan sebagai basis untuk cek minPurchase promo.
+    // ─────────────────────────────────────────────────────────────────────
     let subtotalBeforeDiscount = 0;
+    const itemMeta: {
+      item: typeof items[0];
+      dbProduct: (typeof dbProducts)[0];
+      dbSku: (typeof dbSkus)[0] | null;
+      price: number;
+      actualStock: number;
+      variantId: string | null;
+      variantColor: string | null;
+      skuId: string | null;
+      skuSize: string | null;
+    }[] = [];
 
     for (const item of items) {
       const dbProduct = dbProducts.find((p) => p.id === item.productId);
       if (!dbProduct) throw new AppError(`Produk tidak ditemukan: ${item.productId}`, 404, "NOT_FOUND");
-
-      let price: number;
-      if (item.skuId) {
-        const dbSku = dbSkus.find((s) => s.id === item.skuId);
-        if (!dbSku) throw new AppError(`SKU tidak ditemukan: ${item.skuId}`, 404, "NOT_FOUND");
-        price = Number(dbSku.priceOverride ?? dbSku.variant.basePrice);
-      } else {
-        price = Number(dbProduct.price ?? 0);
-      }
-
-      subtotalBeforeDiscount += price * item.quantity;
-    }
-
-    // STEP 2: Get active promos untuk re-calculate discount
-    const { PromoRepository } = await import("@/backend/repositories/promo.repo");
-    const activePromos = await PromoRepository.getActive();
-
-    // STEP 3: Validasi stok & hitung total dengan discount yang di-calculate ulang
-    let totalPrice = 0;
-    const validatedItems: {
-      productId: string;
-      productCode: string;
-      quantity: number;
-      basePriceAtSale: number;
-      productName: string;
-      discountAmount: number;
-      variantId?: string | null;
-      variantColor?: string | null;
-      skuId?: string | null;
-      skuSize?: string | null;
-      promoName?: string | null;
-      gimmickPriceAtSale?: number | null;
-    }[] = [];
-
-    let totalDiscount = 0;
-    for (const item of items) {
-      const dbProduct = dbProducts.find((p) => p.id === item.productId);
-      if (!dbProduct)
-        throw new AppError(`Produk tidak ditemukan: ${item.productId}`, 404, "NOT_FOUND");
 
       if (item.quantity <= 0)
         throw new AppError(`Jumlah produk untuk ${dbProduct.name} tidak valid`, 400, "BAD_REQUEST");
@@ -130,12 +105,11 @@ export const TransactionService = {
       let variantColor: string | null = null;
       let skuId: string | null = null;
       let skuSize: string | null = null;
+      let dbSku: (typeof dbSkus)[0] | null = null;
 
       if (item.skuId) {
-        // Produk DENGAN varian + SKU
-        const dbSku = dbSkus.find((s) => s.id === item.skuId);
+        dbSku = dbSkus.find((s) => s.id === item.skuId) || null;
         if (!dbSku) throw new AppError(`SKU tidak ditemukan: ${item.skuId}`, 404, "NOT_FOUND");
-
         actualStock = dbSku.stock;
         price = Number(dbSku.priceOverride ?? dbSku.variant.basePrice);
         variantId = dbSku.variantId;
@@ -143,12 +117,11 @@ export const TransactionService = {
         skuId = dbSku.id;
         skuSize = dbSku.size;
       } else {
-        // Produk TANPA varian: gunakan product.stock langsung
         actualStock = dbProduct.stock;
         price = Number(dbProduct.price ?? 0);
       }
 
-      //  Validasi stok
+      // Validasi stok
       if (actualStock < item.quantity) {
         const label = skuSize
           ? `${dbProduct.name} (${variantColor} / Size ${skuSize})`
@@ -156,79 +129,205 @@ export const TransactionService = {
         throw new AppError(`Stok ${label} tidak cukup (tersisa ${actualStock})`, 400, "BAD_REQUEST");
       }
 
+      subtotalBeforeDiscount += price * item.quantity;
+      itemMeta.push({ item, dbProduct, dbSku, price, actualStock, variantId, variantColor, skuId, skuSize });
+    }
+
+    // STEP 2: Ambil semua promo aktif
+    const { PromoRepository } = await import("@/backend/repositories/promo.repo");
+    const activePromos = await PromoRepository.getActive();
+
+    // ─────────────────────────────────────────────────────────────────────
+    // STEP 3: Identifikasi & Hitung diskon ITEM-LEVEL (VARIANT → PRODUCT → CATEGORY)
+    // ─────────────────────────────────────────────────────────────────────
+    const itemsWithPromo = itemMeta.map(({ item, dbProduct, dbSku, price, variantId, variantColor, skuId, skuSize }) => {
       const itemSubtotal = price * item.quantity;
+      let bestPromo: any = null;
 
-      //  FIX: IGNORE discountAmount dari frontend, hitung ulang berdasarkan promo
-      let discount = 0;
-      let promoName: string | null = null;
-
-      // Cari promo terbaik (hierarchy: VARIANT → PRODUCT → CATEGORY → GLOBAL)
-      let bestPromo: any = activePromos.find(
-        (promo) => promo.targetType === "VARIANT" && item.variantId && promo.targetIds.includes(item.variantId)
+      // Hierarki seleksi promo level item (VARIANT → PRODUCT → CATEGORY)
+      bestPromo = activePromos.find(
+        (p) => p.targetType === "VARIANT" && item.variantId && p.targetIds.includes(item.variantId)
       );
       if (!bestPromo) {
         bestPromo = activePromos.find(
-          (promo) => promo.targetType === "PRODUCT" && promo.targetIds.includes(item.productId)
+          (p) => p.targetType === "PRODUCT" && p.targetIds.includes(item.productId)
         );
       }
       if (!bestPromo) {
-        // Gunakan data categories dari dbProduct yang sudah di-fetch di awal (tidak ada query DB tambahan)
         const categoryIds = dbProduct.categories?.map((c: any) => c.categoryId) || [];
-
         bestPromo = activePromos.find(
-          (promo) => promo.targetType === "CATEGORY" && promo.targetIds.some(id => categoryIds.includes(id))
+          (p) => p.targetType === "CATEGORY" && p.targetIds.some((id: string) => categoryIds.includes(id))
         );
       }
-      if (!bestPromo) {
-        bestPromo = activePromos.find((promo) => promo.targetType === "GLOBAL");
-      }
 
-      // Hitung discount jika ada promo
-      if (bestPromo) {
-        const minPurchase = Number(bestPromo.minPurchase || 0);
+      const isGlobalEligible = !bestPromo;
 
-        // Cek apakah memenuhi minPurchase
-        if (minPurchase === 0 || subtotalBeforeDiscount >= minPurchase) {
-          // Apply promo
-          if (bestPromo.type === "PERCENTAGE") {
-            discount = (price * Number(bestPromo.value)) / 100 * item.quantity;
+      return {
+        item, dbProduct, dbSku, price, variantId, variantColor, skuId, skuSize,
+        itemSubtotal,
+        bestPromo,
+        isGlobalEligible,
+        discount: 0, // Akan dihitung di bawah
+        promoName: bestPromo?.name || null,
+        productCode: dbSku ? dbSku.variant.variantCode : dbProduct.productCode || "-",
+        productName: dbProduct.name,
+      };
+    });
+
+    // 3.1. Hitung promo non-conditional (langsung) & percentage
+    itemsWithPromo.forEach((entry) => {
+      const { bestPromo, price, item, itemSubtotal } = entry;
+      if (!bestPromo) return;
+
+      const minP = Number(bestPromo.minPurchase || 0);
+      const isPercentage = bestPromo.type === "PERCENTAGE";
+      const isConditionalFixed = minP > 0 && !isPercentage;
+
+      // Hitung langsung jika BUKAN conditional fixed (karena conditional fixed diproses kelompok di bawah)
+      if (!isConditionalFixed) {
+        const meetsMinP = minP === 0 || subtotalBeforeDiscount >= minP;
+        if (meetsMinP) {
+          if (isPercentage) {
+            entry.discount = (price * Number(bestPromo.value) / 100) * item.quantity;
           } else {
-            // FIXED promo
-            if (minPurchase > 0) {
-              // Conditional FIXED promo: flat discount, do NOT multiply by quantity!
-              discount = Number(bestPromo.value);
-            } else {
-              // Non-conditional FIXED promo: per-item discount, multiply by quantity!
-              discount = Number(bestPromo.value) * item.quantity;
-            }
+            // Nominal reguler tanpa syarat minPurchase: dikali kuantitas (per unit)
+            entry.discount = Number(bestPromo.value) * item.quantity;
           }
-          promoName = bestPromo.name;
+          entry.discount = Math.min(entry.discount, itemSubtotal);
         }
       }
+    });
 
-      // Validasi discount tidak boleh lebih besar dari subtotal
-      discount = Math.min(discount, itemSubtotal);
+    // 3.2. Hitung promo conditional nominal (ada minPurchase) secara berkelompok (per Promo ID)
+    // Cari semua promo conditional nominal unik yang aktif pada item di keranjang
+    const uniqueConditionalNominalPromoIds = Array.from(
+      new Set(
+        itemsWithPromo
+          .filter(e => e.bestPromo && Number(e.bestPromo.minPurchase || 0) > 0 && e.bestPromo.type === "NOMINAL")
+          .map(e => e.bestPromo.id)
+      )
+    );
 
-      totalPrice += itemSubtotal - discount;
-      totalDiscount += discount;
+    uniqueConditionalNominalPromoIds.forEach((promoId) => {
+      // Ambil semua item yang menggunakan promo bersyarat nominal ini
+      const matchingEntries = itemsWithPromo.filter(e => e.bestPromo && e.bestPromo.id === promoId);
+      const firstPromo = matchingEntries[0].bestPromo;
+      const minP = Number(firstPromo.minPurchase || 0);
 
-      validatedItems.push({
-        productId: item.productId,
-        productCode: item.skuId
-          ? dbSkus.find(s => s.id === item.skuId)?.variant.variantCode || dbProduct.productCode || "-"
-          : dbProduct.productCode || "-",
-        quantity: item.quantity,
-        basePriceAtSale: price,
-        productName: dbProduct.name,
-        discountAmount: discount,
-        variantId,
-        variantColor,
-        skuId,
-        skuSize,
-        promoName,
-        gimmickPriceAtSale: item.gimmickPriceAtSale,
-      });
+      // Cek apakah total belanja memenuhi syarat minimal belanja promo
+      if (subtotalBeforeDiscount >= minP) {
+        const totalDiscountValue = Number(firstPromo.value); // Nilai potongan flat tunggal
+        const totalMatchingSubtotal = matchingEntries.reduce((sum, e) => sum + e.itemSubtotal, 0);
+
+        if (matchingEntries.length > 0 && totalMatchingSubtotal > 0) {
+          // Batasi diskon agar tidak melebihi subtotal item-item tersebut
+          const finalDiscount = Math.min(totalDiscountValue, totalMatchingSubtotal);
+          let currentDistributed = 0;
+
+          matchingEntries.forEach((entry, idx) => {
+            const isLast = idx === matchingEntries.length - 1;
+            let portion = 0;
+
+            if (isLast) {
+              portion = finalDiscount - currentDistributed;
+            } else {
+              portion = Math.round((entry.itemSubtotal / totalMatchingSubtotal) * finalDiscount);
+            }
+
+            portion = Math.min(portion, entry.itemSubtotal);
+            entry.discount = portion;
+            currentDistributed += portion;
+          });
+        }
+      }
+    });
+
+    // Hitung total discount & siapkan netSubtotal
+    let totalDiscount = 0;
+    const finalItemsData = itemsWithPromo.map((entry) => {
+      const netSubtotal = entry.itemSubtotal - entry.discount;
+      totalDiscount += entry.discount;
+      return {
+        ...entry,
+        netSubtotal,
+      };
+    });
+
+    // ─────────────────────────────────────────────────────────────────────
+    // STEP 4: Hitung & Distribusikan Diskon GLOBAL
+    //         Dihitung SEKALI di luar loop berdasarkan subtotal bersih,
+    //         lalu diprorata proporsional ke item-item yang "global-eligible".
+    // ─────────────────────────────────────────────────────────────────────
+    const globalPromo = activePromos.find((p) => p.targetType === "GLOBAL");
+    if (globalPromo) {
+      const globalMinPurchase = Number(globalPromo.minPurchase || 0);
+      // Gunakan subtotal KOTOR sebagai acuan minPurchase global
+      const meetsGlobal = globalMinPurchase === 0 || subtotalBeforeDiscount >= globalMinPurchase;
+
+      if (meetsGlobal) {
+        // Distribusikan hanya ke item yang tidak punya promo spesifik (global-eligible)
+        const eligibleItems = finalItemsData.filter((i) => i.isGlobalEligible && i.itemSubtotal > 0);
+        const totalEligibleSubtotal = eligibleItems.reduce((s, i) => s + i.itemSubtotal, 0);
+
+        if (eligibleItems.length > 0 && totalEligibleSubtotal > 0) {
+          // Hitung total diskon global SATU KALI untuk seluruh transaksi berdasarkan subtotal eligible
+          let totalGlobalDiscount: number;
+          if (globalPromo.type === "PERCENTAGE") {
+            totalGlobalDiscount = Math.round(totalEligibleSubtotal * Number(globalPromo.value) / 100);
+          } else {
+            // NOMINAL FLAT: dipotong SEKALI, tidak dikali apapun
+            totalGlobalDiscount = Number(globalPromo.value);
+          }
+
+          // Pastikan total global discount tidak melebihi subtotal item eligible
+          totalGlobalDiscount = Math.min(totalGlobalDiscount, totalEligibleSubtotal);
+
+          let distributed = 0;
+          eligibleItems.forEach((eligItem, idx) => {
+            const isLast = idx === eligibleItems.length - 1;
+            let portion: number;
+            if (isLast) {
+              // Item terakhir menyerap sisa selisih pembulatan agar total tepat
+              portion = totalGlobalDiscount - distributed;
+            } else {
+              portion = Math.round((eligItem.itemSubtotal / totalEligibleSubtotal) * totalGlobalDiscount);
+            }
+            portion = Math.min(portion, eligItem.netSubtotal);
+
+            // Update data item dengan porsi diskon global
+            eligItem.discount += portion;
+            eligItem.netSubtotal -= portion;
+            eligItem.promoName = eligItem.promoName || globalPromo.name;
+            distributed += portion;
+          });
+
+          totalDiscount += distributed;
+        }
+      }
     }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // STEP 5: Susun validated items & hitung total final
+    // ─────────────────────────────────────────────────────────────────────
+    const validatedItems = finalItemsData.map((d) => ({
+      productId: d.item.productId,
+      productCode: d.productCode,
+      quantity: d.item.quantity,
+      basePriceAtSale: d.price,
+      productName: d.productName,
+      discountAmount: Math.min(Math.round(d.discount), d.itemSubtotal),
+      variantId: d.variantId,
+      variantColor: d.variantColor,
+      skuId: d.skuId,
+      skuSize: d.skuSize,
+      promoName: d.promoName,
+      gimmickPriceAtSale: d.item.gimmickPriceAtSale,
+    }));
+
+    const totalPrice = validatedItems.reduce(
+      (acc, curr) => acc + (curr.basePriceAtSale * curr.quantity - curr.discountAmount),
+      0
+    );
 
     if (totalDiscount > DISCOUNT_AUTH_THRESHOLD) {
       if (!adminPin) {

@@ -36,7 +36,14 @@ export function ErrorFallback({ error, resetErrorBoundary }: ErrorFallbackProps)
           </div>
         )}
         <div className="flex gap-2 justify-center">
-          <Button onClick={resetErrorBoundary} variant="default">
+          <Button 
+            onClick={() => {
+              resetErrorBoundary();
+              // Melakukan reload halaman agar browser mendownload ulang file JS yang terputus
+              window.location.reload();
+            }} 
+            variant="default"
+          >
             Coba Lagi
           </Button>
           <Button onClick={() => window.location.href = "/"} variant="outline">

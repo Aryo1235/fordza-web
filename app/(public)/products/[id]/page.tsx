@@ -52,7 +52,7 @@ export default function ProductDetailPage({
     const meas = measSource;
 
     const tType = (sizeTemplate?.type || "").toLowerCase();
-    if (tType === "sepatu") {
+    if (tType === "sepatu" || tType === "shoes") {
       const length = meas.insoleLength || meas.insole || "";
       const width = meas.insoleWidth || "";
       if (length && width) return `${length}x${width} cm`;
@@ -67,7 +67,35 @@ export default function ProductDetailPage({
       if (pb) return `PB:${pb}`;
       return null;
     }
-    if (tType === "aksesoris" || tType === "gelang") {
+    if (tType === "parfum" || tType === "perfume") {
+      const vol = meas.volume || "";
+      if (vol) return `Vol: ${vol} ml`;
+      return null;
+    }
+    if (tType === "aksesoris" || tType === "gelang" || tType === "accessories") {
+      const subtype = sizeTemplate?.measurements?._subtype || "";
+      if (subtype === "tas") {
+        const p = meas.panjang || "-";
+        const l = meas.lebar || "-";
+        const t = meas.tinggi || "-";
+        return `P: ${p} L: ${l} T: ${t} cm`;
+      }
+      if (subtype === "gelang") {
+        return meas.lingkar ? `Lingkar: ${meas.lingkar} cm` : null;
+      }
+      if (subtype === "tali") {
+        return meas.panjangTali ? `P. Tali: ${meas.panjangTali} cm` : null;
+      }
+      if (subtype === "klip") {
+        const p = meas.panjang || "-";
+        const l = meas.lebar || "-";
+        return `P: ${p} L: ${l} cm`;
+      }
+      if (subtype === "lainnya") {
+        return meas.detail || null;
+      }
+
+      // Legacy fallback
       const p = meas.panjang || "";
       const l = meas.lebar || "";
       const t = meas.tinggi || "";
@@ -87,7 +115,7 @@ export default function ProductDetailPage({
     const meas = measSource;
 
     const tType = (sizeTemplate?.type || "").toLowerCase();
-    if (tType === "sepatu") {
+    if (tType === "sepatu" || tType === "shoes") {
       const length = meas.insoleLength || meas.insole || "";
       const width = meas.insoleWidth || "";
       if (length && width) return `Panjang Insole: ${length} cm, Lebar Insole: ${width} cm`;
@@ -102,7 +130,35 @@ export default function ProductDetailPage({
       if (pb) return `Panjang Badan (PB): ${pb} cm`;
       return null;
     }
-    if (tType === "aksesoris" || tType === "gelang") {
+    if (tType === "parfum" || tType === "perfume") {
+      const vol = meas.volume || "";
+      if (vol) return `Volume Bersih: ${vol} ml`;
+      return null;
+    }
+    if (tType === "aksesoris" || tType === "gelang" || tType === "accessories") {
+      const subtype = sizeTemplate?.measurements?._subtype || "";
+      if (subtype === "tas") {
+        const p = meas.panjang || "-";
+        const l = meas.lebar || "-";
+        const t = meas.tinggi || "-";
+        return `Panjang: ${p} cm, Lebar: ${l} cm, Tinggi: ${t} cm`;
+      }
+      if (subtype === "gelang") {
+        return meas.lingkar ? `Lingkar Gelang: ${meas.lingkar} cm` : null;
+      }
+      if (subtype === "tali") {
+        return meas.panjangTali ? `Panjang Tali: ${meas.panjangTali} cm` : null;
+      }
+      if (subtype === "klip") {
+        const p = meas.panjang || "-";
+        const l = meas.lebar || "-";
+        return `Panjang: ${p} cm, Lebar: ${l} cm`;
+      }
+      if (subtype === "lainnya") {
+        return meas.detail || null;
+      }
+
+      // Legacy fallback
       const p = meas.panjang || "";
       const l = meas.lebar || "";
       const t = meas.tinggi || "";
@@ -227,7 +283,7 @@ export default function ProductDetailPage({
         </motion.div>
 
         {/* Product Detail Grid */}
-        <div className="grid gap-12 lg:grid-cols-2 items-start">
+        <div className="grid md:gap-8 xl:gap-0 lg:grid-cols-2 items-start">
 
           {/* Gallery — fade-in + scale */}
           <motion.div
@@ -236,25 +292,22 @@ export default function ProductDetailPage({
             initial="hidden"
             animate="show"
           >
-            <div className="relative overflow-hidden rounded-2xl bg-[#FEF4E8] shadow-sm ring-1 ring-amber-200/50 group">
-              {/* Ornamen Segitiga Khas Fordza */}
-              <div
-                className="absolute top-0 left-0 w-32 h-32 md:w-32 md:h-32 bg-[#4A3B2E] z-0 opacity-[0.03]"
-                style={{ clipPath: "polygon(0 0, 100% 0, 0 100%)" }}
-              />
-              <div className="relative h-120 z-10">
+            <div className="relative overflow-hidden rounded-2xl bg-white border border-stone-200 shadow-sm group  lg:max-w-130 xl:max-w-120  mx-auto">
+              <div className="relative  lg:h-130 xl:h-120  w-full z-10">
                 {galleryImages[selectedImage] ? (
                   <motion.img
                     key={selectedImage}
                     src={galleryImages[selectedImage].url}
                     alt={product.name}
-                    className=" w-full h-full object-cover mix-blend-darken group-hover:scale-105 transition-transform duration-700 ease-out"
+                    className="w-full h-full object-cover"
                     initial={{ opacity: 0, scale: 1.03 }}
+                    style={{ imageRendering: "-webkit-optimize-contrast" }}
+                    loading="lazy"
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.4, ease: "easeOut" }}
                   />
                 ) : (
-                  <div className="flex h-full items-center justify-center bg-[#FEF4E8] text-amber-200">
+                  <div className="flex h-full items-center justify-center bg-stone-50 text-stone-300">
                     <svg className="h-20 w-20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
@@ -408,9 +461,20 @@ export default function ProductDetailPage({
                           {formatRupiah(effectiveHighestPrice)}
                         </span>
                         {selectedVariant?.promoName && (
-                          <span className="text-[10px] font-black uppercase tracking-wider text-amber-700 bg-amber-100 px-2 py-0.5 rounded-sm">
-                            {selectedVariant.promoName}
-                          </span>
+                          <div className="inline-flex items-center gap-1.5 bg-amber-100 text-amber-700 px-2 py-0.5 rounded-sm">
+                            <span className="text-[10px] font-black uppercase tracking-wider">
+                              {selectedVariant.promoName}
+                            </span>
+                            {selectedVariant.promoMinPurchase && Number(selectedVariant.promoMinPurchase) > 0 ? (
+                              <span className="text-[9px] font-bold lowercase tracking-tight opacity-90 border-l border-amber-300 pl-1.5">
+                                min. {formatRupiah(selectedVariant.promoMinPurchase).replace("Rp ", "Rp")}
+                              </span>
+                            ) : (
+                              <span className="text-[9px] font-bold lowercase tracking-tight opacity-90 border-l border-amber-300 pl-1.5">
+                                tanpa min. belanja
+                              </span>
+                            )}
+                          </div>
                         )}
                       </div>
                     )}

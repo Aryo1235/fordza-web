@@ -130,18 +130,17 @@ export default function ProductsPage() {
 
         return (
           <div className="flex flex-col gap-1 items-center">
-            {/* Harga Jual Final */}
+            {/* Harga Master Asli */}
             <div className="flex items-center gap-2">
               <span className="font-bold whitespace-nowrap text-[#3C3025]">
-                Rp {finalPrice.toLocaleString("id-ID")}
+                Rp {basePrice.toLocaleString("id-ID")}
               </span>
-
             </div>
 
-            {/* Tampilkan Harga Asli (Coret) Jika Ada Promo Aktif */}
+            {/* Tampilkan Harga Promo Aktif */}
             {hasPromo && (
-              <span className="text-[10px] line-through text-stone-400 opacity-70">
-                Asli: Rp {basePrice.toLocaleString("id-ID")}
+              <span className="text-[9px] font-bold bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded border border-emerald-100">
+                Promo: Rp {finalPrice.toLocaleString("id-ID")}
               </span>
             )}
 

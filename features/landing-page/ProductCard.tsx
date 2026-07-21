@@ -137,12 +137,15 @@ export function ProductCard({ product }: { product: Product }) {
                 ? [product.promoName]
                 : []
             ).map((promo, idx) => (
-              <div 
+              <div
                 key={idx}
-                className="flex items-center gap-1 bg-amber-400 text-[#4A3B2E] text-[9px] md:text-[10px] font-black uppercase tracking-wide px-1.5 py-1 rounded-[4px] shadow-md leading-none"
+                className="flex flex-col items-start gap-1 bg-amber-400 text-[#4A3B2E] text-[9px] md:text-[10px] font-black uppercase tracking-wide px-1.5 py-1 rounded-[4px] shadow-md leading-tight"
               >
-                <Tag className="size-2.5 md:size-3 flex-shrink-0" />
-                <span className="truncate max-w-[90px]">{promo}</span>
+                <div className="flex items-center gap-1">
+                  <Tag className="size-2.5 md:size-3 flex-shrink-0" />
+                  <span className="truncate max-w-[90px]">{promo}</span>
+                </div>
+
               </div>
             ))}
           </div>

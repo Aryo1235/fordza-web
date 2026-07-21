@@ -104,7 +104,10 @@ export default function POSPage() {
     additionalDiscount: number = 0,
     comparisonPrice: number | null = null,
     promoMinPurchase: number | null = null, // ✅ Tambah parameter
-    promoDiscountPercent: number | null = null // ✅ Tambah parameter persentase
+    promoDiscountPercent: number | null = null, // ✅ Tambah parameter persentase
+    promoTargetType: string | null = null, // ✅ Tambah targetType
+    isPromoConditional: boolean = false, // ✅ Tambah conditional
+    promoType: "PERCENTAGE" | "NOMINAL" | null = null // ✅ Tambah promoType asli dari DB
   ) => {
     // Kunci unik: productId + skuId (jika ada varian)
     const cartKey = skuId ? `${product.id}__${skuId}` : product.id;
@@ -147,6 +150,9 @@ export default function POSPage() {
         promoName: promoName,               // Nama Promo Admin
         promoMinPurchase: promoMinPurchase, // ✅ Min purchase promo
         promoDiscountPercent: promoDiscountPercent, // ✅ Simpan persentase
+        promoTargetType: promoTargetType, // ✅ Simpan targetType
+        isPromoConditional: isPromoConditional, // ✅ Simpan conditional
+        promoType: promoType, // ✅ Simpan promoType
         gimmickPriceAtSale: comparisonPrice, // Harga Gimmick (Coretan asli)
         variantId,
         variantColor,
@@ -194,75 +200,197 @@ export default function POSPage() {
   }, [justAddedProductId]);
 
 
-  // ✅ Hitung subtotal seluruh keranjang sebelum diskon dengan konversi tipe yang aman
+  // ─────────────────────────────────────────────────────────────────────
+  // KALKULASI KERANJANG — Mencerminkan logika backend (2-fase):
+  // FASE 1: Diskon level item (VARIANT/PRODUCT/CATEGORY)
+  // FASE 2: Diskon GLOBAL dihitung sekali, diprorata ke item yang eligible
+  // ─────────────────────────────────────────────────────────────────────
+
+  // Subtotal kotor (tanpa diskon apapun) — basis untuk cek minPurchase
   const cartSubtotal = useMemo(() => {
     return cart.reduce((sum: number, c: CartItem) => sum + Number(c.price ?? 0) * c.quantity, 0);
   }, [cart]);
 
-  // ✅ Hitung detail item keranjang dengan diskon yang sudah disaring minPurchase
+  // FASE 1 & FASE 2: Hitung diskon dengan prorasi dinamis untuk item-level bersyarat & global nominal
   const processedCart = useMemo(() => {
-    return cart.map((c: CartItem) => {
+    // 1. Inisialisasi data item
+    const itemsWithItemDiscount = cart.map((c: CartItem) => {
       const itemPrice = Number(c.price ?? 0);
       const discountAmt = Number(c.discountAmount ?? 0);
       const minP = Number(c.promoMinPurchase ?? 0);
+      const isPercentage = c.promoType === "PERCENTAGE";
+      const targetType = c.promoTargetType;
 
-      let activeDiscount = discountAmt;
-      if (activeDiscount > 0 && minP > 0) {
-        if (cartSubtotal < minP) {
-          activeDiscount = 0;
+      const itemSubtotal = itemPrice * c.quantity;
+      let itemDiscount = 0;
+      let isGlobalEligible = false;
+
+      // Cek minPurchase untuk conditional promo level item
+      const meetMinP = minP === 0 || cartSubtotal >= minP;
+
+      // Bedakan promo global dengan item-level
+      const isGlobal = targetType === "GLOBAL";
+      const isItemConditionalNominal = targetType && !isGlobal && minP > 0 && !isPercentage;
+
+      if (targetType && !isGlobal && !isItemConditionalNominal) {
+        // Hitung langsung diskon non-conditional nominal & percentage level item
+        if (meetMinP) {
+          if (isPercentage) {
+            itemDiscount = (itemPrice * Number(c.promoDiscountPercent ?? 0) / 100) * c.quantity;
+          } else {
+            // Nominal reguler: dikali qty
+            itemDiscount = discountAmt * c.quantity;
+          }
+          itemDiscount = Math.min(itemDiscount, itemSubtotal);
         }
-      }
-
-      // Hitung lineDiscount (total diskon untuk item ini):
-      // Jika PERCENTAGE promo, atau non-conditional FIXED promo -> dikali quantity.
-      // Jika conditional FIXED promo (minP > 0 dan promoDiscountPercent tidak ada/0) -> flat (tidak dikali quantity).
-      const isPercentage = Number(c.promoDiscountPercent ?? 0) > 0;
-      const isConditionalFixed = minP > 0 && !isPercentage;
-
-      let lineDiscount = 0;
-      let lineDiscountAmt = 0;
-
-      if (discountAmt > 0) {
-        if (isConditionalFixed) {
-          lineDiscountAmt = discountAmt;
-          lineDiscount = activeDiscount;
-        } else {
-          lineDiscountAmt = discountAmt * c.quantity;
-          lineDiscount = activeDiscount * c.quantity;
-        }
+      } else if (!targetType || isGlobal) {
+        // Jika tidak ada promo sama sekali, atau promonya bertipe GLOBAL, berhak untuk promo global
+        isGlobalEligible = true;
       }
 
       return {
         ...c,
         itemPrice,
+        itemSubtotal,
+        itemDiscount, // Menyimpan diskon sementara
+        isGlobalEligible,
+        netSubtotal: itemSubtotal, // Akan di-update setelah diskon final dihitung
+        isPercentage,
+        isGlobal,
+        isItemConditionalNominal,
+        meetMinP,
+        minP,
+      };
+    });
+
+    // 2. Hitung diskon item-level conditional nominal (berkelompok per Promo Name)
+    const uniqueItemPromoNames = Array.from(
+      new Set(
+        itemsWithItemDiscount
+          .filter(i => i.isItemConditionalNominal && i.promoName)
+          .map(i => i.promoName!)
+      )
+    );
+
+    uniqueItemPromoNames.forEach((pName) => {
+      const matchingItems = itemsWithItemDiscount.filter(i => i.promoName === pName);
+      const firstItem = matchingItems[0];
+      const minP = Number(firstItem.promoMinPurchase ?? 0);
+
+      if (cartSubtotal >= minP) {
+        const totalDiscountValue = Number(firstItem.discountAmount); // Potongan flat tunggal
+        const totalMatchingSubtotal = matchingItems.reduce((sum, i) => sum + i.itemSubtotal, 0);
+
+        if (matchingItems.length > 0 && totalMatchingSubtotal > 0) {
+          const finalDiscount = Math.min(totalDiscountValue, totalMatchingSubtotal);
+          let currentDistributed = 0;
+
+          matchingItems.forEach((eligItem, idx) => {
+            const isLast = idx === matchingItems.length - 1;
+            let portion = 0;
+
+            if (isLast) {
+              portion = finalDiscount - currentDistributed;
+            } else {
+              portion = Math.round((eligItem.itemSubtotal / totalMatchingSubtotal) * finalDiscount);
+            }
+
+            portion = Math.min(portion, eligItem.itemSubtotal);
+            eligItem.itemDiscount = portion;
+            currentDistributed += portion;
+          });
+        }
+      }
+    });
+
+    // Update netSubtotal setelah kalkulasi item-level promo selesai
+    itemsWithItemDiscount.forEach(item => {
+      item.netSubtotal = item.itemSubtotal - item.itemDiscount;
+      if (item.itemDiscount > 0) {
+        // Sekali item-level promo aktif, dia tidak berhak atas diskon global lagi
+        item.isGlobalEligible = false;
+      }
+    });
+
+    // 3. Hitung diskon GLOBAL (berkelompok) - Mendukung PERCENTAGE & NOMINAL
+    const globalItem = itemsWithItemDiscount.find(i => i.isGlobal);
+    if (globalItem && globalItem.meetMinP) {
+      const eligibleItems = itemsWithItemDiscount.filter(i => i.isGlobalEligible && i.netSubtotal > 0);
+      const totalEligibleSubtotal = eligibleItems.reduce((sum, i) => sum + i.netSubtotal, 0);
+
+      // Hitung total diskon global SATU KALI untuk seluruh transaksi
+      let totalGlobalDiscount = 0;
+      if (globalItem.isPercentage) {
+        totalGlobalDiscount = Math.round(totalEligibleSubtotal * Number(globalItem.promoDiscountPercent ?? 0) / 100);
+      } else {
+        totalGlobalDiscount = Number(globalItem.discountAmount);
+      }
+
+      if (eligibleItems.length > 0 && totalEligibleSubtotal > 0) {
+        const finalGlobalDiscount = Math.min(totalGlobalDiscount, totalEligibleSubtotal);
+        let currentDistributed = 0;
+
+        eligibleItems.forEach((eligItem, idx) => {
+          const isLast = idx === eligibleItems.length - 1;
+          let portion = 0;
+
+          if (isLast) {
+            portion = finalGlobalDiscount - currentDistributed;
+          } else {
+            portion = Math.round((eligItem.netSubtotal / totalEligibleSubtotal) * finalGlobalDiscount);
+          }
+
+          portion = Math.min(portion, eligItem.netSubtotal);
+          eligItem.itemDiscount += portion;
+          eligItem.netSubtotal -= portion;
+          currentDistributed += portion;
+        });
+      }
+    }
+
+    // Kembalikan data yang diformat dengan struktur CartItem final
+    return itemsWithItemDiscount.map(item => {
+      const discountAmt = Number(item.discountAmount ?? 0);
+      const minP = Number(item.promoMinPurchase ?? 0);
+      const isConditionalFixed = minP > 0 && !item.isPercentage;
+
+      return {
+        ...item,
         discountAmt,
         minP,
-        activeDiscount,
-        lineDiscount,
-        lineDiscountAmt,
         isConditionalFixed,
-        isPercentage,
+        // discountAmount di sini menjadi total diskon baris (lineDiscount)
+        lineDiscount: Math.min(Math.round(item.itemDiscount), item.itemSubtotal),
+        lineDiscountAmt: Math.min(Math.round(item.itemDiscount), item.itemSubtotal),
       };
     });
   }, [cart, cartSubtotal]);
 
   // ✅ Hitung diskon item langsung (non-conditional fixed + percentage)
   const itemDiscountTotal = useMemo(() => {
-    return processedCart.reduce(
-      (s: number, c) => s + (c.isConditionalFixed ? 0 : c.lineDiscount),
-      0,
-    );
+    // Di POS, diskon produk adalah diskon level item non-conditional
+    return processedCart.reduce((sum, c) => {
+      const minP = Number(c.promoMinPurchase ?? 0);
+      const isGlobalNominal = c.promoTargetType === "GLOBAL" && Number(c.promoDiscountPercent ?? 0) === 0;
+      // Jika promo bersyarat atau global nominal, jangan masukkan ke diskon item reguler
+      if (minP > 0 || isGlobalNominal) return sum;
+      return sum + c.lineDiscount;
+    }, 0);
   }, [processedCart]);
 
-  // ✅ Hitung diskon promo bersyarat (conditional fixed)
+  // ✅ Hitung diskon promo bersyarat (conditional fixed + global nominal)
   const promoDiscountTotal = useMemo(() => {
-    return processedCart.reduce(
-      (s: number, c) => s + (c.isConditionalFixed ? c.lineDiscount : 0),
-      0,
-    );
+    return processedCart.reduce((sum, c) => {
+      const minP = Number(c.promoMinPurchase ?? 0);
+      const isGlobalNominal = c.promoTargetType === "GLOBAL" && Number(c.promoDiscountPercent ?? 0) === 0;
+      if (minP > 0 || isGlobalNominal) {
+        return sum + c.lineDiscount;
+      }
+      return sum;
+    }, 0);
   }, [processedCart]);
 
-  // ✅ Hitung total harga final (subtotal - lineDiscount)
+  // ✅ Hitung total harga final (subtotal - semua diskon)
   const totalPrice = useMemo(() => {
     return processedCart.reduce(
       (s: number, c) => s + (c.itemPrice * c.quantity - c.lineDiscount),
@@ -356,6 +484,9 @@ export default function POSPage() {
     setIsSubmitting(true);
     checkoutMutation.mutate(
       {
+        // Kirim data item ke backend — backend akan menghitung ulang diskon
+        // secara server-side menggunakan logika prorasi yang sudah diperbaiki.
+        // discountAmount di sini hanya sebagai hints/referensi, backend mengabaikannya.
         items: processedCart.map((c) => ({
           productId: c.id,
           quantity: c.quantity,
@@ -621,7 +752,7 @@ export default function POSPage() {
                             }
                             {item.isConditionalFixed
                               ? item.lineDiscount > 0
-                                ? `(Aktif di Total)`
+                                ? `(Aktif: -Rp ${item.lineDiscount.toLocaleString("id-ID")})`
                                 : `(Min. Rp ${item.minP.toLocaleString("id-ID")} - Belum Terpenuhi)`
                               : item.lineDiscount > 0
                                 ? `(-Rp ${item.lineDiscount.toLocaleString("id-ID")})`
@@ -821,7 +952,10 @@ export default function POSPage() {
                   discountAmount,
                   variant.comparisonPrice || originalPrice,
                   variant.promoMinPurchase || null, // ✅ Pass promoMinPurchase
-                  variant.promoDiscountPercent || null // ✅ Pass promoDiscountPercent
+                  variant.promoDiscountPercent || null, // ✅ Pass promoDiscountPercent
+                  variant.promoTargetType || null, // ✅ Pass targetType
+                  variant.isPromoConditional || false, // ✅ Pass conditional
+                  variant.promoType || null // ✅ Pass promoType
                 );
               }
             } else {

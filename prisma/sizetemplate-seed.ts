@@ -17,6 +17,16 @@ export async function seedSizeTemplates(prisma: PrismaClient) {
             type: "accessories",
             sizes: ["Free Size"],
         },
+        {
+            name: "Parfum Standard",
+            type: "Parfum",
+            sizes: ["30ml", "50ml", "100ml"],
+            measurements: {
+                "30ml": { volume: "30", berat: "100" },
+                "50ml": { volume: "50", berat: "150" },
+                "100ml": { volume: "100", berat: "250" }
+            }
+        },
     ];
     for (const template of templates) {
         const existing = await prisma.sizeTemplate.findFirst({

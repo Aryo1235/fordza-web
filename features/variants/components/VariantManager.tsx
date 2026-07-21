@@ -159,6 +159,13 @@ function AddSkuForm({
   const [ld, setLd] = useState("");
   const [pb, setPb] = useState("");
   const [lingkar, setLingkar] = useState("");
+  const [volume, setVolume] = useState("");
+  const [berat, setBerat] = useState("");
+  const [panjang, setPanjang] = useState("");
+  const [lebar, setLebar] = useState("");
+  const [tinggi, setTinggi] = useState("");
+  const [panjangTali, setPanjangTali] = useState("");
+  const [detail, setDetail] = useState("");
   const createSku = useCreateSku(productId);
 
   const {
@@ -197,6 +204,16 @@ function AddSkuForm({
             } else if (tType === "apparel" || tType === "pakaian") {
               if (ld) meas.ld = ld;
               if (pb) meas.pb = pb;
+            } else if (tType === "parfum") {
+              if (volume) meas.volume = volume;
+              if (berat) meas.berat = berat;
+            } else if (tType === "aksesoris" || tType === "accessories" || tType === "gelang") {
+              if (panjang) meas.panjang = panjang;
+              if (lebar) meas.lebar = lebar;
+              if (tinggi) meas.tinggi = tinggi;
+              if (lingkar) meas.lingkar = lingkar;
+              if (panjangTali) meas.panjangTali = panjangTali;
+              if (detail) meas.detail = detail;
             } else {
               if (lingkar) meas.lingkar = lingkar;
             }
@@ -206,7 +223,8 @@ function AddSkuForm({
           }
           toast.success(`Ukuran ${data.size} ditambahkan`);
           reset();
-          setInsoleLength(""); setInsoleWidth(""); setLd(""); setPb(""); setLingkar("");
+          setInsoleLength(""); setInsoleWidth(""); setLd(""); setPb(""); setLingkar(""); setVolume(""); setBerat("");
+          setPanjang(""); setLebar(""); setTinggi(""); setPanjangTali(""); setDetail("");
           setOpen(false);
         },
         onError: (err) => toast.error(err.message || "Gagal menambah ukuran"),
@@ -277,19 +295,19 @@ function AddSkuForm({
       {(sizeTemplates?.length || existingSizes?.length) && (
         <div className="flex flex-wrap items-center gap-1.5">
           <span className="text-[10px] font-bold text-stone-400 uppercase">Saran Ukuran:</span>
-          
+
           {/* Logika Pintar: -1 dari terkecil dan +1 dari terbesar */}
           {(() => {
             const numericSizes = existingSizes
               .map(s => parseInt(s))
               .filter(n => !isNaN(n))
               .sort((a, b) => a - b);
-            
+
             if (numericSizes.length === 0) return null;
-            
+
             const prevSize = numericSizes[0] - 1;
             const nextSize = numericSizes[numericSizes.length - 1] + 1;
-            
+
             return (
               <div className="flex gap-1.5">
                 <button
@@ -344,13 +362,53 @@ function AddSkuForm({
                 </div>
               </>
             )}
-            {["apparel","pakaian"].includes(tType) && (
+            {["apparel", "pakaian"].includes(tType) && (
               <>
                 <div className="space-y-0.5"><Label className="text-[10px] text-stone-500">LD (cm)</Label><Input value={ld} onChange={e => setLd(e.target.value)} placeholder="52" type="number" step="0.5" className="h-7 text-xs bg-white border-orange-200" /></div>
                 <div className="space-y-0.5"><Label className="text-[10px] text-stone-500">PB (cm)</Label><Input value={pb} onChange={e => setPb(e.target.value)} placeholder="74" type="number" step="0.5" className="h-7 text-xs bg-white border-orange-200" /></div>
               </>
             )}
-            {!["sepatu","apparel","pakaian"].includes(tType) && (
+            {tType === "parfum" && (
+              <>
+                <div className="space-y-0.5">
+                  <Label className="text-[10px] text-stone-500">Volume (ml)</Label>
+                  <Input value={volume} onChange={e => setVolume(e.target.value)} placeholder="50" type="number" step="1" className="h-7 text-xs bg-white border-orange-200" />
+                </div>
+                <div className="space-y-0.5">
+                  <Label className="text-[10px] text-stone-500">Berat (gr)</Label>
+                  <Input value={berat} onChange={e => setBerat(e.target.value)} placeholder="150" type="number" step="1" className="h-7 text-xs bg-white border-orange-200" />
+                </div>
+              </>
+            )}
+            {(tType === "aksesoris" || tType === "accessories" || tType === "gelang") && (
+              <>
+                <div className="space-y-0.5">
+                  <Label className="text-[10px] text-stone-500">Panjang (cm)</Label>
+                  <Input value={panjang} onChange={e => setPanjang(e.target.value)} placeholder="P" type="number" step="0.1" className="h-7 text-xs bg-white border-orange-200" />
+                </div>
+                <div className="space-y-0.5">
+                  <Label className="text-[10px] text-stone-500">Lebar (cm)</Label>
+                  <Input value={lebar} onChange={e => setLebar(e.target.value)} placeholder="L" type="number" step="0.1" className="h-7 text-xs bg-white border-orange-200" />
+                </div>
+                <div className="space-y-0.5">
+                  <Label className="text-[10px] text-stone-500">Tinggi (cm)</Label>
+                  <Input value={tinggi} onChange={e => setTinggi(e.target.value)} placeholder="T" type="number" step="0.1" className="h-7 text-xs bg-white border-orange-200" />
+                </div>
+                <div className="space-y-0.5">
+                  <Label className="text-[10px] text-stone-500">Lingkar (cm)</Label>
+                  <Input value={lingkar} onChange={e => setLingkar(e.target.value)} placeholder="Lingkar" type="number" step="0.1" className="h-7 text-xs bg-white border-orange-200" />
+                </div>
+                <div className="space-y-0.5">
+                  <Label className="text-[10px] text-stone-500">Panjang Tali (cm)</Label>
+                  <Input value={panjangTali} onChange={e => setPanjangTali(e.target.value)} placeholder="P. Tali" type="number" step="0.1" className="h-7 text-xs bg-white border-orange-200" />
+                </div>
+                <div className="space-y-0.5 col-span-2">
+                  <Label className="text-[10px] text-stone-500">Keterangan Bebas</Label>
+                  <Input value={detail} onChange={e => setDetail(e.target.value)} placeholder="Cth: tali panjang 60cm" className="h-7 text-xs bg-white border-orange-200" />
+                </div>
+              </>
+            )}
+            {!["sepatu", "apparel", "pakaian", "parfum", "aksesoris", "accessories", "gelang"].includes(tType) && (
               <div className="space-y-0.5"><Label className="text-[10px] text-stone-500">Lingkar (cm)</Label><Input value={lingkar} onChange={e => setLingkar(e.target.value)} placeholder="18" type="number" step="0.5" className="h-7 text-xs bg-white border-orange-200" /></div>
             )}
           </div>
@@ -462,102 +520,121 @@ function VariantCard({
     <div className="border border-stone-200 rounded-xl overflow-hidden shadow-sm flex flex-col">
       {/* Header Varian */}
       <div
-        className="flex items-center gap-3 p-4 bg-white cursor-pointer hover:bg-stone-50 transition-colors"
+        className="flex flex-col items-start gap-2.5 p-4 bg-white cursor-pointer hover:bg-stone-50 transition-colors w-full"
         onClick={() => setExpanded((p) => !p)}
       >
-        {expanded ? (
-          <ChevronDown className="w-4 h-4 text-stone-400" />
-        ) : (
-          <ChevronRight className="w-4 h-4 text-stone-400" />
-        )}
+        {/* Baris 1: Identitas Utama & Aksi */}
+        <div className="flex items-center justify-between w-full">
+          <div className="flex items-center gap-3">
+            {expanded ? (
+              <ChevronDown className="w-4 h-4 text-stone-400 shrink-0" />
+            ) : (
+              <ChevronRight className="w-4 h-4 text-stone-400 shrink-0" />
+            )}
 
-        {/* Swatch warna / Image */}
-        <div className="w-10 h-10 rounded-lg border border-stone-200 shadow-sm shrink-0 relative overflow-hidden bg-stone-100">
-          {variant.images && variant.images.length > 0 ? (
-            <img
-              src={variant.images[0].url}
-              className="w-full h-full object-cover"
-              alt={variant.color}
-            />
-          ) : (
-            <div className="absolute inset-0 bg-linear-to-br from-stone-400 to-stone-600 opacity-20 flex items-center justify-center">
-              <Plus className="w-4 h-4 text-stone-400" />
+            {/* Swatch warna / Image */}
+            <div className="w-10 h-10 rounded-lg border border-stone-200 shadow-sm shrink-0 relative overflow-hidden bg-stone-100">
+              {variant.images && variant.images.length > 0 ? (
+                <img
+                  src={variant.images[0].url}
+                  className="w-full h-full object-cover"
+                  alt={variant.color}
+                />
+              ) : (
+                <div className="absolute inset-0 bg-linear-to-br from-stone-400 to-stone-600 opacity-20 flex items-center justify-center">
+                  <Plus className="w-4 h-4 text-stone-400" />
+                </div>
+              )}
             </div>
-          )}
-        </div>
 
-        <div className="flex-1 min-w-0">
-          <div className="text-sm font-bold text-stone-800 flex items-center gap-1.5 truncate">
-            {variant.color}
-            {(variant as any).finalPrice < variant.basePrice && (
-              <span className="text-[9px] font-black text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100">
-                PROMO
+            {/* Nama Warna & Badge PROMO */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-black text-[#3C3025]">
+                {variant.color}
               </span>
-            )}
-          </div>
-          <div className="flex items-center gap-2 mt-0.5">
-            <code className="text-[10px] font-mono bg-stone-100 text-stone-500 px-1.5 py-0.5 rounded">
-              {variant.variantCode}
-            </code>
-            {(variant as any).promoName && (
-              <span className="text-[9px] text-amber-600 font-bold bg-amber-50 px-1.5 rounded border border-amber-100 truncate max-w-25">
-                {(variant as any).promoName}
-              </span>
-            )}
-          </div>
-        </div>
-
-        <div className="flex items-center gap-4 text-right">
-          <div>
-            <div className="flex flex-col items-end">
-              <p className="text-sm font-bold text-zinc-900 leading-none">
-                {formatRupiah(
-                  Number((variant as any).finalPrice || variant.basePrice),
-                )}
-              </p>
               {(variant as any).finalPrice < variant.basePrice && (
-                <p className="text-[10px] text-stone-400 line-through mt-0.5 opacity-70">
-                  {formatRupiah(Number(variant.basePrice))}
-                </p>
+                <span className="text-[9px] font-black text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100 whitespace-nowrap">
+                  PROMO
+                </span>
               )}
             </div>
           </div>
-          <div className="hidden sm:block">
-            <p className="text-[10px] text-stone-900 font-bold bg-stone-100 px-1.5 rounded">
-              {totalStock} Psg
-            </p>
+
+          {/* Tombol Aksi Edit / Hapus */}
+          <div className="flex items-center gap-1 shrink-0">
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-8 w-8 hover:text-blue-600 shrink-0"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsEditing(true);
+              }}
+            >
+              <Pencil className="w-4 h-4" />
+            </Button>
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-8 w-8 hover:text-red-500 shrink-0"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowConfirm(true);
+              }}
+              disabled={deleteVariant.isPending}
+            >
+              {deleteVariant.isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Trash2 className="w-4 h-4" />
+              )}
+            </Button>
           </div>
         </div>
 
-        <div className="flex items-center gap-1 ml-2">
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-8 w-8 hover:text-blue-600 shrink-0"
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsEditing(true);
-            }}
-          >
-            <Pencil className="w-4 h-4" />
-          </Button>
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-8 w-8 hover:text-red-500 shrink-0"
-            onClick={(e) => {
-              e.stopPropagation();
-              setShowConfirm(true);
-            }}
-            disabled={deleteVariant.isPending}
-          >
-            {deleteVariant.isPending ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Trash2 className="w-4 h-4" />
+        {/* Baris 2: Detail Komersial (SKU, Promo Tag, Harga, & Stok) */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-stone-50/70 p-3 rounded-xl border border-stone-100/80 w-full mt-1">
+          {/* Info SKU & Promo */}
+          <div className="flex flex-col gap-1.5">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-[9px] font-bold text-stone-400 uppercase tracking-wider">SKU:</span>
+              <code className="text-[10px] font-mono bg-white border border-stone-200/80 text-stone-600 px-1.5 py-0.5 rounded leading-none">
+                {variant.variantCode}
+              </code>
+            </div>
+            {(variant as any).promoName && (
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-[9px] font-bold text-stone-400 uppercase tracking-wider">Promo:</span>
+                <span className="text-[9px] text-amber-700 font-bold bg-amber-50 px-2 py-0.5 rounded border border-amber-100 leading-none">
+                  🏷️ {(variant as any).promoName}
+                </span>
+              </div>
             )}
-          </Button>
+          </div>
+
+          {/* Info Harga & Stok */}
+          <div className="flex items-center justify-between sm:justify-end gap-5 border-t sm:border-t-0 pt-2 sm:pt-0 border-stone-200/60">
+            <div className="flex flex-col items-start sm:items-end">
+              <span className="text-[9px] font-bold text-stone-400 uppercase tracking-wider mb-0.5">Harga</span>
+              <p className="text-sm font-bold text-zinc-900 leading-none">
+                {formatRupiah(Number(variant.basePrice))}
+              </p>
+              {(variant as any).finalPrice < variant.basePrice && (
+                <p className="text-[9px] text-emerald-700 font-bold bg-emerald-50 border border-emerald-100 px-1.5 py-0.5 rounded mt-1 leading-none whitespace-nowrap">
+                  Promo: {formatRupiah(Number((variant as any).finalPrice))}
+                </p>
+              )}
+            </div>
+            <div className="flex flex-col items-start sm:items-end">
+              <span className="text-[9px] font-bold text-stone-400 uppercase tracking-wider mb-0.5">Stok</span>
+              <p className="text-[10px] text-stone-700 font-bold bg-stone-200/60 border border-stone-300/40 px-2 py-1 rounded whitespace-nowrap">
+                {totalStock} Psg
+              </p>
+            </div>
+          </div>
         </div>
+
+
       </div>
 
       <ConfirmDialog
@@ -658,10 +735,10 @@ function AddVariantForm({
       ? watchColorCode.toUpperCase().slice(0, 5)
       : watchColor
         ? watchColor
-            .toUpperCase()
-            .replace(/\s+/g, "")
-            .replace(/[^A-Z0-9]/g, "")
-            .slice(0, 3)
+          .toUpperCase()
+          .replace(/\s+/g, "")
+          .replace(/[^A-Z0-9]/g, "")
+          .slice(0, 3)
         : "???";
   const previewCode = productCode
     ? `${productCode}-${previewSuffix}`
@@ -1073,7 +1150,7 @@ function EditVariantForm({
 
   const onConfirmDeleteSku = () => {
     if (!skuToDelete) return;
-    
+
     setDeletingSize(skuToDelete.size);
     deleteSku.mutate(skuToDelete.id, {
       onSuccess: () => {
@@ -1082,20 +1159,20 @@ function EditVariantForm({
           delete next[skuToDelete.size];
           return next;
         });
-        
+
         // Cek apakah ukuran ini kustom dan tidak digunakan di varian lain
         const isCustom = !sizeTemplates.includes(skuToDelete.size);
         const isSizeUsedElsewhere = (variants || []).some(
           (v) => v.id !== variant.id && v.skus.some((s) => s.size === skuToDelete.size)
         );
-        
+
         if (isCustom && !isSizeUsedElsewhere && handleCustomSizeAdded) {
           const newCustomSizes = customSizes.filter((s) => s !== skuToDelete.size);
           const newCustomMeasurements = { ...customMeasurements };
           delete newCustomMeasurements[skuToDelete.size];
           handleCustomSizeAdded(newCustomSizes, newCustomMeasurements);
         }
-        
+
         toast.success(`Ukuran ${skuToDelete.size} berhasil dihapus`);
         setSkuToDelete(null);
         setDeletingSize(null);

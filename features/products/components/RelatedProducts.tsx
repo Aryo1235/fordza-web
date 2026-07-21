@@ -49,7 +49,7 @@ export function RelatedProducts({ productId }: Props) {
       {/* Loading Skeleton */}
       {loading && (
         <div
-          className="flex overflow-x-auto snap-x snap-mandatory gap-4 sm:gap-5 pb-4 custom-scrollbar items-stretch"
+          className="flex overflow-x-auto snap-x snap-mandatory gap-4 sm:gap-4 pb-4 custom-scrollbar items-stretch"
           style={{ scrollPaddingLeft: "0px" }}
         >
           {Array.from({ length: 4 }).map((_, i) => (
@@ -70,7 +70,7 @@ export function RelatedProducts({ productId }: Props) {
       {/* Product Cards Carousel */}
       {!loading && products.length > 0 && (
         <div
-          className="flex overflow-x-auto snap-x snap-mandatory gap-4 sm:gap-4 pb-4 custom-scrollbar items-stretch"
+          className="flex overflow-x-auto snap-x snap-mandatory gap-4 sm:gap-4 md:gap-2 pb-4 custom-scrollbar items-stretch"
           style={{ scrollPaddingLeft: "0px" }}
         >
           {products.map((product: RecommendedProduct) => {

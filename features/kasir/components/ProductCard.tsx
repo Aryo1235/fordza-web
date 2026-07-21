@@ -22,7 +22,10 @@ interface ProductCardProps {
     additionalDiscount?: number,
     comparisonPrice?: number | null,
     promoMinPurchase?: number | null, // ✅ Tambah parameter
-    promoDiscountPercent?: number | null // ✅ Tambah parameter persentase
+    promoDiscountPercent?: number | null, // ✅ Tambah parameter persentase
+    promoTargetType?: string | null, // ✅ Tambah targetType
+    isPromoConditional?: boolean, // ✅ Tambah conditional
+    promoType?: "PERCENTAGE" | "NOMINAL" | null // ✅ Tambah promoType asli
   ) => void;
   onRemove: (productId: string, skuId?: string) => void;
   isJustAdded?: boolean;
@@ -177,7 +180,10 @@ export default function ProductCard({
                       calculatedDiscount, // Potongan potensial yang benar
                       currentVariant.comparisonPrice,
                       currentVariant.promoMinPurchase, // ✅ Pass promoMinPurchase
-                      currentVariant.promoDiscountPercent // ✅ Pass promoDiscountPercent
+                      currentVariant.promoDiscountPercent, // ✅ Pass promoDiscountPercent
+                      currentVariant.promoTargetType || null, // ✅ Pass targetType
+                      currentVariant.isPromoConditional || false, // ✅ Pass conditional
+                      currentVariant.promoType || null // ✅ Pass promoType
                     )}
                     className={cn(
                       "relative min-w-[40px] flex flex-col items-center justify-center py-1.5 px-2 rounded border text-[10px] md:text-xs font-bold transition-all",
