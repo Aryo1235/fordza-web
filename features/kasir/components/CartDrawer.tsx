@@ -46,13 +46,9 @@ export default function CartDrawer({
   paymentMethod = "CASH",
   onPaymentMethodChange,
 }: CartDrawerProps) {
-  // Subtotal kotor (tanpa diskon) — basis untuk cek minPurchase
   const subtotal = items.reduce((sum, item) => sum + Number(item.price ?? 0) * item.quantity, 0);
-
-  // Total diskon dihitung langsung dari lineDiscount dari items (processedCart)
   const totalDiscount = items.reduce((sum, item) => sum + Number((item as any).lineDiscount ?? 0), 0);
 
-  // Pisahkan diskon produk (non-conditional) dan diskon promo (conditional/global nominal) untuk breakdown
   const itemDiscountTotal = items.reduce((sum, item) => {
     const minP = Number(item.promoMinPurchase ?? 0);
     const isGlobalNominal = item.promoTargetType === "GLOBAL" && Number(item.promoDiscountPercent ?? 0) === 0;
@@ -69,9 +65,7 @@ export default function CartDrawer({
     return sum;
   }, 0);
 
-  // Total akhir setelah semua diskon
   const total = subtotal - totalDiscount;
-
   const change = amountPaid - total;
   const remainingPayment = Math.max(total - amountPaid, 0);
   const hasInvalidDiscount = items.some((item) => item.discountAmount > item.price * item.quantity || item.discountAmount < 0);
@@ -80,10 +74,8 @@ export default function CartDrawer({
   useEffect(() => {
     const previousBodyOverflow = document.body.style.overflow;
     const previousHtmlOverflow = document.documentElement.style.overflow;
-
     document.body.style.overflow = "hidden";
     document.documentElement.style.overflow = "hidden";
-
     return () => {
       document.body.style.overflow = previousBodyOverflow;
       document.documentElement.style.overflow = previousHtmlOverflow;
@@ -92,254 +84,165 @@ export default function CartDrawer({
 
   return (
     <>
-      <div
-        className="fixed inset-0 z-40 bg-black/50"
-        onClick={onClose}
-      />
-
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-xl shadow-2xl h-[88dvh] max-h-[88dvh] flex flex-col min-h-0 overflow-hidden">
-        <div className="flex justify-center pt-3 pb-1 shrink-0">
+      <div className="fixed inset-0 z-40 bg-black/50" onClick={onClose} />
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-xl shadow-2xl h-[90dvh] max-h-[90dvh] flex flex-col overflow-hidden">
+        {/* Handle + Header */}
+        <div className="flex justify-center pt-2 pb-0.5 shrink-0">
           <div className="w-10 h-1 bg-stone-300 rounded-full" />
         </div>
-
-        <div className="flex items-center justify-between px-4 py-2 border-b shrink-0">
-          <h3 className="font-semibold text-stone-800">Keranjang ({items.length} produk)</h3>
-          <button onClick={onClose} className="text-stone-400 hover:text-stone-700">
-            <X className="w-5 h-5" />
+        <div className="flex items-center justify-between px-3 pb-1.5 shrink-0">
+          <h3 className="text-[11px] font-bold text-stone-600 uppercase tracking-wider">
+            Keranjang <span className="text-stone-400">({items.length})</span>
+          </h3>
+          <button onClick={onClose} className="text-stone-400 hover:text-stone-600 p-0.5">
+            <X className="w-4 h-4" />
           </button>
         </div>
 
-        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 py-3 space-y-4">
+        {/* Scrollable items */}
+        <div className="flex-1 min-h-0 overflow-y-auto px-3 py-1 space-y-1.5">
           {items.length === 0 ? (
-            <p className="text-center text-stone-400 py-8 text-sm">Keranjang kosong</p>
+            <p className="text-center text-stone-400 py-6 text-xs">Keranjang kosong</p>
           ) : (
             items.map((item) => {
               const itemKey = item.skuId ? `${item.id}-${item.skuId}` : item.id;
-
-              // Hitung diskon aktif berdasarkan minPurchase dengan konversi tipe yang aman
               const itemPrice = Number(item.price ?? 0);
               const discountAmt = Number(item.discountAmount ?? 0);
               const minP = Number(item.promoMinPurchase ?? 0);
               const meetsRequirement = minP > 0 ? subtotal >= minP : true;
-
               const isPercentage = Number(item.promoDiscountPercent ?? 0) > 0;
-              const isConditionalFixed = minP > 0 && !isPercentage;
 
               let lineDiscount = 0;
               let lineDiscountAmt = 0;
-
               if (discountAmt > 0) {
-                if (isConditionalFixed) {
-                  lineDiscountAmt = discountAmt;
-                  lineDiscount = meetsRequirement ? discountAmt : 0;
-                } else {
+                if (isPercentage) {
                   lineDiscountAmt = discountAmt * item.quantity;
                   lineDiscount = meetsRequirement ? discountAmt * item.quantity : 0;
+                } else {
+                  lineDiscountAmt = discountAmt;
+                  lineDiscount = meetsRequirement ? discountAmt : 0;
                 }
               }
 
               return (
-                <div
-                  key={itemKey}
-                  className={`flex flex-col gap-2 pb-3 border-b border-stone-100 last:border-0 rounded-md transition-colors ${highlightedProductId === itemKey ? "bg-amber-50/70" : ""
-                    }`}
-                >
-                  <div className="flex items-start gap-2">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-stone-800 leading-tight mb-0.5 truncate" title={item.name}>{item.name}</p>
-                      {item.variantCode && (
-                        <div className="flex items-center gap-1.5 mb-1.5 font-mono">
-                          <span className="text-[9px] bg-stone-100 px-1 rounded text-stone-500 font-bold uppercase">{item.variantCode}</span>
-                          <span className="text-[10px] text-stone-400">{item.variantColor} / {item.skuSize}</span>
-                        </div>
-                      )}
-                      <p className="text-xs text-stone-500 font-semibold">Rp {itemPrice.toLocaleString("id-ID")}</p>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => onRemove(item.id, item.skuId || undefined)}
-                        className="h-8 w-8"
-                      >
-                        <Minus className="w-4 h-4" />
-                      </Button>
-                      <span className="w-6 text-center text-sm font-bold">{item.quantity}</span>
-                      <Button
-                        size="icon"
-                        onClick={() => onAdd(item.id, item.skuId || undefined)}
-                        disabled={item.quantity >= item.stock}
-                        className="h-8 w-8 bg-[#3C3025] hover:bg-[#5a4a38] text-white"
-                      >
-                        <Plus className="w-4 h-4" />
-                      </Button>
-                    </div>
-
-                    <div className="text-sm font-bold w-24 text-right text-[#3C3025]">
-                      <p>Rp {(itemPrice * item.quantity).toLocaleString("id-ID")}</p>
-                      {!isConditionalFixed && lineDiscount > 0 ? (
-                        <p className="text-[11px] text-red-500">- Rp {lineDiscount.toLocaleString("id-ID")}</p>
-                      ) : !isConditionalFixed && lineDiscountAmt > 0 ? (
-                        <p className="text-[11px] text-stone-400 line-through">- Rp {lineDiscountAmt.toLocaleString("id-ID")}</p>
-                      ) : null}
-                    </div>
-
-                    <button
-                      onClick={() => onDelete(item.id, item.skuId || undefined)}
-                      className="text-red-300 hover:text-red-500 ml-1 p-1"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                <div key={itemKey} className={`flex items-start gap-1.5 pb-2 border-b border-stone-100 last:border-0 ${highlightedProductId === itemKey ? "bg-amber-50/50 -mx-1.5 px-1.5 rounded" : ""}`}>
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[11px] font-bold text-stone-800 truncate">{item.name}</p>
+                    {item.variantCode && (
+                      <p className="text-[9px] text-stone-400 font-mono">{item.variantCode} · {item.variantColor}/{item.skuSize}</p>
+                    )}
+                    <p className="text-[10px] text-stone-500">Rp {itemPrice.toLocaleString("id-ID")}</p>
+                    {discountAmt > 0 && lineDiscount > 0 && (
+                      <p className="text-[9px] text-red-500 font-bold">{item.promoName || "Promo"} -Rp{lineDiscount.toLocaleString("id-ID")}</p>
+                    )}
                   </div>
-
-                  {discountAmt > 0 && (
-                    <div className="flex items-center gap-2 pl-1">
-                      <div className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tight ${lineDiscount > 0
-                        ? "bg-red-50 text-red-600"
-                        : "bg-stone-100 text-stone-400"
-                        }`}>
-                        {item.promoName || "Promo Admin"}{" - "}
-                        {isPercentage
-                          ? `Diskon ${Math.round(Number(item.promoDiscountPercent ?? 0))}% `
-                          : isConditionalFixed
-                            ? `Potongan Flat Rp ${discountAmt.toLocaleString("id-ID")} `
-                            : `Potongan Rp ${discountAmt.toLocaleString("id-ID")} `
-                        }
-                        {isConditionalFixed
-                          ? lineDiscount > 0
-                            ? `(Aktif di Total)`
-                            : `(Min. Rp ${minP.toLocaleString("id-ID")} - Belum Terpenuhi)`
-                          : lineDiscount > 0
-                            ? `(-Rp ${lineDiscount.toLocaleString("id-ID")})`
-                            : `(Min. Rp ${minP.toLocaleString("id-ID")} - Belum Terpenuhi)`
-                        }
-                      </div>
-                    </div>
-                  )}
+                  {/* Quantity */}
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button onClick={() => onRemove(item.id, item.skuId || undefined)} className="w-7 h-7 flex items-center justify-center rounded border border-stone-200 text-stone-500 hover:bg-stone-100"><Minus className="w-3 h-3" /></button>
+                    <span className="w-5 text-center text-[11px] font-bold">{item.quantity}</span>
+                    <button onClick={() => onAdd(item.id, item.skuId || undefined)} disabled={item.quantity >= item.stock} className="w-7 h-7 flex items-center justify-center rounded bg-[#3C3025] text-white hover:bg-[#5a4a38] disabled:opacity-30"><Plus className="w-3 h-3" /></button>
+                  </div>
+                  {/* Total */}
+                  <div className="text-right w-20 shrink-0">
+                    <p className="text-[11px] font-bold text-[#3C3025]">Rp{(itemPrice * item.quantity).toLocaleString("id-ID")}</p>
+                    {lineDiscount > 0 && <p className="text-[9px] text-red-500">-Rp{lineDiscount.toLocaleString("id-ID")}</p>}
+                  </div>
+                  {/* Delete */}
+                  <button onClick={() => onDelete(item.id, item.skuId || undefined)} className="text-stone-300 hover:text-red-500 p-0.5 shrink-0">
+                    <Trash2 className="w-3 h-3" />
+                  </button>
                 </div>
-              )
+              );
             })
           )}
         </div>
 
-        <div className="border-t px-4 py-4 space-y-4 bg-stone-50/50 shrink-0">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <Label className="text-[10px] text-stone-500 uppercase font-black">Pelanggan</Label>
-              <Input
-                placeholder="Nama"
-                value={customerName}
-                onChange={(e) => onCustomerNameChange(e.target.value)}
-                className="h-9 text-xs bg-white"
-              />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-[10px] text-stone-500 uppercase font-black">No. HP</Label>
-              <Input
-                placeholder="08..."
-                value={customerPhone}
-                onChange={(e) => onCustomerPhoneChange(e.target.value)}
-                className="h-9 text-xs bg-white"
-              />
-            </div>
+        {/* Footer — PINDAHKAN scroll ke atas, footer FIXED */}
+        <div className="shrink-0 border-t border-stone-200 bg-white px-3 pt-2 pb-3 space-y-2">
+          {/* Customer */}
+          <div className="grid grid-cols-2 gap-2">
+            <input placeholder="Nama" value={customerName} onChange={(e) => onCustomerNameChange(e.target.value)} className="h-8 text-[11px] px-2 rounded border border-stone-200 bg-stone-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-stone-400" />
+            <input placeholder="08..." value={customerPhone} onChange={(e) => onCustomerPhoneChange(e.target.value)} className="h-8 text-[11px] px-2 rounded border border-stone-200 bg-stone-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-stone-400" />
           </div>
 
-          <div className="space-y-3 pt-2 border-t border-stone-200">
-            {/* Breakdown */}
-            <div className="space-y-1.5 text-xs">
-              <div className="flex justify-between text-stone-500 font-medium">
+          {/* Breakdown + Payment in grid */}
+          <div className="flex items-start gap-3">
+            {/* Left: breakdown */}
+            <div className="flex-1 min-w-0 space-y-0.5 text-[10px]">
+              <div className="flex justify-between text-stone-500">
                 <span>Subtotal</span>
-                <span>Rp {subtotal.toLocaleString("id-ID")}</span>
+                <span>Rp{subtotal.toLocaleString("id-ID")}</span>
               </div>
               {itemDiscountTotal > 0 && (
-                <div className="flex justify-between text-stone-400 font-medium">
-                  <span>Diskon Produk</span>
-                  <span>- Rp {itemDiscountTotal.toLocaleString("id-ID")}</span>
+                <div className="flex justify-between text-stone-400">
+                  <span>Diskon</span>
+                  <span>-Rp{itemDiscountTotal.toLocaleString("id-ID")}</span>
                 </div>
               )}
               {promoDiscountTotal > 0 && (
-                <div className="flex justify-between text-red-500 font-semibold bg-red-50/50 px-1.5 py-1 rounded">
-                  <span>Promo Bersyarat</span>
-                  <span>- Rp {promoDiscountTotal.toLocaleString("id-ID")}</span>
+                <div className="flex justify-between text-red-500 font-bold bg-red-50/50 rounded px-1">
+                  <span>Promo</span>
+                  <span>-Rp{promoDiscountTotal.toLocaleString("id-ID")}</span>
                 </div>
               )}
-
-              <div className="flex justify-between font-bold text-sm pt-2 border-t border-stone-150">
-                <span className="text-stone-500">Total Akhir</span>
-                <span className="text-[#3C3025] text-base font-black">Rp {total.toLocaleString("id-ID")}</span>
+              <div className="flex justify-between font-black text-stone-800 text-[13px] pt-1 border-t border-stone-300 mt-1">
+                <span>Total</span>
+                <span className="text-[#3C3025]">Rp{total.toLocaleString("id-ID")}</span>
               </div>
             </div>
 
-            {/* Metode Pembayaran */}
-            <div className="space-y-1.5">
-              <Label className="text-[10px] text-stone-500 uppercase font-black">Metode Pembayaran</Label>
-              <div className="grid grid-cols-3 gap-2">
-                {(["CASH", "DEBIT", "QRIS"] as const).map((method) => (
-                  <Button
-                    key={method}
-                    type="button"
-                    variant="outline"
-                    onClick={() => onPaymentMethodChange?.(method)}
+            {/* Right: payment + button */}
+            <div className="w-[160px] shrink-0 space-y-1.5">
+              {/* Payment method pills */}
+              <div className="flex gap-1">
+                {(["CASH", "DEBIT", "QRIS"] as const).map((m) => (
+                  <button
+                    key={m}
+                    onClick={() => onPaymentMethodChange?.(m)}
                     className={cn(
-                      "h-9 text-xs font-bold transition-all rounded-lg",
-                      paymentMethod === method
-                        ? "bg-[#3C3025] text-white hover:bg-[#3C3025] border-transparent"
-                        : "bg-white border-stone-200 text-stone-600 hover:bg-stone-50"
+                      "flex-1 h-7 text-[9px] font-bold rounded uppercase tracking-wider transition-all",
+                      paymentMethod === m
+                        ? "bg-[#3C3025] text-white"
+                        : "bg-stone-100 text-stone-500 hover:bg-stone-200"
                     )}
                   >
-                    {method}
-                  </Button>
+                    {m}
+                  </button>
                 ))}
               </div>
-            </div>
-
-            {/* Bayar Tunai */}
-            <div className="space-y-1.5">
-              <Label className="text-[10px] text-stone-500 uppercase font-black">
-                {paymentMethod === "CASH" ? "Bayar Tunai (Rp)" : `Uang Diterima (${paymentMethod})`}
-              </Label>
-              <Input
+              {/* Amount input */}
+              <input
                 type="text"
                 value={formatNumber(amountPaid)}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  if (/^[0-9.]*$/.test(val)) {
-                    onAmountPaidChange(parseNumber(val));
-                  }
-                }}
+                onChange={(e) => { const v = e.target.value; if (/^[0-9.]*$/.test(v)) onAmountPaidChange(parseNumber(v)); }}
                 disabled={paymentMethod !== "CASH"}
                 placeholder="0"
                 className={cn(
-                  "bg-white h-10 text-lg font-bold",
-                  paymentMethod !== "CASH" && "bg-stone-50 text-stone-400 border-stone-200"
+                  "w-full h-8 text-sm font-black text-right px-2 rounded border border-stone-300 bg-white focus:outline-none focus:ring-1 focus:ring-stone-500",
+                  paymentMethod !== "CASH" && "bg-stone-50 text-stone-400"
                 )}
               />
-              {paymentMethod === "CASH" && amountPaid >= total && total > 0 && (
-                <div className="flex justify-between items-center text-xs text-green-700 font-bold bg-green-50 px-2 py-1.5 rounded">
-                  <span>Kembalian:</span>
-                  <span>Rp {change.toLocaleString("id-ID")}</span>
+              {paymentMethod === "CASH" && amountPaid > 0 && (
+                <div className={cn("text-[10px] font-bold px-1.5 py-0.5 rounded text-center", amountPaid >= total ? "text-green-700 bg-green-50" : "text-red-500 bg-red-50")}>
+                  {amountPaid >= total ? `Kembali Rp${change.toLocaleString("id-ID")}` : `Kurang Rp${remainingPayment.toLocaleString("id-ID")}`}
                 </div>
-              )}
-              {paymentMethod === "CASH" && amountPaid > 0 && amountPaid < total && (
-                <p className="text-[10px] text-red-500 font-bold">Kurang: Rp {remainingPayment.toLocaleString("id-ID")}</p>
               )}
             </div>
           </div>
 
+          {/* Pay button — ALWAYS at bottom */}
           <Button
             onClick={onCheckout}
             disabled={!canCheckout}
-            className={`w-full py-6 text-sm font-black tracking-wide ${canCheckout
-              ? "bg-[#3C3025] hover:bg-[#5a4a38] text-white"
-              : "bg-stone-200 text-stone-500"
-              }`}
+            className={cn(
+              "w-full h-10 text-xs font-black tracking-widest rounded-lg transition-all",
+              canCheckout
+                ? "bg-[#3C3025] hover:bg-[#5a4a38] text-white shadow-lg active:scale-[0.98]"
+                : "bg-stone-200 text-stone-400"
+            )}
           >
-            {isLoading
-              ? "MEMPROSES..."
-              : canCheckout
-                ? `BAYAR Rp ${total.toLocaleString("id-ID")}`
-                : "PENDING"}
+            {isLoading ? "PROSES..." : canCheckout ? `BAYAR Rp${total.toLocaleString("id-ID")}` : "LENGKAPI"}
           </Button>
         </div>
       </div>

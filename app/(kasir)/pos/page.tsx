@@ -50,6 +50,7 @@ export default function POSPage() {
   const [showCartDrawer, setShowCartDrawer] = useState(false);
   const [showPinModal, setShowPinModal] = useState(false);
   const [isCartVisible, setIsCartVisible] = useState(true);
+  const [isPaymentExpanded, setIsPaymentExpanded] = useState(true);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const amountPaidInputRef = useRef<HTMLInputElement>(null);
 
@@ -233,16 +234,13 @@ export default function POSPage() {
       const isItemConditionalNominal = targetType && !isGlobal && minP > 0 && !isPercentage;
 
       if (targetType && !isGlobal && !isItemConditionalNominal) {
-        // Hitung langsung diskon non-conditional nominal & percentage level item
-        if (meetMinP) {
-          if (isPercentage) {
-            itemDiscount = (itemPrice * Number(c.promoDiscountPercent ?? 0) / 100) * c.quantity;
-          } else {
-            // Nominal reguler: dikali qty
-            itemDiscount = discountAmt * c.quantity;
-          }
+        // Hitung langsung diskon non-conditional PERCENTAGE level item (per-item)
+        if (meetMinP && isPercentage) {
+          itemDiscount = (itemPrice * Number(c.promoDiscountPercent ?? 0) / 100) * c.quantity;
           itemDiscount = Math.min(itemDiscount, itemSubtotal);
         }
+        // NOMINAL tanpa minPurchase tidak dihitung per-item di sini,
+        // melainkan flat per-promo di langkah 2 (seperti conditional nominal)
       } else if (!targetType || isGlobal) {
         // Jika tidak ada promo sama sekali, atau promonya bertipe GLOBAL, berhak untuk promo global
         isGlobalEligible = true;
@@ -263,8 +261,46 @@ export default function POSPage() {
       };
     });
 
-    // 2. Hitung diskon item-level conditional nominal (berkelompok per Promo Name)
-    const uniqueItemPromoNames = Array.from(
+    // 2. Hitung diskon item-level NOMINAL tanpa minPurchase (berkelompok per Promo Name)
+    //    NOMINAL flat: diskon dihitung SEKALI per promo, lalu didistribusikan
+    //    proporsional ke item-item yang cocok.
+    const uniqueNominalPromoNames = Array.from(
+      new Set(
+        itemsWithItemDiscount
+          .filter(i => i.promoName && i.promoTargetType && !i.isGlobal && !i.isPercentage && i.minP === 0)
+          .map(i => i.promoName!)
+      )
+    );
+
+    uniqueNominalPromoNames.forEach((pName) => {
+      const matchingItems = itemsWithItemDiscount.filter(i => i.promoName === pName);
+      const firstItem = matchingItems[0];
+      const totalDiscountValue = Number(firstItem.discountAmount); // Potongan flat tunggal
+      const totalMatchingSubtotal = matchingItems.reduce((sum, i) => sum + i.itemSubtotal, 0);
+
+      if (matchingItems.length > 0 && totalMatchingSubtotal > 0) {
+        const finalDiscount = Math.min(totalDiscountValue, totalMatchingSubtotal);
+        let currentDistributed = 0;
+
+        matchingItems.forEach((eligItem, idx) => {
+          const isLast = idx === matchingItems.length - 1;
+          let portion = 0;
+
+          if (isLast) {
+            portion = finalDiscount - currentDistributed;
+          } else {
+            portion = Math.round((eligItem.itemSubtotal / totalMatchingSubtotal) * finalDiscount);
+          }
+
+          portion = Math.min(portion, eligItem.itemSubtotal);
+          eligItem.itemDiscount = portion;
+          currentDistributed += portion;
+        });
+      }
+    });
+
+    // 3. Hitung diskon item-level conditional nominal (berkelompok per Promo Name)
+    const uniqueConditionalPromoNames = Array.from(
       new Set(
         itemsWithItemDiscount
           .filter(i => i.isItemConditionalNominal && i.promoName)
@@ -272,7 +308,7 @@ export default function POSPage() {
       )
     );
 
-    uniqueItemPromoNames.forEach((pName) => {
+    uniqueConditionalPromoNames.forEach((pName) => {
       const matchingItems = itemsWithItemDiscount.filter(i => i.promoName === pName);
       const firstItem = matchingItems[0];
       const minP = Number(firstItem.promoMinPurchase ?? 0);
@@ -770,27 +806,27 @@ export default function POSPage() {
 
           {/* Footer: Bayar */}
           {cart.length > 0 && (
-            <div className="border-t px-4 py-4 space-y-3 bg-stone-50/50 shrink-0">
-              <div className="space-y-2 pb-2">
+            <div className="border-t px-4 py-4 space-y-4 bg-stone-50/50 shrink-0">
+              <div className="space-y-2 pb-1">
                 <div className="grid grid-cols-2 gap-2">
                   <div className="space-y-1">
-                    <Label className="text-[9px] uppercase font-black text-stone-400">
+                    <Label className="text-xs uppercase font-black text-stone-500">
                       Customer
                     </Label>
                     <Input
                       placeholder="Nama"
-                      className="h-8 text-xs bg-white border-stone-200"
+                      className="h-10 text-sm bg-white border-stone-200"
                       value={customerName}
                       onChange={(e) => setCustomerName(e.target.value)}
                     />
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-[9px] uppercase font-black text-stone-400">
+                    <Label className="text-xs uppercase font-black text-stone-500">
                       No. HP
                     </Label>
                     <Input
                       placeholder="08..."
-                      className="h-8 text-xs bg-white border-stone-200"
+                      className="h-10 text-sm bg-white border-stone-200"
                       value={customerPhone}
                       onChange={(e) => setCustomerPhone(e.target.value)}
                     />
@@ -798,105 +834,94 @@ export default function POSPage() {
                 </div>
               </div>
 
-              <div className="space-y-1.5 pt-2 border-t border-stone-200 text-xs">
-                <div className="flex justify-between text-stone-500 font-medium">
-                  <span>Subtotal</span>
-                  <span>Rp {cartSubtotal.toLocaleString("id-ID")}</span>
-                </div>
-                {itemDiscountTotal > 0 && (
-                  <div className="flex justify-between text-stone-400 font-medium">
-                    <span>Diskon Produk</span>
-                    <span>- Rp {itemDiscountTotal.toLocaleString("id-ID")}</span>
+              {/* Breakdown compact */}
+              <div className="flex items-start gap-3">
+                <div className="flex-1 min-w-0 space-y-0.5 text-[10px]">
+                  <div className="flex justify-between text-stone-500">
+                    <span>Subtotal</span>
+                    <span>Rp{cartSubtotal.toLocaleString("id-ID")}</span>
                   </div>
-                )}
-                {promoDiscountTotal > 0 && (
-                  <div className="flex justify-between text-red-500 font-semibold bg-red-50/50 px-1.5 py-1 rounded">
-                    <span>Promo Bersyarat</span>
-                    <span>- Rp {promoDiscountTotal.toLocaleString("id-ID")}</span>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex justify-between font-bold text-sm pt-2 border-t border-stone-200">
-                <span className="text-stone-500">Total Harga</span>
-                <span className="text-[#3C3025] text-lg font-black italic">
-                  Rp {totalPrice.toLocaleString("id-ID")}
-                </span>
-              </div>
-
-              {/* Metode Pembayaran Desktop */}
-              <div className="space-y-1.5">
-                <Label className="text-[9px] text-stone-400 uppercase font-black">Metode Pembayaran</Label>
-                <div className="grid grid-cols-3 gap-2">
-                  {(["CASH", "DEBIT", "QRIS"] as const).map((method) => (
-                    <Button
-                      key={method}
-                      type="button"
-                      variant="outline"
-                      onClick={() => setPaymentMethod(method)}
-                      className={cn(
-                        "h-8 text-xs font-bold transition-all rounded-lg",
-                        paymentMethod === method
-                          ? "bg-[#3C3025] text-white hover:bg-[#3C3025] border-transparent"
-                          : "bg-white border-stone-200 text-stone-600 hover:bg-stone-50"
-                      )}
-                    >
-                      {method}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-1.5 pt-1">
-                <Label className="text-[9px] text-stone-400 uppercase font-black">
-                  {paymentMethod === "CASH" ? "Uang Diterima (Rp)" : `Uang Diterima (${paymentMethod})`}
-                </Label>
-                <Input
-                  ref={amountPaidInputRef}
-                  type="text"
-                  value={formatNumber(amountPaid)}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (/^[0-9.]*$/.test(val)) {
-                      setAmountPaid(parseNumber(val));
-                    }
-                  }}
-                  disabled={paymentMethod !== "CASH"}
-                  className={cn(
-                    "bg-white h-10 text-base font-black border-stone-300",
-                    paymentMethod !== "CASH" && "bg-stone-50 text-stone-400 border-stone-200"
+                  {itemDiscountTotal > 0 && (
+                    <div className="flex justify-between text-stone-400">
+                      <span>Diskon</span>
+                      <span>-Rp{itemDiscountTotal.toLocaleString("id-ID")}</span>
+                    </div>
                   )}
-                />
-                {paymentMethod === "CASH" && amountPaid > 0 && amountPaid >= totalPrice && (
-                  <div className="flex justify-between items-center text-xs text-green-700 font-bold bg-green-50 px-2 py-1.5 rounded border border-green-100">
-                    <span>Kembalian:</span>
-                    <span>Rp {change.toLocaleString("id-ID")}</span>
+                  {promoDiscountTotal > 0 && (
+                    <div className="flex justify-between text-red-500 font-bold bg-red-50/50 rounded px-1">
+                      <span>Promo</span>
+                      <span>-Rp{promoDiscountTotal.toLocaleString("id-ID")}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between font-black text-stone-800 text-[13px] pt-1 border-t border-stone-300 mt-1">
+                    <span>Total</span>
+                    <span className="text-[#3C3025]">Rp{totalPrice.toLocaleString("id-ID")}</span>
                   </div>
-                )}
-                {paymentMethod === "CASH" && amountPaid > 0 && amountPaid < totalPrice && (
-                  <p className="text-[9px] text-red-500 font-bold bg-red-50 px-2 py-1 rounded">
-                    Kurang Bayar Rp {remainingPayment.toLocaleString("id-ID")}
-                  </p>
-                )}
+                </div>
+
+                {/* Right: payment collapse-toggle */}
+                <div className="w-[160px] shrink-0">
+                  <button
+                    onClick={() => setIsPaymentExpanded(!isPaymentExpanded)}
+                    className="w-full flex items-center justify-between h-7 text-[10px] font-bold text-stone-500 uppercase tracking-wider hover:text-stone-700 transition-colors border border-stone-200 rounded px-2"
+                  >
+                    <span>Bayar</span>
+                    <svg className={`w-3 h-3 transition-transform ${isPaymentExpanded ? "rotate-90" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                  </button>
+                </div>
               </div>
-              <Button
-                onClick={handleCheckout}
-                disabled={
-                  checkoutMutation.isPending || isSubmitting || !canCheckout
-                }
-                className={cn(
-                  "w-full py-6 text-sm font-black tracking-widest",
-                  canCheckout
-                    ? "bg-[#3C3025] hover:bg-[#5a4a38] text-white shadow-lg"
-                    : "bg-stone-200 text-stone-400",
-                )}
-              >
-                {checkoutMutation.isPending || isSubmitting
-                  ? "MEMPROSES..."
-                  : canCheckout
-                    ? `BAYAR Rp ${totalPrice.toLocaleString("id-ID")}`
-                    : "LENGKAPI DATA"}
-              </Button>
+
+              {isPaymentExpanded && (
+                <>
+                  {/* Payment method pills */}
+                  <div className="flex gap-1">
+                    {(["CASH", "DEBIT", "QRIS"] as const).map((m) => (
+                      <button
+                        key={m}
+                        onClick={() => setPaymentMethod(m)}
+                        className={cn(
+                          "flex-1 h-7 text-[9px] font-bold rounded uppercase tracking-wider transition-all",
+                          paymentMethod === m
+                            ? "bg-[#3C3025] text-white"
+                            : "bg-stone-100 text-stone-500 hover:bg-stone-200"
+                        )}
+                      >
+                        {m}
+                      </button>
+                    ))}
+                  </div>
+                  {/* Amount input */}
+                  <input
+                    ref={amountPaidInputRef}
+                    type="text"
+                    value={formatNumber(amountPaid)}
+                    onChange={(e) => { const v = e.target.value; if (/^[0-9.]*$/.test(v)) setAmountPaid(parseNumber(v)); }}
+                    disabled={paymentMethod !== "CASH"}
+                    placeholder="0"
+                    className={cn(
+                      "w-full h-8 text-sm font-black text-right px-2 rounded border border-stone-300 bg-white focus:outline-none focus:ring-1 focus:ring-stone-500",
+                      paymentMethod !== "CASH" && "bg-stone-50 text-stone-400"
+                    )}
+                  />
+                  {paymentMethod === "CASH" && amountPaid > 0 && (
+                    <div className={cn("text-[10px] font-bold px-1.5 py-0.5 rounded text-center", amountPaid >= totalPrice ? "text-green-700 bg-green-50" : "text-red-500 bg-red-50")}>
+                      {amountPaid >= totalPrice ? `Kembali Rp${change.toLocaleString("id-ID")}` : `Kurang Rp${remainingPayment.toLocaleString("id-ID")}`}
+                    </div>
+                  )}
+                  <Button
+                    onClick={handleCheckout}
+                    disabled={checkoutMutation.isPending || isSubmitting || !canCheckout}
+                    className={cn(
+                      "w-full h-10 text-xs font-black tracking-widest rounded-lg transition-all",
+                      canCheckout
+                        ? "bg-[#3C3025] hover:bg-[#5a4a38] text-white shadow-lg active:scale-[0.98]"
+                        : "bg-stone-200 text-stone-400"
+                    )}
+                  >
+                    {checkoutMutation.isPending || isSubmitting ? "PROSES..." : canCheckout ? `BAYAR Rp${totalPrice.toLocaleString("id-ID")}` : "LENGKAPI"}
+                  </Button>
+                </>
+              )}
             </div>
           )}
         </aside>

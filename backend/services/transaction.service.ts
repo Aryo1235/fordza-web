@@ -174,31 +174,61 @@ export const TransactionService = {
       };
     });
 
-    // 3.1. Hitung promo non-conditional (langsung) & percentage
+    // 3.1. Hitung promo PERCENTAGE (langsung per-item)
+    //     PERCENTAGE tetap dihitung per-item karena bersifat proporsional terhadap harga.
     itemsWithPromo.forEach((entry) => {
       const { bestPromo, price, item, itemSubtotal } = entry;
       if (!bestPromo) return;
+      if (bestPromo.type !== "PERCENTAGE") return;
 
       const minP = Number(bestPromo.minPurchase || 0);
-      const isPercentage = bestPromo.type === "PERCENTAGE";
-      const isConditionalFixed = minP > 0 && !isPercentage;
-
-      // Hitung langsung jika BUKAN conditional fixed (karena conditional fixed diproses kelompok di bawah)
-      if (!isConditionalFixed) {
-        const meetsMinP = minP === 0 || subtotalBeforeDiscount >= minP;
-        if (meetsMinP) {
-          if (isPercentage) {
-            entry.discount = (price * Number(bestPromo.value) / 100) * item.quantity;
-          } else {
-            // Nominal reguler tanpa syarat minPurchase: dikali kuantitas (per unit)
-            entry.discount = Number(bestPromo.value) * item.quantity;
-          }
-          entry.discount = Math.min(entry.discount, itemSubtotal);
-        }
+      const meetsMinP = minP === 0 || subtotalBeforeDiscount >= minP;
+      if (meetsMinP) {
+        entry.discount = (price * Number(bestPromo.value) / 100) * item.quantity;
+        entry.discount = Math.min(entry.discount, itemSubtotal);
       }
     });
 
-    // 3.2. Hitung promo conditional nominal (ada minPurchase) secara berkelompok (per Promo ID)
+    // 3.2. Hitung promo NOMINAL tanpa minPurchase secara berkelompok (per Promo ID)
+    //     NOMINAL flat: diskon dihitung SEKALI per promo, lalu didistribusikan
+    //     proporsional ke item-item yang cocok (sama seperti cara kerja conditional nominal).
+    const uniqueNominalPromoIds = Array.from(
+      new Set(
+        itemsWithPromo
+          .filter(e => e.bestPromo && (Number(e.bestPromo.minPurchase || 0) === 0) && e.bestPromo.type === "NOMINAL")
+          .map(e => e.bestPromo.id)
+      )
+    );
+
+    uniqueNominalPromoIds.forEach((promoId) => {
+      const matchingEntries = itemsWithPromo.filter(e => e.bestPromo && e.bestPromo.id === promoId);
+      const firstPromo = matchingEntries[0].bestPromo;
+      const totalDiscountValue = Number(firstPromo.value); // Nilai potongan flat tunggal
+      const totalMatchingSubtotal = matchingEntries.reduce((sum, e) => sum + e.itemSubtotal, 0);
+
+      if (matchingEntries.length > 0 && totalMatchingSubtotal > 0) {
+        // Batasi diskon agar tidak melebihi subtotal item-item tersebut
+        const finalDiscount = Math.min(totalDiscountValue, totalMatchingSubtotal);
+        let currentDistributed = 0;
+
+        matchingEntries.forEach((entry, idx) => {
+          const isLast = idx === matchingEntries.length - 1;
+          let portion = 0;
+
+          if (isLast) {
+            portion = finalDiscount - currentDistributed;
+          } else {
+            portion = Math.round((entry.itemSubtotal / totalMatchingSubtotal) * finalDiscount);
+          }
+
+          portion = Math.min(portion, entry.itemSubtotal);
+          entry.discount = portion;
+          currentDistributed += portion;
+        });
+      }
+    });
+
+    // 3.3. Hitung promo conditional nominal (ada minPurchase) secara berkelompok (per Promo ID)
     // Cari semua promo conditional nominal unik yang aktif pada item di keranjang
     const uniqueConditionalNominalPromoIds = Array.from(
       new Set(
