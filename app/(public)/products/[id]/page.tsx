@@ -267,8 +267,8 @@ export default function ProductDetailPage({
   }
 
   return (
-    <div className="min-h-screen bg-[#FDFCFB] selection:bg-[#4A3B2E] selection:text-white pt-10">
-      <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-10 py-8 md:py-12">
+    <div className="  selection:bg-[#4A3B2E] selection:text-white ">
+      <main className="mx-auto max-w-7xl px-4 sm:px-6 md:px-20 lg:px-10 ">
 
         {/* Breadcrumb — fade in cepat */}
         <motion.div
@@ -466,7 +466,7 @@ export default function ProductDetailPage({
                               {selectedVariant.promoName}
                             </span>
                             {selectedVariant.promoMinPurchase && Number(selectedVariant.promoMinPurchase) > 0 ? (
-                              <span className="text-[9px] font-bold lowercase tracking-tight opacity-90 border-l border-amber-300 pl-1.5">
+                              <span className="text-[9px] font-bold  tracking-tight opacity-90 border-l border-amber-300 pl-1.5">
                                 min. {formatRupiah(selectedVariant.promoMinPurchase).replace("Rp ", "Rp")}
                               </span>
                             ) : (
