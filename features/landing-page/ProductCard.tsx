@@ -94,6 +94,16 @@ export function ProductCard({ product }: { product: Product }) {
     }
   }
 
+  if (
+    displayDiscount === 0 &&
+    displayHighestPrice > displayFinalPrice &&
+    displayHighestPrice > 0
+  ) {
+    displayDiscount = Math.round(
+      ((displayHighestPrice - displayFinalPrice) / displayHighestPrice) * 100,
+    );
+  }
+
   const hasDiscount = Boolean(displayDiscount > 0);
 
   return (
@@ -146,41 +156,43 @@ export function ProductCard({ product }: { product: Product }) {
         </div>
 
         {/* Nama produk */}
-        <p
-          className="text-sm font-bold text-gray-900 leading-snug line-clamp-2"
-          style={{ fontFamily: "Inter, sans-serif" }}
-        >
+        <p className="text-xs md:text-sm font-bold text-[var(--fordza-brown)] group-hover:text-[var(--fordza-brown-light)] transition-colors leading-snug line-clamp-2">
           {product.name}
         </p>
 
         {/* Deskripsi */}
         <div className="min-h-[36px]">
           {product.shortDescription ? (
-            <p className="text-[11px] text-gray-400 font-medium leading-relaxed line-clamp-2">
+            <p className="text-[11px] text-stone-400 font-medium leading-relaxed line-clamp-2">
               {product.shortDescription}
             </p>
           ) : null}
         </div>
 
         {/* Footer */}
-        <div className="mt-auto flex items-end justify-between pt-3  pb-1 border-t border-transparent">
+        <div className="mt-auto flex items-end justify-between pt-3 pb-1 border-t border-transparent">
           {/* Harga */}
           <div className="flex flex-col gap-0.5">
             <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-[10px] tracking-wide text-gray-400 font-medium">
+              <span className="text-[10px] tracking-wide text-stone-400 font-medium">
                 Harga
               </span>
               {hasDiscount && displayHighestPrice !== displayFinalPrice ? (
-                <span className="text-xs font-medium text-gray-400 line-through">
+                <span className="text-[10px] md:text-xs font-medium text-stone-400 line-through">
                   {formatRupiah(displayHighestPrice)}
                 </span>
               ) : null}
             </div>
 
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-base font-bold text-gray-900 leading-none">
+              <span className="text-base font-extrabold text-stone-900 leading-none">
                 {formatRupiah(displayFinalPrice)}
               </span>
+              {hasDiscount && (
+                <span className="text-[10px] md:text-[11px] font-black text-red-600 bg-red-50 px-2 py-0.5 rounded shadow-sm">
+                  -{displayDiscount}%
+                </span>
+              )}
             </div>
           </div>
 
