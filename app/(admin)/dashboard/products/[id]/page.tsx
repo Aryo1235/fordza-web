@@ -631,7 +631,7 @@ export default function EditProductPage({
             selectedTemplate?.sizes || product?.detail?.sizeTemplate?.sizes
           }
           sizeTemplateType={
-            selectedTemplate?.type || product?.detail?.sizeTemplate?.type
+            selectedTemplate?.type || product?.detail?.sizeTemplate?.type || product?.productType || "shoes"
           }
           productCustomSizes={product?.detail?.customSizes || []}
           productCustomMeasurements={product?.detail?.customMeasurements || {}}

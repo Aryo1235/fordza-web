@@ -455,22 +455,24 @@ export default function ProductDetailPage({
                         </span>
                       )}
                     </div>
-                    {effectiveHighestPrice > currentFinalPrice && (
-                      <div className="flex items-center gap-3 mt-1">
-                        <span className="text-base font-bold text-[#4A3B2E]/40 line-through decoration-[#4A3B2E]/30">
-                          {formatRupiah(effectiveHighestPrice)}
-                        </span>
+                    {(effectiveHighestPrice > currentFinalPrice || selectedVariant?.promoName) && (
+                      <div className="flex items-center gap-3 mt-1 flex-wrap">
+                        {effectiveHighestPrice > currentFinalPrice && (
+                          <span className="text-base font-bold text-[#4A3B2E]/40 line-through decoration-[#4A3B2E]/30">
+                            {formatRupiah(effectiveHighestPrice)}
+                          </span>
+                        )}
                         {selectedVariant?.promoName && (
-                          <div className="inline-flex items-center gap-1.5 bg-amber-100 text-amber-700 px-2 py-0.5 rounded-sm">
-                            <span className="text-[10px] font-black uppercase tracking-wider">
-                              {selectedVariant.promoName}
+                          <div className="inline-flex items-center gap-1.5 bg-amber-100 text-amber-700 px-2.5 py-1 rounded-md border border-amber-200/60 shadow-xs">
+                            <span className="text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
+                              🏷️ {selectedVariant.promoName}
                             </span>
                             {selectedVariant.promoMinPurchase && Number(selectedVariant.promoMinPurchase) > 0 ? (
-                              <span className="text-[9px] font-bold lowercase tracking-tight opacity-90 border-l border-amber-300 pl-1.5">
+                              <span className="text-[9px] font-bold lowercase tracking-tight opacity-90 border-l border-amber-300/80 pl-1.5">
                                 min. {formatRupiah(selectedVariant.promoMinPurchase).replace("Rp ", "Rp")}
                               </span>
                             ) : (
-                              <span className="text-[9px] font-bold lowercase tracking-tight opacity-90 border-l border-amber-300 pl-1.5">
+                              <span className="text-[9px] font-bold lowercase tracking-tight opacity-90 border-l border-amber-300/80 pl-1.5">
                                 tanpa min. belanja
                               </span>
                             )}
