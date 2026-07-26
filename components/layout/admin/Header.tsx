@@ -11,7 +11,7 @@ export function Header() {
   const logout = useLogout();
 
   return (
-    <header className="flex h-16 items-center justify-between border-b border-border bg-white px-4 shrink-0 transition-all duration-300">
+    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-white/95 backdrop-blur-sm px-4 shrink-0 transition-all duration-300 shadow-xs">
       <SidebarTrigger className="text-[#3C3025]" />
       
       {/* Right side */}

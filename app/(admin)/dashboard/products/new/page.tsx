@@ -129,10 +129,10 @@ export default function NewProductPage() {
 
     const meas: Record<string, string> = {};
     const tType = (selectedTemplate?.type || "").toLowerCase();
-    if (tType === "sepatu") {
+    if (["sepatu", "shoes", "sandal", "sandals", ""].includes(tType)) {
       if (insoleLength) meas.insoleLength = insoleLength;
       if (insoleWidth) meas.insoleWidth = insoleWidth;
-    } else if (tType === "apparel" || tType === "pakaian") {
+    } else if (["apparel", "pakaian", "baju"].includes(tType)) {
       if (ld) meas.ld = ld;
       if (pb) meas.pb = pb;
     } else {
@@ -548,7 +548,7 @@ export default function NewProductPage() {
                           value={newSizeInput}
                           onChange={e => setNewSizeInput(e.target.value)}
                           placeholder={
-                            (selectedTemplate?.type || "").toLowerCase() === "sepatu"
+                            ["sepatu", "shoes", "sandal", "sandals", ""].includes((selectedTemplate?.type || "").toLowerCase())
                               ? "Cth: 45"
                               : "Cth: XXXL"
                           }
@@ -556,7 +556,7 @@ export default function NewProductPage() {
                         />
                       </div>
 
-                      {(selectedTemplate?.type || "").toLowerCase() === "sepatu" && (
+                      {["sepatu", "shoes", "sandal", "sandals", ""].includes((selectedTemplate?.type || "").toLowerCase()) && (
                         <>
                           <div className="space-y-1">
                             <Label className="text-[10px] font-bold text-stone-500">Panjang Insole (cm)</Label>
@@ -568,7 +568,7 @@ export default function NewProductPage() {
                           </div>
                         </>
                       )}
-                      {["apparel", "pakaian"].includes((selectedTemplate?.type || "").toLowerCase()) && (
+                      {["apparel", "pakaian", "baju"].includes((selectedTemplate?.type || "").toLowerCase()) && (
                         <>
                           <div className="space-y-1">
                             <Label className="text-[10px] font-bold text-stone-500">LD (cm)</Label>
@@ -580,7 +580,7 @@ export default function NewProductPage() {
                           </div>
                         </>
                       )}
-                      {!["sepatu", "apparel", "pakaian"].includes((selectedTemplate?.type || "").toLowerCase()) && (
+                      {!["sepatu", "shoes", "sandal", "sandals", "", "apparel", "pakaian", "baju"].includes((selectedTemplate?.type || "").toLowerCase()) && (
                         <>
                           <div className="space-y-1">
                             <Label className="text-[10px] font-bold text-stone-500">Panjang (cm)</Label>

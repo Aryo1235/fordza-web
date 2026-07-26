@@ -622,9 +622,16 @@ export const ProductRepository = {
           ? Number(sku.priceOverride)
           : basePrice;
         
-        // Hanya potong harga SKU jika promo non-conditional (direct promo)
-        const effectivePercent = isConditional ? 0 : promoDiscountPercent;
-        const skuFinalPrice = skuBasePrice * (1 - effectivePercent / 100);
+        let skuFinalPrice = skuBasePrice;
+        if (!isConditional && bestPromo) {
+          if (bestPromo.type === "PERCENTAGE") {
+            const pct = Number(bestPromo.value || 0);
+            skuFinalPrice = skuBasePrice * (1 - pct / 100);
+          } else if (bestPromo.type === "NOMINAL") {
+            const nom = Number(bestPromo.value || 0);
+            skuFinalPrice = Math.max(0, skuBasePrice - nom);
+          }
+        }
         return {
           ...sku,
           priceOverride: sku.priceOverride ? Number(sku.priceOverride) : null,
@@ -849,15 +856,25 @@ export const ProductRepository = {
             const skuBasePrice = sku.priceOverride
               ? Number(sku.priceOverride)
               : basePrice;
-            const effectivePercent = isConditional ? 0 : promoDiscountPercent;
-            const skuFinalPrice =
-              skuBasePrice * (1 - effectivePercent / 100);
+            
+            let skuFinalPrice = skuBasePrice;
+            if (!isConditional && bestPromo) {
+              if (bestPromo.type === "PERCENTAGE") {
+                const pct = Number(bestPromo.value || 0);
+                skuFinalPrice = skuBasePrice * (1 - pct / 100);
+              } else if (bestPromo.type === "NOMINAL") {
+                const nom = Number(bestPromo.value || 0);
+                skuFinalPrice = Math.max(0, skuBasePrice - nom);
+              }
+            }
             return {
               ...sku,
+              priceOverride: sku.priceOverride
+                ? Number(sku.priceOverride)
+                : null,
               finalPrice: Math.round(skuFinalPrice),
             };
           });
-
           let totalDiscountPercent = 0;
           if (highestPrice > finalPrice) {
             totalDiscountPercent = Math.round(
@@ -875,16 +892,7 @@ export const ProductRepository = {
             promoDiscountPercent,
             promoName: bestPromo?.name || null,
             isPromoConditional: isConditional,
-            skus: v.skus.map((sku: any) => ({
-              ...sku,
-              priceOverride: sku.priceOverride
-                ? Number(sku.priceOverride)
-                : null,
-              finalPrice: Math.round(
-                (sku.priceOverride ? Number(sku.priceOverride) : basePrice) *
-                (1 - promoDiscountPercent / 100),
-              ),
-            })),
+            skus,
           };
         });
 

@@ -198,16 +198,21 @@ function AddSkuForm({
           // Jika ukuran kustom baru, update ProductDetail
           if (isCustom && onCustomSizeAdded) {
             const meas: Record<string, string> = {};
-            if (tType === "sepatu") {
+            const isShoeType = ["sepatu", "shoes", "sandal", "sandals", ""].includes(tType);
+            const isApparelType = ["apparel", "pakaian", "baju"].includes(tType);
+            const isParfumType = ["parfum", "perfume"].includes(tType);
+            const isAksesorisType = ["aksesoris", "accessories", "gelang", "tali"].includes(tType);
+
+            if (isShoeType) {
               if (insoleLength) meas.insoleLength = insoleLength;
               if (insoleWidth) meas.insoleWidth = insoleWidth;
-            } else if (tType === "apparel" || tType === "pakaian") {
+            } else if (isApparelType) {
               if (ld) meas.ld = ld;
               if (pb) meas.pb = pb;
-            } else if (tType === "parfum") {
+            } else if (isParfumType) {
               if (volume) meas.volume = volume;
               if (berat) meas.berat = berat;
-            } else if (tType === "aksesoris" || tType === "accessories" || tType === "gelang") {
+            } else if (isAksesorisType) {
               if (panjang) meas.panjang = panjang;
               if (lebar) meas.lebar = lebar;
               if (tinggi) meas.tinggi = tinggi;
@@ -215,7 +220,8 @@ function AddSkuForm({
               if (panjangTali) meas.panjangTali = panjangTali;
               if (detail) meas.detail = detail;
             } else {
-              if (lingkar) meas.lingkar = lingkar;
+              if (insoleLength) meas.insoleLength = insoleLength;
+              if (insoleWidth) meas.insoleWidth = insoleWidth;
             }
             const newCustomSizes = [...productCustomSizes, data.size.trim()];
             const newCustomMeasurements = { ...productCustomMeasurements, [data.size.trim()]: meas };
@@ -350,7 +356,7 @@ function AddSkuForm({
             Ukuran kustom — masukkan dimensi fisik (opsional)
           </p>
           <div className="grid grid-cols-2 gap-2">
-            {tType === "sepatu" && (
+            {(["sepatu", "shoes", "sandal", "sandals", ""].includes(tType)) && (
               <>
                 <div className="space-y-0.5">
                   <Label className="text-[10px] text-stone-500">Panjang Insole (cm)</Label>
@@ -362,13 +368,13 @@ function AddSkuForm({
                 </div>
               </>
             )}
-            {["apparel", "pakaian"].includes(tType) && (
+            {["apparel", "pakaian", "baju"].includes(tType) && (
               <>
                 <div className="space-y-0.5"><Label className="text-[10px] text-stone-500">LD (cm)</Label><Input value={ld} onChange={e => setLd(e.target.value)} placeholder="52" type="number" step="0.5" className="h-7 text-xs bg-white border-orange-200" /></div>
                 <div className="space-y-0.5"><Label className="text-[10px] text-stone-500">PB (cm)</Label><Input value={pb} onChange={e => setPb(e.target.value)} placeholder="74" type="number" step="0.5" className="h-7 text-xs bg-white border-orange-200" /></div>
               </>
             )}
-            {tType === "parfum" && (
+            {["parfum", "perfume"].includes(tType) && (
               <>
                 <div className="space-y-0.5">
                   <Label className="text-[10px] text-stone-500">Volume (ml)</Label>
@@ -408,8 +414,8 @@ function AddSkuForm({
                 </div>
               </>
             )}
-            {!["sepatu", "apparel", "pakaian", "parfum", "aksesoris", "accessories", "gelang"].includes(tType) && (
-              <div className="space-y-0.5"><Label className="text-[10px] text-stone-500">Lingkar (cm)</Label><Input value={lingkar} onChange={e => setLingkar(e.target.value)} placeholder="18" type="number" step="0.5" className="h-7 text-xs bg-white border-orange-200" /></div>
+            {!["sepatu", "shoes", "sandal", "sandals", "", "apparel", "pakaian", "baju", "parfum", "perfume", "aksesoris", "accessories", "gelang"].includes(tType) && (
+              <div className="space-y-0.5"><Label className="text-[10px] text-stone-500">Keterangan Detail</Label><Input value={detail} onChange={e => setDetail(e.target.value)} placeholder="Detail ukuran" className="h-7 text-xs bg-white border-orange-200" /></div>
             )}
           </div>
         </div>

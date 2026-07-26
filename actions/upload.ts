@@ -57,7 +57,8 @@ export async function uploadFileToS3(
     if (!isValidImageSignature(buffer)) {
       return {
         success: false,
-        message: "File rusak atau format file asli bukan gambar yang diizinkan (PNG/JPG/WebP).",
+        message:
+          "File rusak atau format file asli bukan gambar yang diizinkan (PNG/JPG/WebP).",
       };
     }
 
@@ -109,10 +110,7 @@ function isValidImageSignature(buffer: Buffer): boolean {
   if (isPng) return true;
 
   // 2. Check JPEG: FF D8 FF
-  const isJpeg =
-    buffer[0] === 0xff &&
-    buffer[1] === 0xd8 &&
-    buffer[2] === 0xff;
+  const isJpeg = buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff;
   if (isJpeg) return true;
 
   // 3. Check WebP: RIFF (bytes 0-3) dan WEBP (bytes 8-11)

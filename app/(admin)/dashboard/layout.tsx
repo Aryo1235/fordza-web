@@ -36,16 +36,16 @@ export default function DashboardLayout({
   if (isError || !admin) return null;
 
   return (
-    <SidebarProvider>
-      <div className="flex  w-full overflow-hidden bg-[#FEF4E8]">
-        <AdminSidebar />
-        <div className="flex flex-1 flex-col overflow-hidden">
-          <Header />
-          <main className="flex-1 overflow-y-auto">
-            {children}
-          </main>
-        </div>
-      </div>
-    </SidebarProvider>
+   <SidebarProvider>
+  <div className="flex  w-full overflow-hidden bg-[#FEF4E8]">
+    <AdminSidebar />
+    <div className="flex flex-1 flex-col h-full overflow-hidden">
+      <Header />
+      <main className="flex-1 overflow-y-auto">
+        {children}
+      </main>
+    </div>
+  </div>
+</SidebarProvider>
   );
 }

@@ -1,18 +1,18 @@
 "use client";
 
-import { use } from "react";
+import { use, useState } from "react";
 import { useProduct } from "@/features/products";
 import { BreadcrumbsHeader } from "@/components/layout/admin/BreadcrumbsHeader";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { Button } from "@/components/ui/button";
-import { 
-  Loader2, 
-  ArrowLeft, 
-  Edit, 
-  Package, 
-  Layers, 
-  Info, 
-  Star, 
+import {
+  Loader2,
+  ArrowLeft,
+  Edit,
+  Package,
+  Layers,
+  Info,
+  Star,
   ChevronRight,
   ShieldCheck,
   Zap,
@@ -22,11 +22,12 @@ import {
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { formatRupiah } from "@/lib/utils";
+import { formatRupiah, cn } from "@/lib/utils";
 
 export default function ProductDetailAdminPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { data: product, isLoading } = useProduct(id);
+  const [selectedImage, setSelectedImage] = useState<number>(0);
 
   const getMeasurementText = (size: string, sizeTemplate: any) => {
     if (!sizeTemplate || !sizeTemplate.measurements) return null;
@@ -118,38 +119,48 @@ export default function ProductDetailAdminPage({ params }: { params: Promise<{ i
         }
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left Column: Visuals & Quick Stats */}
-        <div className="lg:col-span-1 space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+        {/* Left Column: Visuals & Gallery (Sticky on Scroll) */}
+        <div className="lg:col-span-1 space-y-6 lg:sticky lg:top-20 self-start">
           <Card className="overflow-hidden border-stone-200 shadow-sm">
             <div className="aspect-square bg-stone-100 relative group">
-              {product.images?.[0] ? (
-                <img 
-                  src={product.images[0].url} 
-                  alt={product.name} 
-                  className="w-full h-full object-cover"
+              {product.images?.[selectedImage]?.url || product.images?.[0]?.url ? (
+                <img
+                  src={product.images[selectedImage]?.url || product.images[0].url}
+                  alt={product.name}
+                  className="w-full h-full object-cover transition-all duration-300"
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-stone-300">
                   <Package className="h-12 w-12" />
                 </div>
               )}
-              <div className="absolute top-4 right-4">
+              <div className="absolute top-4 right-4 z-10">
                 <StatusBadge active={product.isActive} />
               </div>
             </div>
-            {product.images?.length > 1 && (
-              <div className="p-4 grid grid-cols-4 gap-2 border-t border-stone-100 bg-white">
-                {product.images.slice(1, 5).map((img: any) => (
-                  <div key={img.id} className="aspect-square rounded border border-stone-200 overflow-hidden">
-                    <img src={img.url} className="w-full h-full object-cover" alt="Gallery" />
-                  </div>
+            {product.images && product.images.length > 1 && (
+              <div className="p-3 flex gap-2 overflow-x-auto border-t border-stone-100 bg-white custom-scrollbar">
+                {product.images.map((img: any, idx: number) => (
+                  <button
+                    key={img.id || idx}
+                    type="button"
+                    onClick={() => setSelectedImage(idx)}
+                    className={cn(
+                      "aspect-square h-14 w-14 flex-shrink-0 rounded-lg border-2 overflow-hidden transition-all bg-stone-50 cursor-pointer",
+                      idx === selectedImage
+                        ? "border-[#3C3025] ring-2 ring-[#3C3025]/20 shadow-sm"
+                        : "border-stone-200 opacity-60 hover:opacity-100"
+                    )}
+                  >
+                    <img src={img.url} className="w-full h-full object-cover" alt={`Thumbnail ${idx + 1}`} />
+                  </button>
                 ))}
               </div>
             )}
           </Card>
 
-          <Card className="border-stone-200 shadow-sm">
+          {/* <Card className="border-stone-200 shadow-sm">
             <CardHeader className="pb-2">
               <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-stone-400">Status Performa</CardTitle>
             </CardHeader>
@@ -171,22 +182,22 @@ export default function ProductDetailAdminPage({ params }: { params: Promise<{ i
                 {product.isNew && <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-100 uppercase text-[9px] font-bold">Baru</Badge>}
               </div>
             </CardContent>
-          </Card>
+          </Card> */}
         </div>
 
         {/* Right Column: Detailed Info & Inventory */}
         <div className="lg:col-span-2 space-y-6">
-          
+
           {/* Bento Section: Deskripsi (Full Width in column) */}
           <Card className="border-stone-200 shadow-sm overflow-hidden flex flex-col">
             <CardHeader className="bg-stone-50 border-b border-stone-100 py-3 px-5">
-               <div className="flex items-center gap-2">
-                  <div className="w-1.5 h-6 bg-[#3C3025] rounded-full" />
-                  <CardTitle className="text-sm font-bold text-stone-800 uppercase tracking-wider">Deskripsi Lengkap Produk</CardTitle>
-               </div>
+              <div className="flex items-center gap-2">
+                <div className="w-1.5 h-6 bg-[#3C3025] rounded-full" />
+                <CardTitle className="text-sm font-bold text-stone-800 uppercase tracking-wider">Deskripsi Lengkap Produk</CardTitle>
+              </div>
             </CardHeader>
             <CardContent className="p-8 flex-1 bg-white">
-              <div 
+              <div
                 className="prose prose-sm max-w-none text-stone-600 leading-relaxed min-h-[100px]"
                 dangerouslySetInnerHTML={{ __html: product.detail?.description || "Tidak ada deskripsi produk." }}
               />
@@ -197,7 +208,7 @@ export default function ProductDetailAdminPage({ params }: { params: Promise<{ i
           <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
             <Card className="md:col-span-12 border-stone-200 shadow-sm overflow-hidden flex flex-col">
               <CardHeader className="bg-stone-50 border-b border-stone-100 py-3 px-5 font-bold text-stone-800 uppercase tracking-widest text-[10px] flex flex-row items-center gap-2">
-                 <Zap className="h-3 w-3 text-amber-500" /> Catatan & Insight Internal
+                <Zap className="h-3 w-3 text-amber-500" /> Catatan & Insight
               </CardHeader>
               <CardContent className="p-6 flex-1 bg-amber-50/20">
                 <div className="bg-white p-5 rounded-xl border border-amber-100 shadow-sm italic text-sm text-amber-900 leading-relaxed">
@@ -263,43 +274,43 @@ export default function ProductDetailAdminPage({ params }: { params: Promise<{ i
                 <div key={variant.id} className="p-6 bg-white hover:bg-stone-50/50 transition-colors">
                   <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-4">
-                        <div className="h-12 w-12 rounded-xl border border-stone-200 overflow-hidden bg-white shadow-sm p-0.5">
-                           {variant.images?.[0]?.url && <img src={variant.images[0].url} className="w-full h-full object-cover rounded-lg" alt="Variant" />}
-                        </div>
-                        <div>
-                            <p className="text-base font-bold text-[#3C3025] flex items-center gap-2">
-                                {variant.color}
-                                {variant.finalPrice < variant.basePrice && (
-                                  <span className="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-md font-bold border border-emerald-200">
-                                    PROMO
-                                  </span>
-                                )}
-                            </p>
-                            <p className="text-[10px] text-stone-400 uppercase font-black tracking-widest">{variant.variantCode}</p>
-                            {variant.promoName && (
-                              <p className="text-[10px] font-bold text-amber-600 mt-1 italic">🏷️ {variant.promoName}</p>
-                            )}
-                        </div>
+                      <div className="h-12 w-12 rounded-xl border border-stone-200 overflow-hidden bg-white shadow-sm p-0.5">
+                        {variant.images?.[0]?.url && <img src={variant.images[0].url} className="w-full h-full object-cover rounded-lg" alt="Variant" />}
+                      </div>
+                      <div>
+                        <p className="text-base font-bold text-[#3C3025] flex items-center gap-2">
+                          {variant.color}
+                          {variant.finalPrice < variant.basePrice && (
+                            <span className="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-md font-bold border border-emerald-200">
+                              PROMO
+                            </span>
+                          )}
+                        </p>
+                        <p className="text-[10px] text-stone-400 uppercase font-black tracking-widest">{variant.variantCode}</p>
+                        {variant.promoName && (
+                          <p className="text-[10px] font-bold text-amber-600 mt-1 italic">🏷️ {variant.promoName}</p>
+                        )}
+                      </div>
                     </div>
                     <div className="text-right">
-                        <p className="text-lg font-black text-[#3C3025]">{formatRupiah(variant.basePrice)}</p>
-                        {variant.finalPrice < variant.basePrice && (
-                            <p className="text-[10px] text-emerald-700 font-bold bg-emerald-50 border border-emerald-100 px-1.5 py-0.5 rounded mt-1 inline-block">
-                              Promo: {formatRupiah(variant.finalPrice)}
-                            </p>
-                        )}
+                      <p className="text-lg font-black text-[#3C3025]">{formatRupiah(variant.basePrice)}</p>
+                      {variant.finalPrice < variant.basePrice && (
+                        <p className="text-[10px] text-emerald-700 font-bold bg-emerald-50 border border-emerald-100 px-1.5 py-0.5 rounded mt-1 inline-block">
+                          Promo: {formatRupiah(variant.finalPrice)}
+                        </p>
+                      )}
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-2.5">
                     {variant.skus?.map((sku: any) => {
-                        const measText = getMeasurementText(sku.size, product.detail?.sizeTemplate);
-                        return (
-                          <div key={sku.id} className={`px-4 py-3 border rounded-xl text-center min-w-[75px] transition-all ${sku.stock > 0 ? 'bg-white border-stone-200 hover:border-stone-400 shadow-sm' : 'bg-red-50 border-red-100 opacity-60'}`}>
-                              <p className="text-[10px] text-stone-400 font-black mb-0.5">{sku.size}</p>
-                              {measText && <p className="text-[9px] text-stone-500 font-bold leading-tight mb-1">{measText}</p>}
-                              <p className={`text-sm font-bold ${sku.stock === 0 ? 'text-red-500' : 'text-[#3C3025]'}`}>{sku.stock}</p>
-                          </div>
-                        );
+                      const measText = getMeasurementText(sku.size, product.detail?.sizeTemplate);
+                      return (
+                        <div key={sku.id} className={`px-4 py-3 border rounded-xl text-center min-w-[75px] transition-all ${sku.stock > 0 ? 'bg-white border-stone-200 hover:border-stone-400 shadow-sm' : 'bg-red-50 border-red-100 opacity-60'}`}>
+                          <p className="text-[10px] text-stone-400 font-black mb-0.5">{sku.size}</p>
+                          {measText && <p className="text-[9px] text-stone-500 font-bold leading-tight mb-1">{measText}</p>}
+                          <p className={`text-sm font-bold ${sku.stock === 0 ? 'text-red-500' : 'text-[#3C3025]'}`}>{sku.stock}</p>
+                        </div>
+                      );
                     })}
                     {(!variant.skus || variant.skus.length === 0) && <p className="text-xs text-stone-400 italic font-medium p-2 bg-stone-50 rounded italic">Belum ada data ukuran untuk varian ini.</p>}
                   </div>
