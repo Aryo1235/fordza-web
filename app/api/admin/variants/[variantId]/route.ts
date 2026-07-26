@@ -102,6 +102,7 @@ export async function PATCH(
         const duplicateVariant = await tx.productVariant.findFirst({
           where: {
             variantCode: newCode,
+            deletedAt: null,
             NOT: { id: variantId },
           },
           select: { id: true },
@@ -392,10 +393,12 @@ export async function DELETE(
 
     await prisma.$transaction(async (tx) => {
       const now = new Date();
+      const deletedVariantCode = `${variant.variantCode}-DEL-${Date.now()}`;
 
       await tx.productVariant.update({
         where: { id: variantId },
         data: {
+          variantCode: deletedVariantCode,
           isActive: false,
           deletedAt: now,
         },

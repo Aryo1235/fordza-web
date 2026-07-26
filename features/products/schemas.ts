@@ -3,12 +3,11 @@
 
 import { z } from "zod";
 
-export const productSchema = z.object({
+export const baseProductSchema = z.object({
   productCode: z.string().min(3, "Kode produk minimal 3 karakter"),
   name: z.string().min(3, "Nama produk minimal 3 karakter"),
-  // price & stock tidak lagi di form induk — dikelola per SKU di VariantManager
   shortDescription: z.string().min(5),
-  productType: z.string(),
+  productType: z.string().optional().nullable(),
   gender: z.enum(["Man", "Woman", "Unisex"]).default("Unisex"),
 
   description: z.string().default("").optional().nullable(),
@@ -31,7 +30,9 @@ export const productSchema = z.object({
 
   images: z.any().optional(),
   variants: z.array(z.any()).optional(), // Mengizinkan data varian masuk ke service
-}).strict().superRefine((data, ctx) => {
+});
+
+export const productSchema = baseProductSchema.superRefine((data, ctx) => {
   if (!data.isActive && (data.isPopular || data.isBestseller || data.isNew)) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
@@ -40,5 +41,7 @@ export const productSchema = z.object({
     });
   }
 });
+
+export const productUpdateSchema = baseProductSchema.partial();
 
 export type ProductSchemaValues = z.infer<typeof productSchema>;

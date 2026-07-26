@@ -16,6 +16,7 @@ import {
   Edit2,
   X,
   Loader2,
+  AlertTriangle,
 } from "lucide-react";
 import imageCompression from "browser-image-compression";
 import { Button } from "@/components/ui/button";
@@ -797,11 +798,12 @@ export function VariantBuilder({
         )}
       </div>
 
-      {/* Info jika belum ada size template */}
       {sizes.length === 0 && (
-        <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3">
-          ⚠️ Pilih <strong>Size Template</strong> di atas terlebih dahulu agar
-          ukuran muncul di sini.
+        <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-center gap-2">
+          <AlertTriangle className="w-4 h-4 shrink-0 text-amber-600" />
+          <span>
+            Pilih <strong>Size Template</strong> di atas terlebih dahulu agar ukuran muncul di sini.
+          </span>
         </div>
       )}
 

@@ -5,6 +5,7 @@ import type { Metadata } from "next";
 import { Toaster } from "sonner";
 import { KasirSidebar, QuickStockCheck } from "@/features/kasir";
 import { SidebarProvider } from "@/components/ui/sidebar";
+import { Search } from "lucide-react";
 import { useMe } from "@/features/auth/hooks";
 import { useCurrentShift, ShiftBlockerModal } from "@/features/shifts";
 
@@ -175,9 +176,7 @@ export default function KasirLayout({
                   WebkitTransform: `translate3d(${buttonPos.x}px, ${buttonPos.y}px, 0)`,
                 }}
               >
-                <span className="group-hover:scale-110 transition-transform">
-                  🔍
-                </span>
+                <Search className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
                 <span className="md:hidden">Cek Stok</span>
                 <span className="hidden md:inline">Cek Stok</span>
                 <kbd className="hidden md:flex bg-stone-100 px-1.5 py-0.5 rounded border border-stone-300 pointer-events-none">

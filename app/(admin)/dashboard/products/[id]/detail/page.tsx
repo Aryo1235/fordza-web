@@ -288,7 +288,10 @@ export default function ProductDetailAdminPage({ params }: { params: Promise<{ i
                         </p>
                         <p className="text-[10px] text-stone-400 uppercase font-black tracking-widest">{variant.variantCode}</p>
                         {variant.promoName && (
-                          <p className="text-[10px] font-bold text-amber-600 mt-1 italic">🏷️ {variant.promoName}</p>
+                          <p className="text-[10px] font-bold text-amber-600 mt-1 italic flex items-center gap-1">
+                            <Tag className="w-2.5 h-2.5" />
+                            <span>{variant.promoName}</span>
+                          </p>
                         )}
                       </div>
                     </div>

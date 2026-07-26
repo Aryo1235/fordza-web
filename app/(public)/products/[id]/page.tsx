@@ -6,6 +6,7 @@ import { use } from "react";
 import { RelatedProducts, ProductTestimonials, usePublicProduct, type Product } from "@/features/products";
 import { cn } from "@/lib/utils";
 import { motion, type Variants } from "framer-motion";
+import { Tag } from "lucide-react";
 import { FadeUpSection } from "@/components/shared/animations";
 
 /* ── Animation variants ── */
@@ -465,7 +466,8 @@ export default function ProductDetailPage({
                         {selectedVariant?.promoName && (
                           <div className="inline-flex items-center gap-1.5 bg-amber-100 text-amber-700 px-2.5 py-1 rounded-md border border-amber-200/60 shadow-xs">
                             <span className="text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
-                              🏷️ {selectedVariant.promoName}
+                              <Tag className="w-2.5 h-2.5" />
+                              <span>{selectedVariant.promoName}</span>
                             </span>
                             {selectedVariant.promoMinPurchase && Number(selectedVariant.promoMinPurchase) > 0 ? (
                               <span className="text-[9px] font-bold  tracking-tight opacity-90 border-l border-amber-300 pl-1.5">

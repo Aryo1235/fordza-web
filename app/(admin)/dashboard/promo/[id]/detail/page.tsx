@@ -60,6 +60,7 @@ import {
 import { DatePicker } from "@/components/ui/date-picker";
 import { MultiSelectComboBox } from "@/components/shared/MultiSelectComboBox";
 import { BreadcrumbsHeader } from "@/components/layout/admin/BreadcrumbsHeader";
+import { formatRupiah, formatNumber, parseNumber } from "@/lib/utils";
 
 // ✅ Hooks Pattern
 import {
@@ -330,14 +331,13 @@ export default function PromoDetailPage({ params }: { params: Promise<{ id: stri
                   </div>
                 ) : (
                   <div className="flex items-baseline gap-1">
-                    <span className="text-xl font-bold text-amber-300 font-serif">Rp</span>
-                    <span className="text-4xl font-extrabold text-white tracking-tight">{promo.value?.toLocaleString("id-ID")}</span>
+                    <span className="text-3xl font-extrabold text-white tracking-tight">{formatRupiah(promo.value)}</span>
                   </div>
                 )}
               </div>
               <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white/5 border border-white/5 text-[10px] font-medium text-stone-300">
                 <span className="text-amber-400/80">Min. Belanja:</span>
-                <span className="font-bold text-white">Rp {promo.minPurchase?.toLocaleString("id-ID")}</span>
+                <span className="font-bold text-white">{formatRupiah(promo.minPurchase)}</span>
               </div>
             </div>
 
@@ -583,14 +583,43 @@ export default function PromoDetailPage({ params }: { params: Promise<{ id: stri
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-semibold">Nilai</label>
+                    <label className="text-sm font-semibold">
+                      Nilai {formData.type === "NOMINAL" ? "(Rp)" : "(%)"}
+                    </label>
                     <Input
                       required
-                      type="number"
-                      placeholder="Nilai diskon..."
-                      value={formData.value}
-                      onChange={(e) => setFormData(prev => ({ ...prev, value: e.target.value }))}
+                      type="text"
+                      placeholder={formData.type === "NOMINAL" ? "Cth: 50.000" : "Cth: 20"}
+                      value={
+                        formData.type === "NOMINAL" && formData.value
+                          ? formatNumber(formData.value)
+                          : formData.value
+                      }
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (formData.type === "NOMINAL") {
+                          const num = parseNumber(val);
+                          setFormData((prev) => ({
+                            ...prev,
+                            value: num > 0 ? String(num) : "",
+                          }));
+                        } else {
+                          setFormData((prev) => ({ ...prev, value: val }));
+                        }
+                      }}
                     />
+                    {formData.type === "NOMINAL" &&
+                      formData.value &&
+                      Number(formData.value) > 0 && (
+                        <p className="text-xs font-semibold text-blue-600">
+                          {formatRupiah(formData.value)}
+                        </p>
+                      )}
+                    {formData.type === "PERCENTAGE" && formData.value && (
+                      <p className="text-xs font-semibold text-amber-600">
+                        Diskon {formData.value}%
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -693,11 +722,30 @@ export default function PromoDetailPage({ params }: { params: Promise<{ id: stri
                 <div className="space-y-2">
                   <label className="text-sm font-semibold">Minimal Belanja (Opsional)</label>
                   <Input
-                    type="number"
-                    placeholder="Minimal Rp..."
-                    value={formData.minPurchase}
-                    onChange={(e) => setFormData(prev => ({ ...prev, minPurchase: e.target.value }))}
+                    type="text"
+                    placeholder="Minimal Rp 0 (Tanpa Syarat)"
+                    value={
+                      formData.minPurchase && formData.minPurchase !== "0"
+                        ? formatNumber(formData.minPurchase)
+                        : ""
+                    }
+                    onChange={(e) => {
+                      const num = parseNumber(e.target.value);
+                      setFormData((prev) => ({
+                        ...prev,
+                        minPurchase: String(num),
+                      }));
+                    }}
                   />
+                  {parseNumber(formData.minPurchase) > 0 ? (
+                    <p className="text-xs font-semibold text-emerald-600">
+                      Minimum Belanja: {formatRupiah(formData.minPurchase)}
+                    </p>
+                  ) : (
+                    <p className="text-[10px] text-stone-500 italic">
+                      Tanpa minimal belanja (0 / kosong)
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-2">

@@ -17,6 +17,7 @@ import {
   ImageIcon,
   Package,
   Upload,
+  Tag,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -147,8 +148,9 @@ export default function ProductsPage() {
             {/* Nama Promo Aktif */}
             {promoName && (
               <div className="mt-1">
-                <span className="text-[9px] font-bold bg-amber-50 text-amber-600 px-1.5 py-0.5 rounded border border-amber-100 truncate inline-block max-w-[120px]">
-                  🏷️ {promoName}
+                <span className="text-[9px] font-bold bg-amber-50 text-amber-600 px-1.5 py-0.5 rounded border border-amber-100 truncate inline-flex items-center gap-1 max-w-[120px]">
+                  <Tag className="w-2.5 h-2.5" />
+                  <span className="truncate">{promoName}</span>
                 </span>
               </div>
             )}

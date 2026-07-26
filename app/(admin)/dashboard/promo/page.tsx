@@ -53,6 +53,7 @@ import { useProductsForPromo } from "@/features/products";
 import { useVariantsAdminSearch } from "@/features/variants";
 import { MultiSelectComboBox } from "@/components/shared/MultiSelectComboBox";
 import { DatePicker } from "@/components/ui/date-picker";
+import { formatRupiah, formatNumber, parseNumber } from "@/lib/utils";
 
 export default function PromoPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -505,14 +506,43 @@ export default function PromoPage() {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-semibold">Nilai</label>
+                    <label className="text-sm font-semibold">
+                      Nilai {formData.type === "NOMINAL" ? "(Rp)" : "(%)"}
+                    </label>
                     <Input
                       required
-                      type="number"
-                      placeholder="Nilai diskon..."
-                      value={formData.value}
-                      onChange={(e) => setFormData(prev => ({ ...prev, value: e.target.value }))}
+                      type="text"
+                      placeholder={formData.type === "NOMINAL" ? "Cth: 50.000" : "Cth: 20"}
+                      value={
+                        formData.type === "NOMINAL" && formData.value
+                          ? formatNumber(formData.value)
+                          : formData.value
+                      }
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (formData.type === "NOMINAL") {
+                          const num = parseNumber(val);
+                          setFormData((prev) => ({
+                            ...prev,
+                            value: num > 0 ? String(num) : "",
+                          }));
+                        } else {
+                          setFormData((prev) => ({ ...prev, value: val }));
+                        }
+                      }}
                     />
+                    {formData.type === "NOMINAL" &&
+                      formData.value &&
+                      Number(formData.value) > 0 && (
+                        <p className="text-xs font-semibold text-blue-600">
+                          {formatRupiah(formData.value)}
+                        </p>
+                      )}
+                    {formData.type === "PERCENTAGE" && formData.value && (
+                      <p className="text-xs font-semibold text-amber-600">
+                        Diskon {formData.value}%
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -615,11 +645,30 @@ export default function PromoPage() {
                 <div className="space-y-2">
                   <label className="text-sm font-semibold">Minimal Belanja (Opsional)</label>
                   <Input
-                    type="number"
-                    placeholder="Minimal Rp..."
-                    value={formData.minPurchase}
-                    onChange={(e) => setFormData(prev => ({ ...prev, minPurchase: e.target.value }))}
+                    type="text"
+                    placeholder="Minimal Rp 0 (Tanpa Syarat)"
+                    value={
+                      formData.minPurchase && formData.minPurchase !== "0"
+                        ? formatNumber(formData.minPurchase)
+                        : ""
+                    }
+                    onChange={(e) => {
+                      const num = parseNumber(e.target.value);
+                      setFormData((prev) => ({
+                        ...prev,
+                        minPurchase: String(num),
+                      }));
+                    }}
                   />
+                  {parseNumber(formData.minPurchase) > 0 ? (
+                    <p className="text-xs font-semibold text-emerald-600">
+                      Minimum Belanja: {formatRupiah(formData.minPurchase)}
+                    </p>
+                  ) : (
+                    <p className="text-[10px] text-stone-500 italic">
+                      Tanpa minimal belanja (0 / kosong)
+                    </p>
+                  )}
                   <p className="text-[10px] text-green-600 font-semibold italic">*Fitur minimal belanja kini aktif sepenuhnya di sistem POS Kasir Desktop & Mobile.</p>
                 </div>
 

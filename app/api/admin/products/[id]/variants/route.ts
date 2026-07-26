@@ -197,6 +197,7 @@ export async function POST(
     const existingVariant = await prisma.productVariant.findFirst({
       where: {
         variantCode,
+        deletedAt: null,
       },
       select: {
         id: true,

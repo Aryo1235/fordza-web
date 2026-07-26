@@ -109,23 +109,8 @@ export default function ProductCard({
           <div className="flex flex-col gap-0.5 mt-1">
             <div className="flex items-baseline gap-1.5">
               <p className="text-xs md:text-sm font-black text-stone-900 leading-none">
-                {formatRupiah((currentVariant as any)?.finalPrice || currentVariant?.basePrice || product.price)}
+                {formatRupiah(currentVariant?.basePrice || product.price)}
               </p>
-              {(currentVariant as any)?.finalPrice < (currentVariant?.basePrice || product.price) && (
-                <span className="text-[9px] md:text-[10px] text-stone-400 line-through opacity-70">
-                  {formatRupiah(currentVariant?.basePrice || product.price)}
-                </span>
-              )}
-            </div>
-
-            {/* Badge Transparan untuk Kasir */}
-            <div className="flex flex-wrap gap-1 mt-0.5">
-
-              {(currentVariant as any)?.promoName && (
-                <span className="text-[8px] font-bold bg-amber-50 text-amber-600 px-1 py-0.5 rounded border border-amber-100 truncate max-w-[80px]">
-                  🏷️ {(currentVariant as any).promoName}
-                </span>
-              )}
             </div>
           </div>
         </div>
@@ -158,10 +143,10 @@ export default function ProductCard({
 
                 // LOGIKA CERDAS: Ambil Harga Asli & Hitung Diskon Potensial
                 const originalPrice = sku.priceOverride ?? currentVariant.basePrice;
-                const promoPercent = currentVariant.promoDiscountPercent ?? 0;
-                const calculatedDiscount = promoPercent > 0
-                  ? (originalPrice * promoPercent) / 100
-                  : (currentVariant.additionalDiscount ?? 0);
+                const isPercentagePromo = currentVariant.promoType === "PERCENTAGE";
+                const calculatedDiscount = isPercentagePromo
+                  ? (originalPrice * Number(currentVariant.promoDiscountPercent ?? 0)) / 100
+                  : Number(currentVariant.additionalDiscount ?? 0);
 
                 return (
                   <button

@@ -9,7 +9,8 @@ import {
   User, 
   Package,
   Calendar,
-  AlertCircle
+  AlertCircle,
+  CreditCard
 } from "lucide-react";
 import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
@@ -128,8 +129,8 @@ export default function TransactionDetailPage() {
             </div>
             <div className="p-6 space-y-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-stone-100 flex items-center justify-center font-bold text-stone-600 text-sm">
-                  💳
+                <div className="w-10 h-10 rounded-full bg-stone-100 flex items-center justify-center">
+                  <CreditCard className="w-5 h-5 text-stone-600" />
                 </div>
                 <div>
                   <p className="text-[10px] uppercase font-bold text-stone-400">Metode Pembayaran</p>

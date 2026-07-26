@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { categorySchema } from "@/features/categories";
 import { CategoryService } from "@/backend/services/category.service";
 import { uploadFileToS3, deleteFileFromS3 } from "@/actions/upload";
 import { handleError, AppError } from "@/lib/error-handler";
@@ -51,6 +52,24 @@ export async function PUT(
 
     const isActive = formData.get("isActive");
     if (isActive !== null) updateData.isActive = isActive === "true";
+
+    // Validasi Zod Partial untuk Update Kategori
+    const validation = categorySchema.partial().safeParse(updateData);
+    if (!validation.success) {
+      const headerList = await headers();
+      const traceId = headerList.get("x-request-id") || "unknown";
+      logger.warn({ traceId, errors: validation.error.issues }, "Category update Zod validation failed");
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Data update kategori tidak valid",
+          code: "VALIDATION_ERROR",
+          errors: validation.error.flatten().fieldErrors,
+          traceId,
+        },
+        { status: 400 }
+      );
+    }
 
     // Upload gambar baru (jika ada)
     const image = formData.get("image") as File;
