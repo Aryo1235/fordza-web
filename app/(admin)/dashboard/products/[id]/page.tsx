@@ -115,8 +115,6 @@ export default function EditProductPage({
     formState: { errors, isDirty },
   } = useForm<ProductSchemaValues>({
     resolver: zodResolver(productSchema) as any,
-    // INI KUNCINYA: Form akan otomatis reset saat data product mendarat/berubah
-    values: formValues,
     defaultValues: {
       productCode: "",
       name: "",
@@ -144,6 +142,13 @@ export default function EditProductPage({
   const selectedTemplate = templates.find(
     (t: any) => t.id === watchSizeTemplateId,
   );
+
+  // 🔄 Reset form saat data product berhasil dimuat
+  useEffect(() => {
+    if (formValues) {
+      reset(formValues);
+    }
+  }, [formValues, reset]);
 
 
 

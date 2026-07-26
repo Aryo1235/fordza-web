@@ -37,7 +37,6 @@ const navItems = [
   { href: "/dashboard/products", label: "Produk", icon: ShoppingBag },
   { href: "/dashboard/categories", label: "Kategori", icon: FolderOpen },
   { href: "/dashboard/banners", label: "Banner", icon: Image },
-  { href: "/dashboard/testimonials", label: "Testimoni", icon: MessageSquare },
   { href: "/dashboard/size-templates", label: "Template Ukuran", icon: Ruler },
   { href: "/dashboard/promo", label: "Manajemen Promo", icon: Percent },
   { href: "/dashboard/stock", label: "Stok Opname", icon: Package },
