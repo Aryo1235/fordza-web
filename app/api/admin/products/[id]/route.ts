@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { productUpdateSchema } from "@/features/products/schemas";
 import { ProductService } from "@/backend/services/products.service";
 import { uploadFileToS3, deleteFileFromS3 } from "@/actions/upload";
 import { handleError, AppError } from "@/lib/error-handler";
@@ -63,11 +64,17 @@ export async function PUT(
       const value = formData.get(field);
       if (value !== null) {
         // Basic validation
-        if (field === "productCode" && typeof value === "string" && value.trim().length === 0) {
-          throw new AppError("Kode produk tidak boleh kosong", 400, "VALIDATION_ERROR");
+        if (field === "productCode" && typeof value === "string" && value.trim().length < 3) {
+          throw new AppError("Kode produk minimal 3 karakter", 400, "VALIDATION_ERROR");
         }
-        if (field === "name" && typeof value === "string" && value.trim().length === 0) {
-          throw new AppError("Nama produk tidak boleh kosong", 400, "VALIDATION_ERROR");
+        if (field === "name" && typeof value === "string" && value.trim().length < 3) {
+          throw new AppError("Nama produk minimal 3 karakter", 400, "VALIDATION_ERROR");
+        }
+        if (field === "shortDescription" && typeof value === "string" && value.trim().length < 5) {
+          throw new AppError("Deskripsi singkat minimal 5 karakter", 400, "VALIDATION_ERROR");
+        }
+        if (field === "material" && typeof value === "string" && value.trim().length === 0) {
+          throw new AppError("Material Utama tidak boleh kosong", 400, "VALIDATION_ERROR");
         }
         if (field === "gender" && !["Man", "Woman", "Unisex"].includes(value as string)) {
           throw new AppError("Gender tidak valid. Harus 'Man', 'Woman', atau 'Unisex'", 400, "VALIDATION_ERROR", { field: "gender" });
@@ -114,6 +121,24 @@ export async function PUT(
     }
 
     if (categoryIds.length > 0) updateData.categoryIds = categoryIds;
+
+    // Validasi Zod Partial untuk Backend UPDATE
+    const validation = productUpdateSchema.safeParse(updateData);
+    if (!validation.success) {
+      const headerList = await headers();
+      const traceId = headerList.get("x-request-id") || "unknown";
+      logger.warn({ traceId, errors: validation.error.issues }, "Product update Zod validation failed");
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Data update produk tidak valid",
+          code: "VALIDATION_ERROR",
+          errors: validation.error.flatten().fieldErrors,
+          traceId,
+        },
+        { status: 400 }
+      );
+    }
 
 
     // Upload gambar baru (jika ada)

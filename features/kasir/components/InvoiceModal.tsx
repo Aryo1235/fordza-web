@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import { X, Printer, FileText } from "lucide-react";
+import { X, Printer, FileText, CheckCircle2 } from "lucide-react";
 import { jsPDF } from "jspdf";
 
 interface TransactionItem {
@@ -330,7 +330,10 @@ export default function InvoiceModal({ transaction, onClose }: InvoiceModalProps
         <div className="print-modal-wrapper bg-white w-80 rounded shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
           {/* Header */}
           <div className="no-print flex items-center justify-between px-4 py-3 border-b shrink-0" style={{ backgroundColor: "#3C3025" }}>
-            <h2 className="text-white font-semibold text-sm">Transaksi Berhasil 🎉</h2>
+            <h2 className="text-white font-semibold text-sm flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+              <span>Transaksi Berhasil</span>
+            </h2>
             <button onClick={onClose} className="text-white/70 hover:text-white transition-colors">
               <X className="w-4 h-4" />
             </button>

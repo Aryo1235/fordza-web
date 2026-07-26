@@ -16,6 +16,7 @@ import {
   Trash2,
   Loader2,
   Package,
+  Tag,
 } from "lucide-react";
 import imageCompression from "browser-image-compression";
 import { Button } from "@/components/ui/button";
@@ -482,27 +483,26 @@ function VariantCard({
 
   const totalStock = variant.skus.reduce((s, sku) => s + sku.stock, 0);
 
+  const [isDeleting, setIsDeleting] = useState(false);
+
   const onConfirmDelete = async () => {
-    // 1. Hapus file fisik dari S3 jika ada
-    const cleanupS3 = async () => {
+    try {
+      setIsDeleting(true);
+      await deleteVariant.mutateAsync(variant.id);
+
       if (variant.images && variant.images.length > 0) {
         for (const img of variant.images) {
           if (img.key) await deleteFileFromS3(img.key);
         }
       }
-    };
 
-    deleteVariant.mutate(variant.id, {
-      onSuccess: async () => {
-        await cleanupS3();
-        toast.success(`Varian "${variant.color}" dihapus`);
-        setShowConfirm(false);
-      },
-      onError: () => {
-        toast.error("Gagal menghapus varian");
-        setShowConfirm(false);
-      },
-    });
+      toast.success(`Varian "${variant.color}" berhasil dihapus`);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || err?.message || "Gagal menghapus varian");
+    } finally {
+      setIsDeleting(false);
+      setShowConfirm(false);
+    }
   };
 
   if (isEditing) {
@@ -611,8 +611,9 @@ function VariantCard({
             {(variant as any).promoName && (
               <div className="flex items-center gap-1.5 flex-wrap">
                 <span className="text-[9px] font-bold text-stone-400 uppercase tracking-wider">Promo:</span>
-                <span className="text-[9px] text-amber-700 font-bold bg-amber-50 px-2 py-0.5 rounded border border-amber-100 leading-none">
-                  🏷️ {(variant as any).promoName}
+                <span className="text-[9px] text-amber-700 font-bold bg-amber-50 px-2 py-0.5 rounded border border-amber-100 leading-none inline-flex items-center gap-1">
+                  <Tag className="w-2.5 h-2.5" />
+                  <span>{(variant as any).promoName}</span>
                 </span>
               </div>
             )}
@@ -647,7 +648,7 @@ function VariantCard({
         open={showConfirm}
         onOpenChange={setShowConfirm}
         onConfirm={onConfirmDelete}
-        isLoading={deleteVariant.isPending}
+        isLoading={deleteVariant.isPending || isDeleting}
         title="Hapus Varian?"
         description={`Hapus varian "${variant.color}"? Semua ukuran (${variant.skus.length} SKU) akan ikut terhapus secara permanen.`}
       />

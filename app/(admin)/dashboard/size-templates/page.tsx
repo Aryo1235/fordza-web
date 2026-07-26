@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Plus, Edit, Trash2, Loader2, Eye, Ruler } from "lucide-react";
+import { Plus, Edit, Trash2, Loader2, Eye, Ruler, AlertTriangle, Info } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
 
@@ -410,11 +410,13 @@ export default function SizeTemplatesPage() {
                   />
                   {isSepatu ? (
                     <p className="text-[11px] text-amber-600 font-semibold flex items-center gap-1">
-                      ⚠️ Tipe Sepatu hanya mendukung ukuran berupa angka (huruf otomatis diblokir).
+                      <AlertTriangle className="w-3 h-3 shrink-0" />
+                      <span>Tipe Sepatu hanya mendukung ukuran berupa angka (huruf otomatis diblokir).</span>
                     </p>
                   ) : isParfum ? (
                     <p className="text-[11px] text-stone-500 font-semibold flex items-center gap-1">
-                      ℹ️ Masukkan ukuran botol parfum dalam satuan ml. Pisahkan dengan koma (,).
+                      <Info className="w-3 h-3 shrink-0" />
+                      <span>Masukkan ukuran botol parfum dalam satuan ml. Pisahkan dengan koma (,).</span>
                     </p>
                   ) : (
                     <p className="text-[11px] text-stone-500 font-medium">

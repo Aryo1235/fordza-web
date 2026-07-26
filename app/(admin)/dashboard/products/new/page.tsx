@@ -30,7 +30,7 @@ import { useSizeTemplatesAdmin } from "@/features/admin/size-templates";
 import { useCreateProduct } from "@/features/products";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Loader2, Plus, Trash2, Package, X } from "lucide-react";
+import { Loader2, Plus, Trash2, Package, X, Sun, Camera } from "lucide-react";
 import {
   productSchema,
   type ProductSchemaValues,
@@ -729,8 +729,8 @@ export default function NewProductPage() {
               </h4>
               <div className="grid grid-cols-1 gap-3">
                 <div className="flex items-start gap-3 p-3 rounded-xl bg-amber-50/30 border border-amber-100/30">
-                  <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center text-amber-600 shrink-0 text-xs">
-                    ☀️
+                  <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center text-amber-600 shrink-0">
+                    <Sun className="w-4 h-4" />
                   </div>
                   <div className="space-y-0.5">
                     <p className="text-[11px] font-bold text-stone-700">
@@ -743,8 +743,8 @@ export default function NewProductPage() {
                   </div>
                 </div>
                 <div className="flex items-start gap-3 p-3 rounded-xl bg-blue-50/30 border border-blue-100/30">
-                  <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600 shrink-0 text-xs">
-                    📷
+                  <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600 shrink-0">
+                    <Camera className="w-4 h-4" />
                   </div>
                   <div className="space-y-0.5">
                     <p className="text-[11px] font-bold text-stone-700">

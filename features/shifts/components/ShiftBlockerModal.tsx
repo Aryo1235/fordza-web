@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { AlertCircle, Wallet } from "lucide-react";
+import { AlertCircle, Wallet, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { cn, formatNumber, parseNumber } from "@/lib/utils";
 import { useOpenShift } from "../hooks";
@@ -88,8 +88,9 @@ export function ShiftBlockerModal({ isOpen, onShiftOpened, kasirName }: ShiftBlo
               />
             </div>
             {displayValue && parseNumber(displayValue) > 0 && (
-              <p className="text-sm text-blue-700 font-semibold bg-blue-50 px-3 py-2 rounded-md">
-                ✓ Modal dikonfirmasi: <span className="text-blue-900">Rp {displayValue}</span>
+              <p className="text-sm text-blue-700 font-semibold bg-blue-50 px-3 py-2 rounded-md flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0" />
+                <span>Modal dikonfirmasi: <strong className="text-blue-900">Rp {displayValue}</strong></span>
               </p>
             )}
             <p className="text-sm text-yellow-600 flex items-center gap-1 mt-1 font-medium bg-yellow-50 p-2 rounded-md">

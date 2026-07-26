@@ -18,7 +18,8 @@ import {
   PackageOpen,
   TrendingUp,
   TrendingDown,
-  Tag
+  Tag,
+  CheckCircle2
 } from "lucide-react";
 import { useDashboardStats } from "@/features/admin/dashboard";
 import { useSizeTemplatesAdmin } from "@/features/admin/size-templates";
@@ -492,7 +493,7 @@ export default function DashboardPage() {
             ) : (
               <div className="flex flex-col items-center justify-center p-12 text-center h-full gap-2">
                 <div className="h-10 w-10 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600">
-                  ✓
+                  <CheckCircle2 className="w-5 h-5" />
                 </div>
                 <div>
                   <h5 className="text-xs font-bold text-stone-800">Semua Stok Aman!</h5>

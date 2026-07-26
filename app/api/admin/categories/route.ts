@@ -40,13 +40,28 @@ export async function POST(req: Request) {
       name: formData.get("name"),
       shortDescription: formData.get("shortDescription"),
       order: formData.get("order"),
-      image: formData.getAll("image"),
+      image: formData.get("image"),
     };
 
-    const validation = { data: categorySchema.parse(rawData) };
+    const validation = categorySchema.safeParse(rawData);
+    if (!validation.success) {
+      logger.warn({ traceId, errors: validation.error.issues }, "Category validation failed");
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Data kategori tidak valid",
+          code: "VALIDATION_ERROR",
+          errors: validation.error.flatten().fieldErrors,
+          traceId,
+        },
+        { status: 400 }
+      );
+    }
+
+    const validatedData = validation.data;
 
     const uploadFormData = new FormData();
-    uploadFormData.append("file", validation.data.image as File);
+    uploadFormData.append("file", validatedData.image as File);
 
     const uploadRes = await uploadFileToS3(uploadFormData, "categories");
     if (!uploadRes.success) {
@@ -58,11 +73,11 @@ export async function POST(req: Request) {
     const operatorId = req.headers.get("x-user-id") || undefined;
 
     const category = await CategoryService.create({
-      name: validation.data.name,
-      shortDescription: validation.data.shortDescription,
+      name: validatedData.name,
+      shortDescription: validatedData.shortDescription,
       imageUrl: uploadRes.url as string,
       imageKey: uploadRes.fileName as string,
-      order: validation.data.order,
+      order: validatedData.order,
       createdById: operatorId,
       updatedById: operatorId,
     });

@@ -957,10 +957,10 @@ export default function POSPage() {
               if (variant && sku) {
                 // LOGIKA CERDAS: Gunakan diskon potensial dari promo
                 const originalPrice = sku.priceOverride ?? variant.basePrice;
-                const promoPercent = variant.promoDiscountPercent ?? 0;
-                const discountAmount = promoPercent > 0
-                  ? (originalPrice * promoPercent) / 100
-                  : (variant.additionalDiscount ?? 0);
+                const isPercentagePromo = variant.promoType === "PERCENTAGE";
+                const discountAmount = isPercentagePromo
+                  ? (originalPrice * Number(variant.promoDiscountPercent ?? 0)) / 100
+                  : Number(variant.additionalDiscount ?? 0);
 
 
 
