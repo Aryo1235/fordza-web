@@ -156,12 +156,12 @@ export async function GET(req: Request) {
       // Tanda Tangan 1
       doc.text("Dibuat Oleh,", startX, finalY);
       doc.line(startX, finalY + 20, startX + signatureWidth, finalY + 20);
-      doc.text("( Staff Gudang )", startX, finalY + 25);
+      doc.text("( Staff Gudang / Picker )", startX, finalY + 25);
 
       // Tanda Tangan 2
       doc.text("Diperiksa Oleh,", startX + signatureWidth + gap, finalY);
       doc.line(startX + signatureWidth + gap, finalY + 20, startX + signatureWidth * 2 + gap, finalY + 20);
-      doc.text("( Admin Gudang )", startX + signatureWidth + gap, finalY + 25);
+      doc.text("( Admin Gudang / Kepala Gudang )", startX + signatureWidth + gap, finalY + 25);
 
       // Tanda Tangan 3
       doc.text("Diketahui Oleh,", startX + (signatureWidth + gap) * 2, finalY);

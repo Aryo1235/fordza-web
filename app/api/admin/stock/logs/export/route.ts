@@ -140,7 +140,7 @@ export async function GET(req: Request) {
 
       doc.text("Dicek Oleh,", startX, finalY);
       doc.line(startX, finalY + 20, startX + sigW, finalY + 20);
-      doc.text("( Admin Gudang )", startX, finalY + 25);
+      doc.text("( Admin Gudang / Kepala Gudang )", startX, finalY + 25);
 
       doc.text("Disetujui Oleh,", startX + sigW + gap, finalY);
       doc.line(startX + sigW + gap, finalY + 20, startX + sigW * 2 + gap, finalY + 20);
