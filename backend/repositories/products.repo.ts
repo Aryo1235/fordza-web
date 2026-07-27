@@ -482,7 +482,7 @@ export const ProductRepository = {
           }
         }
         return product;
-      });
+      }, { timeout: 20000, maxWait: 10000 });
     } catch (error: any) {
       throw error;
     }
@@ -990,6 +990,12 @@ export const ProductRepository = {
 
   async update(id: string, data: any, operatorId?: string) {
     return await prisma.$transaction(async (tx) => {
+      let effectiveOperatorId: string | null = operatorId ?? null;
+      if (!effectiveOperatorId) {
+        const firstAdmin = await tx.admin.findFirst({ select: { id: true } });
+        effectiveOperatorId = firstAdmin?.id ?? null;
+      }
+
       const existing = await tx.product.findUnique({ where: { id } });
       if (!existing) throw new Error("Produk tidak ditemukan");
 
@@ -1131,12 +1137,6 @@ export const ProductRepository = {
       });
 
       // --- 6. LOGGING AUDIT (CATATAN KHUSUS) ---
-      let effectiveOperatorId: string | null = operatorId ?? null;
-      if (!effectiveOperatorId) {
-        const firstAdmin = await tx.admin.findFirst({ select: { id: true } });
-        effectiveOperatorId = firstAdmin?.id ?? null;
-      }
-
       if (isDeactivating) {
         // Log penonaktifan massal untuk semua SKU yang sebelumnya aktif
         const skusToLog = await tx.productSku.findMany({
@@ -1190,7 +1190,7 @@ export const ProductRepository = {
           variants: { include: { skus: true, images: true } },
         },
       });
-    });
+    }, { timeout: 20000, maxWait: 10000 });
   },
 
   async delete(id: string, operatorId?: string) {
@@ -1262,7 +1262,7 @@ export const ProductRepository = {
         where: { id },
         data: { isActive: false, deletedAt: now, stock: 0 },
       });
-    });
+    }, { timeout: 20000, maxWait: 10000 });
   },
 
   async updateRating(

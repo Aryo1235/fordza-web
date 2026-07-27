@@ -129,7 +129,7 @@ export async function PATCH(
       }
 
       return updated;
-    });
+    }, { timeout: 15000, maxWait: 10000 });
 
     const headerList = await headers();
     const traceId = headerList.get("x-request-id") || "unknown";
@@ -232,7 +232,7 @@ export async function DELETE(
           },
         });
       }
-    });
+    }, { timeout: 15000, maxWait: 10000 });
 
     const headerList = await headers();
     const traceId = headerList.get("x-request-id") || "unknown";
