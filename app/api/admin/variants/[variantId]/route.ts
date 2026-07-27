@@ -46,6 +46,12 @@ export async function PATCH(
     }
 
     const updatedVariant = await prisma.$transaction(async (tx) => {
+      let operatorId: string | null = req.headers.get("x-user-id") || null;
+      if (!operatorId) {
+        const firstAdmin = await tx.admin.findFirst({ select: { id: true } });
+        operatorId = firstAdmin?.id ?? null;
+      }
+
       const oldVariant = await tx.productVariant.findUnique({
         where: { id: variantId },
         select: {
@@ -145,11 +151,6 @@ export async function PATCH(
         validation.data.isActive !== undefined &&
         validation.data.isActive !== oldVariant.isActive
       ) {
-        const operatorId =
-          req.headers.get("x-user-id") ??
-          (await tx.admin.findFirst({ select: { id: true } }))?.id ??
-          null;
-
         const skuSnapshots = await tx.productSku.findMany({
           where: { variantId, deletedAt: null },
           select: {
@@ -169,7 +170,6 @@ export async function PATCH(
 
         const skuStatusLogs = skuSnapshots
           .map((sku) => {
-            // Logika baru: delta dihitung berdasarkan ketersediaan (sellable)
             const previousEffectiveStock =
               oldVariant.isActive && sku.isActive ? sku.stock : 0;
             const nextEffectiveStock = validation.data.isActive && sku.isActive ? sku.stock : 0;
@@ -195,19 +195,18 @@ export async function PATCH(
         }
       }
 
-      // Handle SKUs Bulk Update (Upsert) + Auto Stock Logging
+      // Handle SKUs Bulk Update (Upsert) + Auto Stock Logging (Optimized)
       if (validation.data.skus) {
-        const operatorId =
-          req.headers.get("x-user-id") ??
-          (await tx.admin.findFirst({ select: { id: true } }))?.id ??
-          null;
+        const existingSkus = await tx.productSku.findMany({
+          where: { variantId },
+          select: { id: true, size: true, stock: true },
+        });
+        const existingSkuMap = new Map(existingSkus.map((s) => [s.size, s]));
+
+        const skuStockLogsToCreate: any[] = [];
 
         for (const skuData of validation.data.skus) {
-          // Cari stok lama SEBELUM diupdate (untuk menghitung delta)
-          const existingSku = await tx.productSku.findUnique({
-            where: { variantId_size: { variantId, size: skuData.size } },
-            select: { id: true, stock: true },
-          });
+          const existingSku = existingSkuMap.get(skuData.size);
 
           const upsertedSku = await tx.productSku.upsert({
             where: { variantId_size: { variantId, size: skuData.size } },
@@ -226,25 +225,25 @@ export async function PATCH(
             },
           });
 
-          // Hitung delta stok (stok baru - stok lama)
           const oldStock = existingSku?.stock ?? 0;
           const delta = skuData.stock - oldStock;
 
-          // Buat log HANYA jika stok berubah
           if (delta !== 0) {
-            await tx.skuStockLog.create({
-              data: {
-                skuId: upsertedSku.id,
-                delta,
-                currentStock: skuData.stock,
-                size: skuData.size,
-                color: validation.data.color ?? oldVariant.color,
-                type: delta > 0 ? "RESTOCK" : "ADJUSTMENT",
-                notes: "Perubahan Stok via Edit Varian (Admin)",
-                operatorId,
-              },
+            skuStockLogsToCreate.push({
+              skuId: upsertedSku.id,
+              delta,
+              currentStock: skuData.stock,
+              size: skuData.size,
+              color: validation.data.color ?? oldVariant.color,
+              type: delta > 0 ? "RESTOCK" : "ADJUSTMENT",
+              notes: "Perubahan Stok via Edit Varian (Admin)",
+              operatorId,
             });
           }
+        }
+
+        if (skuStockLogsToCreate.length > 0) {
+          await tx.skuStockLog.createMany({ data: skuStockLogsToCreate as any });
         }
       }
 
@@ -267,7 +266,7 @@ export async function PATCH(
       // Rekalkulasi Total Stok (Hanya jika produk induk aktif)
       const parentProduct = await tx.product.findUnique({
         where: { id: productId },
-        select: { isActive: true }
+        select: { isActive: true, stock: true },
       });
 
       let newTotalStock = 0;
@@ -287,12 +286,7 @@ export async function PATCH(
         newTotalStock = totalStockAgg._sum.stock ?? 0;
       }
 
-      // Ambil stok lama produk untuk menghitung delta master log
-      const productBefore = await tx.product.findUnique({
-        where: { id: productId },
-        select: { stock: true },
-      });
-      const masterDelta = newTotalStock - (productBefore?.stock ?? 0);
+      const masterDelta = newTotalStock - (parentProduct?.stock ?? 0);
 
       await tx.product.update({
         where: { id: productId },
@@ -311,10 +305,6 @@ export async function PATCH(
             : `Nonaktifkan Varian "${effectiveColor}" (Master Log)`
           : `Perubahan Stok via Edit Varian ${effectiveColor} (Master Log)`;
 
-        const operatorId =
-          req.headers.get("x-user-id") ??
-          (await tx.admin.findFirst({ select: { id: true } }))?.id ??
-          null;
         await tx.stockLog.create({
           data: {
             productId,
@@ -331,7 +321,7 @@ export async function PATCH(
         where: { id: variantId },
         include: { skus: true, images: true },
       });
-    });
+    }, { timeout: 20000, maxWait: 10000 });
 
     const operatorId = req.headers.get("x-user-id") || undefined;
     const headerList = await headers();
@@ -494,7 +484,7 @@ export async function DELETE(
           },
         });
       }
-    });
+    }, { timeout: 20000, maxWait: 10000 });
 
     const operatorId = req.headers.get("x-user-id") || undefined;
     const headerList = await headers();
