@@ -51,7 +51,7 @@ export function AdminSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { state, isMobile } = useSidebar();
-
+    console.log("STATE =", state);
   const handleLogout = async () => {
     await fetch("/api/admin/auth/logout", { method: "POST" });
     router.push("/login");
