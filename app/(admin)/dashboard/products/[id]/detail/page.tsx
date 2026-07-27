@@ -35,7 +35,7 @@ export default function ProductDetailAdminPage({ params }: { params: Promise<{ i
     if (!meas) return null;
 
     const tType = (sizeTemplate.type || "").toLowerCase();
-    if (tType === "sepatu") {
+    if (tType === "sepatu" || tType === "shoes" || meas.insoleLength || meas.insoleWidth || meas.insole) {
       const length = meas.insoleLength || meas.insole || "";
       const width = meas.insoleWidth || "";
       if (length && width) return `${length}x${width} cm`;
