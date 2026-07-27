@@ -130,7 +130,7 @@ export default function SizeTemplateDetailPage({ params }: { params: Promise<{ i
     if (!meas) return <span className="text-[9.5px] text-stone-400 block font-normal mt-0.5">Belum ada CM</span>;
 
     const tType = (template.type || "").toLowerCase();
-    if (tType === "sepatu") {
+    if (tType === "sepatu" || tType === "shoes" || meas.insoleLength || meas.insoleWidth || meas.insole) {
       const length = meas.insoleLength || meas.insole || "-";
       const width = meas.insoleWidth;
       return (
@@ -139,7 +139,7 @@ export default function SizeTemplateDetailPage({ params }: { params: Promise<{ i
         </span>
       );
     }
-    if (tType === "apparel" || tType === "pakaian") {
+    if (tType === "apparel" || tType === "pakaian" || tType === "clothes" || meas.ld || meas.pb) {
       return (
         <span className="text-[9.5px] text-stone-600 block font-semibold mt-0.5 leading-tight">
           LD: {meas.ld || "-"} cm<br />
@@ -147,7 +147,7 @@ export default function SizeTemplateDetailPage({ params }: { params: Promise<{ i
         </span>
       );
     }
-    if (tType === "parfum") {
+    if (tType === "parfum" || tType === "perfume" || meas.volume) {
       return (
         <span className="text-[9.5px] text-stone-600 block font-semibold mt-0.5 leading-tight">
           Vol: {meas.volume || "-"} ml<br />
