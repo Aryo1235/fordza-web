@@ -309,7 +309,7 @@ export async function POST(
       }
 
       return created;
-    });
+    }, { timeout: 20000, maxWait: 10000 });
 
     const headerList = await headers();
     const traceId = headerList.get("x-request-id") || "unknown";
