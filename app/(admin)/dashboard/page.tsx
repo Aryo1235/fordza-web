@@ -177,7 +177,7 @@ export default function DashboardPage() {
               Selamat Datang di Hub Kendali Toko Anda
             </h1>
             <p className="text-stone-300 text-sm leading-relaxed max-w-3xl">
-              Pantau dan kelola seluruh inventaris produk, moderasi ulasan testimoni dari pembeli, serta perbarui banner promo halaman depan secara langsung dari satu halaman utama ini.
+              Pantau dan kelola seluruh inventaris produk, serta perbarui banner promo halaman depan secara langsung dari satu halaman utama ini.
             </p>
           </div>
         </div>
@@ -323,9 +323,8 @@ export default function DashboardPage() {
                     <div key={log.id} className="p-3 rounded-xl border border-stone-100 bg-stone-50/30 hover:bg-stone-50/60 transition-colors">
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex items-center gap-2.5 min-w-0">
-                          <div className={`h-7 w-7 rounded-lg flex items-center justify-center shrink-0 ${
-                            isPositive ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-500"
-                          }`}>
+                          <div className={`h-7 w-7 rounded-lg flex items-center justify-center shrink-0 ${isPositive ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-500"
+                            }`}>
                             {isPositive
                               ? <TrendingUp className="h-3.5 w-3.5" />
                               : <TrendingDown className="h-3.5 w-3.5" />}
@@ -339,9 +338,8 @@ export default function DashboardPage() {
                             </p>
                           </div>
                         </div>
-                        <span className={`text-xs font-black shrink-0 ${
-                          isPositive ? "text-emerald-600" : "text-red-500"
-                        }`}>
+                        <span className={`text-xs font-black shrink-0 ${isPositive ? "text-emerald-600" : "text-red-500"
+                          }`}>
                           {isPositive ? "+" : ""}{log.delta}
                         </span>
                       </div>
