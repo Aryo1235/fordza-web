@@ -147,7 +147,7 @@ export const StockRepository = {
       });
 
       return { product, log };
-    });
+    }, { timeout: 15000, maxWait: 10000 });
   },
 
   // ─── SKU-Level Stock Log (produk dengan varian) ─────────────────────────────
@@ -281,7 +281,7 @@ export const StockRepository = {
       });
 
       return { sku: updatedSku, log };
-    });
+    }, { timeout: 15000, maxWait: 10000 });
   },
 
   async getSkuLogsExport(filters: {
