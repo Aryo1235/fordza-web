@@ -268,7 +268,7 @@ export default function ProductDetailPage({
   }
 
   return (
-    <div className="  selection:bg-[#4A3B2E] selection:text-white ">
+    <div className="  selection:bg-[#4A3B2E] selection:text-white py-4 ">
       <main className="mx-auto max-w-7xl px-4 sm:px-6 md:px-20 lg:px-10 ">
 
         {/* Breadcrumb — fade in cepat */}
